@@ -1,8 +1,8 @@
 venv
 db.sqlite3
 bookutil/__pycache__
-bookutil/settings.py
 *.log
 *.pyc
 db-volumes/
 documents/memo.txt
+.env
