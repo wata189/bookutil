@@ -6,7 +6,8 @@ create table bookutil.t_toread_book (
   id BIGINT not null auto_increment comment 'ID'
   , book_name VARCHAR(100) not null comment '書籍名'
   , isbn VARCHAR(13) comment 'ISBN'
-  , author_name VARCHAR(13) comment '著者名'
+  , author_name VARCHAR(100) comment '著者名'
+  , publisher_name VARCHAR(100) comment '出版社名'
   , other_url TEXT comment 'その他URL'
   , create_user VARCHAR(100) default 'system' not null comment '作成者'
   , create_at TIMESTAMP default CURRENT_TIMESTAMP not null comment '作成日時'
@@ -107,3 +108,16 @@ WHERE
     t_toread_tag.delete_flg = 0
 ) tag
 ORDER BY order_num;
+
+--insert
+insert into bookutil.t_toread_book(book_name,isbn,author_name,other_url,create_user,create_at,update_user,update_at,delete_flg) values 
+    ('日本統計学会公式認定 統計検定 2級 公式問題集[2018〜2021年]','4788925559','日本統計学会
+日本統計学','https://www.toukei-kentei.jp/','system',TIMESTAMP '2023-04-30 10:21:16.000','system',TIMESTAMP '2023-04-30 10:21:16.000','0')
+  , ('「技術書」の読書術 達人が教える選び方・読み方・情報発信&共有のコツとテクニック','4798171549','増井 敏克
+増井敏克',null,'system',TIMESTAMP '2023-04-30 10:22:10.000','system',TIMESTAMP '2023-04-30 10:22:10.000','0');
+
+insert into bookutil.t_toread_tag(book_id,tag,create_user,create_at,update_user,update_at,delete_flg) values 
+    (1,'統計学','system',TIMESTAMP '2023-04-30 10:36:55.000','system',TIMESTAMP '2023-04-30 10:36:55.000','0')
+  , (1,'自然科学','system',TIMESTAMP '2023-04-30 10:36:45.000','system',TIMESTAMP '2023-04-30 10:36:45.000','0')
+  , (2,'その他プログラミング','system',TIMESTAMP '2023-04-30 10:37:22.000','system',TIMESTAMP '2023-04-30 10:37:22.000','0')
+  , (2,'プログラミング','system',TIMESTAMP '2023-04-30 10:37:09.000','system',TIMESTAMP '2023-04-30 10:37:09.000','0');
