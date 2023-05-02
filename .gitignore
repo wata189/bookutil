@@ -6,3 +6,4 @@ bookutil/__pycache__
 db-volumes/
 documents/memo.txt
 .env
+web/static/css

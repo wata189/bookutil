@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      {% load static %}
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+      <title>{{ pageName }}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <!-- TODO: favicon
+      <link rel="icon" href="favicon.ico" type="image/vnd.microsoft.icon" />-->
+      <!-- TODO:css 
+      <link rel="stylesheet" href="vuetify/vuetify.min.css">
+      <link rel="stylesheet" href="mdi/font/css/materialdesignicons.min.css">-->
+      <link rel="stylesheet" href="{% static 'css/common/common.css' %}">
+      <link rel="stylesheet" href="static/css/{{pageId}}.css">
+      </head>
+    <body>
+
+      <div id="app">
+        <div v-cloak>
+        {% block main_containts %}
+        {% endblock %}
+
+      </div>
+    </div>
+    <!-- TODO:vue 
+    <script src="vue/vue.global.js"></script>
+    <script src="vuetify/vuetify.min.js"></script>-->
+
+    <!--js-->
+    <script src="{% static 'js/common/common.js' %}"></script>
+    <script src="static/js/{{pageId}}.js"></script>
+
+  </body>
+</html>
