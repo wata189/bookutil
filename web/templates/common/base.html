@@ -13,20 +13,24 @@
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css">
       <link rel="stylesheet" href="{% static 'css/common/common.css' %}">
       <link rel="stylesheet" href="static/css/{{pageId}}.css">
+      <!-- vue -->
+      <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vuetify@3.2.1/dist/vuetify.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/http-vue-loader@1.4.2/src/httpVueLoader.min.js"></script>
+
       </head>
     <body>
 
       <div id="app">
-        <div v-cloak>
-        {% block main_containts %}
-        {% endblock %}
+        <v-app v-cloak>
+          <c-header></c-header>
+          {% block main_containts %}
+          {% endblock %}
 
-      </div>
+          [[helloworld]]
+          
+        </v-app>
     </div>
-    <!-- vue -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.2.1/dist/vuetify.min.js"></script>
-
     <!--js-->
     <script src="{% static 'js/common/common.js' %}"></script>
     <script src="static/js/{{pageId}}.js"></script>
