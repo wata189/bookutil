@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import THeader from '@/components/views/v-header.vue';
+import CHeader from '@/components/c-header.vue';
 
 const pageName:string = 'Bookutil'; //TODO:ページ名をページごとに取得
 // TODO: メニューは権限に応じて取得
@@ -20,10 +20,10 @@ const menus = [
   <q-layout>
     <q-page-container>
       <q-page>
-        <t-header
+        <c-header
           :page-name="pageName"
           :menus="menus"
-        ></t-header>
+        ></c-header>
         <RouterView :menus="menus" />
       </q-page>
     </q-page-container>

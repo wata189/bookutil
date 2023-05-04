@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { computed, ref } from 'vue';
   import { Dark } from 'quasar';
-import PRoundBtn from '@/components/parts/p-round-btn.vue';
+import CRoundBtn from '@/components/c-round-btn.vue';
 
   interface Menu {
     name: string,
@@ -44,29 +44,29 @@ import PRoundBtn from '@/components/parts/p-round-btn.vue';
 </script>
 
 <template>
-  <q-toolbar>
+  <q-toolbar class="glossy">
     <!--TODO:アイコンを設定してトップ画面に遷移できるようにする-->
     <q-toolbar-title>
         {{ props.pageName }}
     </q-toolbar-title>
 
     <!-- TODO: ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
-    <p-round-btn
+    <c-round-btn
       v-for="menu in menus"
       :title="menu.name"
       :icon="menu.icon"
       :to="menu.to"
     />
     <q-separator vertical inset />
-    <p-round-btn
+    <c-round-btn
       :title="themeChangeTitle"
       :icon="themeChangeIcon"
       @click="changeTheme"
-    ></p-round-btn>
-    <p-round-btn
+    ></c-round-btn>
+    <c-round-btn
       title="ユーザー情報"
       icon="mdi-account"
-    ></p-round-btn>
+    ></c-round-btn>
   </q-toolbar>
 </template>
 
