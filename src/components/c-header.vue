@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { computed, ref } from 'vue';
   import { Dark } from 'quasar';
-import CRoundBtn from '@/components/c-round-btn.vue';
+  import { useRouter } from "vue-router";
+  import CRoundBtn from '@/components/c-round-btn.vue';
 
   interface Menu {
     name: string,
@@ -41,13 +42,18 @@ import CRoundBtn from '@/components/c-round-btn.vue';
     isDarkMode.value = true;
   }
   setDarkMode(isDarkMode.value);
+
+  const router = useRouter();
+  const transite = (to:string) => {
+    router.push(to);
+  };
 </script>
 
 <template>
-  <q-toolbar class="glossy">
+  <q-toolbar>
     <!--TODO:アイコンを設定してトップ画面に遷移できるようにする-->
-    <q-toolbar-title>
-        {{ props.pageName }}
+    <q-toolbar-title class="toolbar-title">
+        <div @click="transite('/')">{{ props.pageName }}</div>
     </q-toolbar-title>
 
     <!-- TODO: ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
@@ -71,4 +77,7 @@ import CRoundBtn from '@/components/c-round-btn.vue';
 </template>
 
 <style scoped>
+.toolbar-title{
+  cursor: pointer;
+}
 </style>

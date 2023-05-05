@@ -25,6 +25,7 @@ onMounted(async () => {
           :page-name="pageName"
           :menus="menus"
         ></c-header>
+        <q-separator></q-separator>
         <RouterView :menus="menus" />
       </q-page>
     </q-page-container>
