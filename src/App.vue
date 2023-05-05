@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import CHeader from '@/components/c-header.vue';
 
-const pageName:string = 'Bookutil'; //TODO:ページ名をページごとに取得
+import { onMounted } from '@vue/runtime-core';
+import { ref } from '@vue/reactivity';
+import axiosUtil from '@/modules/axiosUtil';
+
+const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
 // TODO: メニューは権限に応じて取得
-const menus = [
-  {name: "読みたいリスト", to:"/toread",       icon:"mdi-format-list-bulleted-type",
-    description: "読みたい本をリスト化します。"
-  },
-  {name: "図書館リスト",   to:"/libraries",    icon:"mdi-bank-outline",
-    description: "利用する図書館の一覧を表示します。"
-  },
-  {name: "短編小説検索",   to:"/shortstories", icon:"mdi-book-open-variant",
-    description: "短編集が収録している短編小説を検索します。"
-  },
-];
+const menus = ref([]);
+
+onMounted(async () => {
+  const response = await axiosUtil.get("/menus/fetch");
+  if(response){
+    menus.value = response.data.menus
+  }
+})
 </script>
 
 <template>
@@ -31,6 +32,7 @@ const menus = [
 </template>
 
 <style>
+/* TODO:styleは共通style作る */
 body {
   font-family: "BIZ UDPGothic";
 }
