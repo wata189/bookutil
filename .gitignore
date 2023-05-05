@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Distribution / packaging
+lambda/.Python
+lambda/env/
+lambda/build/
+lambda/develop-eggs/
+lambda/dist/
+lambda/downloads/
+lambda/eggs/
+lambda/.eggs/
+lambda/lib/
+lambda/lib64/
+lambda/parts/
+lambda/sdist/
+lambda/var/
+lambda/*.egg-info/
+lambda/.installed.cfg
+lambda/*.egg
+lambda/__pycache__
+lambda/modules/__pycache__
+
+# Serverless directories
+lambda/*.serverless

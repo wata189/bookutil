@@ -1,0 +1,17 @@
+service: lambda
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+
+functions:
+  fetch_menus:
+    handler: handler.handler_fetch_menus
+    events:
+      - http:
+          path: "/menus/fetch"
+          method: "get"
+        
+plugins:
+  - serverless-offline
