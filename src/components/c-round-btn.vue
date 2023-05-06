@@ -18,5 +18,7 @@ const emits = defineEmits(["click"]);
     :icon="props.icon"
     :to="props.to"
     @click="emits('click')"
-  />
+  >
+    <slot></slot>
+  </q-btn>
 </template>

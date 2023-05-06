@@ -4,17 +4,42 @@ import CHeader from '@/components/c-header.vue';
 import { onMounted } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
 import axiosUtil from '@/modules/axiosUtil';
+import authUtil from '@/modules/authUtil';
 
 const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
 // TODO: メニューは権限に応じて取得
 const menus = ref([]);
 
+const user = ref({email:""});
+
 onMounted(async () => {
-  const response = await axiosUtil.get("/menus/fetch");
+  // パラメータにcodeがあったらトークンを取得
+  const urlParams = (new URL(window.location.href)).searchParams;
+  const code = urlParams.get('code');
+
+  // トークン取得
+  if(code){
+    localStorage.code = code;
+    const tokens = await authUtil.getToken(code);
+
+    localStorage.accessToken = tokens.accessToken;
+    localStorage.idToken = tokens.idToken;
+  }
+
+  // ユーザー情報取得
+  const accessToken = localStorage.accessToken;
+  if(accessToken){
+    const userInfo = await authUtil.getUserInfo(accessToken);
+    user.value = userInfo;
+  }
+
+  // メニュー情報取得
+  const paramAccessToken = accessToken || '';
+  const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
   if(response){
     menus.value = response.data.menus
   }
-})
+});
 </script>
 
 <template>
@@ -24,9 +49,10 @@ onMounted(async () => {
         <c-header
           :page-name="pageName"
           :menus="menus"
+          :user="user"
         ></c-header>
         <q-separator></q-separator>
-        <RouterView :menus="menus" />
+        <RouterView :menus="menus" :user="user" />
       </q-page>
     </q-page-container>
   </q-layout>

@@ -41,6 +41,7 @@ lambda/.installed.cfg
 lambda/*.egg
 lambda/__pycache__
 lambda/modules/__pycache__
+lambda/.env
 
 # Serverless directories
 lambda/*.serverless

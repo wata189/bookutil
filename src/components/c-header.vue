@@ -2,7 +2,9 @@
   import { computed, ref } from 'vue';
   import { Dark } from 'quasar';
   import { useRouter } from "vue-router";
+  import { onMounted } from '@vue/runtime-core';
   import CRoundBtn from '@/components/c-round-btn.vue';
+  import authUtil from '@/modules/authUtil';
 
   interface Menu {
     name: string,
@@ -10,13 +12,22 @@
     icon: string,
     description: string
   };
+  interface User {
+    email: string
+  }
   interface Props {
     pageName: string,
-    menus: Array<Menu>
+    menus: Array<Menu>,
+    user: User
   };
-
   const props = defineProps<Props>();
 
+  const router = useRouter();
+  // ダークモード情報をlocalstorageから取り出して設定
+  const isDarkMode = ref(false);
+  if(localStorage.isDarkMode === "true"){
+    isDarkMode.value = true;
+  }
 
   const themeChangeTitle = computed(() => {
     const pre = isDarkMode.value ? "ライト" : "ダーク";
@@ -25,6 +36,13 @@
   const themeChangeIcon = computed(() => {
     return isDarkMode.value ? "mdi-weather-night" : "mdi-weather-sunny";
   });
+
+  const transite = (to:string) => {
+    router.push(to);
+  };
+  const changeTheme = () => {
+    setDarkMode(!isDarkMode.value); //ダークモードをトグルして設定
+  };
   const setDarkMode = (isDark: boolean) => {
     isDarkMode.value = isDark;
     Dark.set(isDark);
@@ -32,21 +50,20 @@
     // ダークモードの値をlocalStorageに保存
     localStorage.isDarkMode = isDark;
   };
-  const changeTheme = () => {
-    setDarkMode(!isDarkMode.value); //ダークモードをトグルして設定
+  const login = () => {
+    authUtil.login();
+  };
+  const logout = () => {
+    // アクセストークン初期化
+    localStorage.accessToken = "";
+
+    authUtil.logout();
   };
 
-  // ダークモード情報をlocalstorageから取り出して設定
-  const isDarkMode = ref(false);
-  if(localStorage.isDarkMode === "true"){
-    isDarkMode.value = true;
-  }
-  setDarkMode(isDarkMode.value);
+  onMounted(() => {
+    setDarkMode(isDarkMode.value);
+  });
 
-  const router = useRouter();
-  const transite = (to:string) => {
-    router.push(to);
-  };
 </script>
 
 <template>
@@ -72,7 +89,23 @@
     <c-round-btn
       title="ユーザー情報"
       icon="mdi-account"
-    ></c-round-btn>
+    >
+      <q-menu>
+        <q-list>
+          <template v-if="user.email">
+            <q-item v-close-popup>
+              <q-item-section>{{ user.email }}</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="logout">
+              <q-item-section>ログアウト</q-item-section>
+            </q-item>
+          </template>
+          <q-item v-else clickable v-close-popup @click="login">
+            <q-item-section>ログイン</q-item-section>
+          </q-item>
+        </q-list>
+      </q-menu>
+    </c-round-btn>
   </q-toolbar>
 </template>
 

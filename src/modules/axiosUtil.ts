@@ -9,11 +9,11 @@ const axios = axiosBase.create({
   responseType: 'json'  
 });
 
-const get = async (path:string) => {
+const get = async (path:string, headerParams?:Object) => {
   try{
     console.log(`axios get:${path}`);
 
-    return await axios.get(path)
+    return await axios.get(path, headerParams);
   }catch(error){
     // TODO: エラーハンドリング共通化
     console.log(error);

@@ -1,5 +1,5 @@
 # ユーザーに応じてメニュー情報を返却する処理
-def fetch_menus(user):
+def fetch_menus(isAuth: bool):
     menus = [
         {
             "name": "読みたいリスト", 
@@ -9,7 +9,7 @@ def fetch_menus(user):
         }
     ]
 
-    if user:
+    if isAuth:
         userMenus = [
             {
                 "name": "図書館リスト", 
