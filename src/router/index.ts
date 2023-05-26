@@ -18,6 +18,16 @@ const routes = [
       const top = await import('@/pages/Top.vue');
       return top;
     }
+  },
+
+  {
+    path: '/toread',
+    name: '/toread',
+    props: true,
+    component: async () => {
+      const toread = await import('@/pages/Toread.vue');
+      return toread;
+    }
   }
 ];
 

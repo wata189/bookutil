@@ -1,5 +1,5 @@
 # ユーザーに応じてメニュー情報を返却する処理
-def fetch_menus(isAuth: bool):
+def fetch_menus(is_auth: bool):
     menus = [
         {
             "name": "読みたいリスト", 
@@ -9,8 +9,8 @@ def fetch_menus(isAuth: bool):
         }
     ]
 
-    if isAuth:
-        userMenus = [
+    if is_auth:
+        user_menus = [
             {
                 "name": "図書館リスト", 
                 "to":"/libraries",       
@@ -24,6 +24,27 @@ def fetch_menus(isAuth: bool):
                 "description": "短編集が収録している短編小説を検索します。"
             },
         ]
-        menus += userMenus
+        menus += user_menus
 
     return menus
+
+## toreadの行を取得する処理
+## isAuthがfalseの場合はモック用の本のみ表示する
+def fetch_toread(is_auth: bool):
+
+    # TODO:DBから取得
+    toread_rows = [
+    ]
+
+    return toread_rows
+
+
+def fetch_toread_tags():
+    # TODO:DBから取得
+    toread_tags = [
+        'よみたい',
+        'すごくよみたい',
+        '新刊チェック'
+    ]
+
+    return toread_tags

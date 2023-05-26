@@ -9,7 +9,7 @@ issuer = f'https://cognito-idp.{region}.amazonaws.com/{user_pool_id}'
 jwks_url = f'{issuer}/.well-known/jwks.json'
 
 # トークンが使えるか確認する処理
-def isAuth(token:str):
+def is_auth(token:str):
     try:
         jwks_client = jwt.PyJWKClient(jwks_url)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
