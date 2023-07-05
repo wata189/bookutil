@@ -44,14 +44,11 @@ onMounted(async () => {
 
 <template>
   <q-layout>
-    <q-header reveal elevated>
-      <c-header
-        :page-name="pageName"
-        :menus="menus"
-        :user="user"
-      ></c-header>
-      <q-separator></q-separator>
-    </q-header>
+    <c-header
+      :page-name="pageName"
+      :menus="menus"
+      :user="user"
+    ></c-header>
     <q-page-container>
       <q-page>
         <RouterView :menus="menus" />

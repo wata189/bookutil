@@ -40,10 +40,10 @@
   const transite = (to:string) => {
     router.push(to);
   };
-  const changeTheme = () => {
-    setDarkMode(!isDarkMode.value); //ダークモードをトグルして設定
+  const toggleMode = () => {
+    setMode(!isDarkMode.value); //ダークモードをトグルして設定
   };
-  const setDarkMode = (isDark: boolean) => {
+  const setMode = (isDark: boolean) => {
     isDarkMode.value = isDark;
     Dark.set(isDark);
 
@@ -61,52 +61,54 @@
   };
 
   onMounted(() => {
-    setDarkMode(isDarkMode.value);
+    setMode(isDarkMode.value);
   });
 
 </script>
 
 <template>
-  <q-toolbar>
-    <!--TODO:アイコンを設定してトップ画面に遷移できるようにする-->
-    <q-toolbar-title class="toolbar-title">
+  <q-header reveal elevated :class="isDarkMode ? 'bg-dark' : 'bg-white text-black'">
+    <q-toolbar>
+      <q-toolbar-title class="toolbar-title">
+        <!--TODO:アイコンを設定-->
         <div @click="transite('/')">{{ props.pageName }}</div>
-    </q-toolbar-title>
+      </q-toolbar-title>
 
-    <!-- TODO: ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
-    <c-round-btn
-      v-for="menu in menus"
-      :title="menu.name"
-      :icon="menu.icon"
-      :to="menu.to"
-    />
-    <q-separator vertical inset />
-    <c-round-btn
-      :title="themeChangeTitle"
-      :icon="themeChangeIcon"
-      @click="changeTheme"
-    ></c-round-btn>
-    <c-round-btn
-      title="ユーザー情報"
-      icon="person"
-    >
-      <q-menu>
-        <q-list>
-          <template v-if="user.email">
-            <q-item v-close-popup>
-              <q-item-section>{{ user.email }}</q-item-section>
+      <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
+      <c-round-btn
+        v-for="menu in menus"
+        :title="menu.name"
+        :icon="menu.icon"
+        :to="menu.to"
+      />
+      <q-separator vertical inset />
+      <c-round-btn
+        :title="themeChangeTitle"
+        :icon="themeChangeIcon"
+        @click="toggleMode"
+      ></c-round-btn>
+      <c-round-btn
+        title="ユーザー情報"
+        icon="person"
+      >
+        <q-menu>
+          <q-list>
+            <template v-if="user.email">
+              <q-item v-close-popup>
+                <q-item-section>{{ user.email }}</q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="logout">
+                <q-item-section>ログアウト</q-item-section>
+              </q-item>
+            </template>
+            <q-item v-else clickable v-close-popup @click="login">
+              <q-item-section>ログイン</q-item-section>
             </q-item>
-            <q-item clickable v-close-popup @click="logout">
-              <q-item-section>ログアウト</q-item-section>
-            </q-item>
-          </template>
-          <q-item v-else clickable v-close-popup @click="login">
-            <q-item-section>ログイン</q-item-section>
-          </q-item>
-        </q-list>
-      </q-menu>
-    </c-round-btn>
-  </q-toolbar>
+          </q-list>
+        </q-menu>
+      </c-round-btn>
+    </q-toolbar>
+  </q-header>
 </template>
 
 <style scoped>
