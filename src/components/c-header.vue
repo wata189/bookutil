@@ -34,7 +34,7 @@
     return pre + "モードに切り替え";
   });
   const themeChangeIcon = computed(() => {
-    return isDarkMode.value ? "mdi-weather-night" : "mdi-weather-sunny";
+    return isDarkMode.value ? "dark_mode" : "light_mode";
   });
 
   const transite = (to:string) => {
@@ -88,7 +88,7 @@
     ></c-round-btn>
     <c-round-btn
       title="ユーザー情報"
-      icon="mdi-account"
+      icon="person"
     >
       <q-menu>
         <q-list>

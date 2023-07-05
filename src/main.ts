@@ -4,7 +4,10 @@ import quasarLang from 'quasar/lang/ja';
 import router from '@/router';
 
 // Import icon libraries
-import '@quasar/extras/mdi-v7/mdi-v7.css';
+import "@quasar/extras/material-icons/material-icons.css";
+import '@quasar/extras/material-icons-outlined/material-icons-outlined.css';
+import '@quasar/extras/material-icons-round/material-icons-round.css';
+import '@quasar/extras/material-icons-sharp/material-icons-sharp.css';
 
 // Import Quasar css
 import 'quasar/src/css/index.sass';

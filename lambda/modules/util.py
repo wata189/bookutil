@@ -4,7 +4,7 @@ def fetch_menus(is_auth: bool):
         {
             "name": "読みたいリスト", 
             "to":"/toread",       
-            "icon":"mdi-format-list-bulleted-type",
+            "icon":"format_list_bulleted",
             "description": "読みたい本をリスト化します。"
         }
     ]
@@ -14,13 +14,13 @@ def fetch_menus(is_auth: bool):
             {
                 "name": "図書館リスト", 
                 "to":"/libraries",       
-                "icon":"mdi-bank-outline",
+                "icon":"account_balance",
                 "description": "利用する図書館の一覧を表示します。"
             },
             {
                 "name": "短編小説検索", 
                 "to":"/shortstories",       
-                "icon":"mdi-book-open-variant",
+                "icon":"menu_book",
                 "description": "短編集が収録している短編小説を検索します。"
             },
         ]
