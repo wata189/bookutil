@@ -12,10 +12,15 @@ const menus = ref([]);
 
 const user = ref({email:""});
 
+const isBookutilUrl = (url:string) => {
+  return /^http/.test(url)
+};
+
 onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get('code');
+
 
   // トークン取得
   if(code){
@@ -52,6 +57,13 @@ onMounted(async () => {
     <q-page-container>
       <q-page>
         <RouterView :menus="menus" />
+        <q-ajax-bar
+          :hijak-filter="isBookutilUrl"
+          position="bottom"
+          size="5px"
+        >
+
+        </q-ajax-bar>
       </q-page>
     </q-page-container>
   </q-layout>
