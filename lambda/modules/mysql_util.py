@@ -8,7 +8,7 @@ DATABASE    = os.environ['MYSQL_DATABASE']
 CURSORCLASS = pymysql.cursors.DictCursor
 
 
-class My_Sql:
+class Mysql:
     def __init__(self, cursor) -> None:
         self.cursor = cursor
 
@@ -54,7 +54,7 @@ def tran(func):
     with connection:
         with connection.cursor() as cursor:
             # 引数で渡された処理を実際に行う
-            ret = func(My_Sql(cursor))
+            ret = func(Mysql(cursor))
         # コミット
         connection.commit()
     return ret

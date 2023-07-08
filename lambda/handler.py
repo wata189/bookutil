@@ -24,9 +24,9 @@ def handler_init_toread(event, context):
     token = event.get('queryStringParameters').get('access_token')
     is_auth = auth_util.is_auth(token)
 
-    def init_toread(my_sql):
-        toread_rows = util.fetch_toread(is_auth, my_sql)
-        toread_tags = util.fetch_toread_tags(my_sql)
+    def init_toread(mysql):
+        toread_rows = util.fetch_toread(is_auth, mysql)
+        toread_tags = util.fetch_toread_tags(mysql)
         return {
             'toreadRows': toread_rows,
             'toreadTags': toread_tags
