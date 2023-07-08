@@ -67,3 +67,30 @@ CREATE TABLE `t_toread_tag` (
   PRIMARY KEY (`book_id`,`tag`),
   CONSTRAINT `t_toread_tag_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `t_toread_book` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE VIEW `v_toread_tag` AS 
+SELECT `tag`
+FROM (
+    SELECT 
+      `m_toread_tag`.`tag` AS `tag`,
+      `m_toread_tag`.`order_num` AS `order_num` 
+    FROM `m_toread_tag`
+    WHERE (`m_toread_tag`.`delete_flg` = 0)
+    
+    UNION
+    
+    SELECT
+      concat(`m_library`.`city`,'図書館') AS `tag`,
+      (`m_library`.`order_num` + 400) AS `order_num` 
+    FROM `m_library` 
+    WHERE (`m_library`.`delete_flg` = 0)
+    
+    UNION
+    
+    SELECT 
+      `t_toread_tag`.`tag` AS `tag`,
+      1000 AS `order_num`
+    FROM `t_toread_tag` 
+    WHERE (`t_toread_tag`.`delete_flg` = 0)
+  ) `tag`
+ORDER BY `tag`.`order_num`
