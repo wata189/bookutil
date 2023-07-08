@@ -69,13 +69,5 @@ onMounted(async () => {
   </q-layout>
 </template>
 
-<style>
-/* TODO:styleは共通style作る */
-body {
-  font-family: "BIZ UDPGothic";
-}
-
-[v-cloak] {
-  display: none;
-}
+<style scoped>
 </style>
