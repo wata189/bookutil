@@ -6,10 +6,8 @@ import axiosUtil from '@/modules/axiosUtil';
   const searchWord = ref('');
   const tags = ref('');
 
-  const toreadTable = {
+  const toreadList = {
     rows: ref([]),
-    columns: [],
-    loading: ref(true)
   };
 
   const toreadTagOptions = ref([]);
@@ -19,10 +17,9 @@ import axiosUtil from '@/modules/axiosUtil';
     const accessToken = localStorage.accessToken;
     const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
     if(response){
-      toreadTable.rows.value = response.data.toreadRows;
+      toreadList.rows.value = response.data.toreadRows;
       toreadTagOptions.value = response.data.toreadTags;
     }
-    toreadTable.loading.value = false;
   };
 
   onMounted(async () => {
@@ -34,13 +31,11 @@ import axiosUtil from '@/modules/axiosUtil';
   <q-layout view="hHh lpr fFf">
     <q-page-container>
       <q-page>
-        <q-table
-          :rows="toreadTable.rows.value"
-          :loading="toreadTable.loading.value"
-        >
+        <!-- TODO: カードで表示-->
+        <div v-for="row in toreadList.rows.value">
+          {{ row }}
 
-        </q-table>
-
+        </div>
       </q-page>
     </q-page-container>
     <q-footer class="bg-grey">
