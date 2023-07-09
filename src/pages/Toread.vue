@@ -1,40 +1,192 @@
 <script setup lang="ts">
-  import { onMounted } from '@vue/runtime-core';
-  import { ref } from '@vue/reactivity';
+import { onMounted, Ref } from '@vue/runtime-core';
+import { ref } from '@vue/reactivity';
 import axiosUtil from '@/modules/axiosUtil';
+import CRoundBtn from '@/components/c-round-btn.vue';
 
-  const searchWord = ref('');
-  const tags = ref('');
+const searchWord = ref('');
+const tags = ref('');
 
-  const toreadList = {
-    rows: ref([]),
-  };
+type Book = {
+  id: string,
+  bookName: string,
+  isbn: string | null,
+  coverUrl: string,
+  authorName: string | null,
+  publisherName: string | null,
+  page: number | null,
+  otherUrl: string | null,
+  newBookCheckFlg: Ref<number>,
+  updateAt: number,
+  tags: string[],
+  isChecked: Ref<boolean>
+};
 
-  const toreadTagOptions = ref([]);
 
-  // toread画面初期化処理
-  const initToread = async () => {
-    const accessToken = localStorage.accessToken;
-    const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
-    if(response){
-      toreadList.rows.value = response.data.toreadRows;
-      toreadTagOptions.value = response.data.toreadTags;
+
+
+const toreadBooks: Ref<Book[]> = ref([]);
+
+const toreadTagOptions = ref([]);
+
+// toread画面初期化処理
+const initToread = async () => {
+  const accessToken = localStorage.accessToken;
+  const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
+  if(response){
+    toreadBooks.value = response.data.toreadRows.map((book:Book):Book => {
+      const retBook = {
+        ...book,
+        isChecked: ref(false)
+      };
+      retBook.newBookCheckFlg = ref(book.newBookCheckFlg);
+      return retBook;
+    });
+    toreadTagOptions.value = response.data.toreadTags;
+  }
+};
+
+
+const SEARCH_PLACEHOLDER = "@PLACEHOLDER@";
+type Link = {
+  title: string,
+  imgUrl: string,
+  searchUrl: {
+    isbn: string,
+    bookName: string
+  }
+};
+const links:Link[] = [
+  {
+    title: "カーリル",
+    imgUrl: "img/calil.jpg",
+    searchUrl: {
+      isbn: "https://calil.jp/book/" + SEARCH_PLACEHOLDER,
+      bookName: "https://calil.jp/search?q=" + SEARCH_PLACEHOLDER
     }
-  };
+  },
+  {
+    title: "ブクログ",
+    imgUrl: "img/booklog.jpg",
+    searchUrl: {
+      isbn: "https://booklog.jp/item/1/" + SEARCH_PLACEHOLDER,
+      bookName: "https://booklog.jp/search?keyword=" + SEARCH_PLACEHOLDER
+    }
+  },
+  {
+    title: "ブックウォーカー",
+    imgUrl: "img/bookwalker.png",
+    searchUrl: {
+      isbn: "",
+      bookName: "https://bookwalker.jp/search/?qcat=&word=" + SEARCH_PLACEHOLDER
+    }
+  },
+  {
+    title: "honto",
+    imgUrl: "img/honto.jpg",
+    searchUrl: {
+      isbn: "https://honto.jp/netstore/search.html?k=" + SEARCH_PLACEHOLDER,
+      bookName: "https://honto.jp/netstore/search.html?k=" + SEARCH_PLACEHOLDER
+    }
+  },
+  {
+    title: "Amazon",
+    imgUrl: "img/amazon.png",
+    searchUrl: {
+      isbn: "https://www.amazon.co.jp/dp/" + SEARCH_PLACEHOLDER,
+      bookName: "https://www.amazon.co.jp/s?k=" + SEARCH_PLACEHOLDER +"&i=stripbooks"
+    }
+  }
+];
+const showPage = (isbn:string | null, bookName:string, link:Link) => {
+  let searchUrl = "";
+  if(isbn && link.searchUrl.isbn){
+    searchUrl = link.searchUrl.isbn.replace(SEARCH_PLACEHOLDER, isbn);
+  }else{
+    searchUrl = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, bookName);
+  }
 
-  onMounted(async () => {
-    await initToread();
-  });
+  window.open(searchUrl, "_blank")
+};
+
+const showBookDialog = (bookId:string) => {
+  // TODO:編集ダイアログ表示
+  return bookId;
+};
+
+onMounted(async () => {
+  await initToread();
+});
 </script>
 
 <template>
   <q-layout view="hHh lpr fFf">
     <q-page-container>
       <q-page>
-        <!-- TODO: カードで表示-->
-        <div v-for="row in toreadList.rows.value">
-          {{ row }}
+        <div class="row">
+          <div v-for="book in toreadBooks" class="col book-cover-wrapper q-pa-sm">
+            <q-card class="q-pb-sm" :title="book.bookName">
+              <q-checkbox
+                v-model="book.isChecked"
+              >
+              </q-checkbox>
+              <q-img
+                :src="book.coverUrl"
+                class="book-img"
+                fit="contain"
+              ></q-img>
+              <div class="ellipsis q-px-sm">
+                  {{ book.bookName }}
+              </div>
+              <q-menu fit class="q-pa-md book-info">
+                <div>
+                  {{ book.bookName }}
+                </div>
+                <div>
+                  {{ book.authorName }} {{ book.publisherName }}
+                </div>
+                <div>
+                  <q-chip v-for="tag in book.tags" dense color="teal">{{ tag }}</q-chip>
+                </div>
+                <q-btn
+                  v-for="link in links"
+                  size="md"
+                  round
+                  padding="none"
+                  :title="link.title"
+                  class="q-mx-xs"
+                  @click="showPage(book.isbn, book.bookName, link)"
+                >
+                  <q-avatar size="32px">
+                    <q-img :src="link.imgUrl"></q-img>
+                  </q-avatar>
+                </q-btn>
+                <div class="row">
+                  <div class="col-auto">
+                    <q-toggle
+                      v-model="book.newBookCheckFlg"
+                      :true-value="1"
+                      :false-value="0"
+                      color="teal"
+                    >
+                      新刊チェック
+                    </q-toggle>
+                  </div>
+                  <div class="col"></div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      title="編集"
+                      icon="edit"
+                      color="teal"
+                      @click="showBookDialog(book.id)"
+                    >
 
+                    </c-round-btn>
+                  </div>
+                </div>
+              </q-menu>
+            </q-card>
+          </div>
         </div>
       </q-page>
     </q-page-container>
@@ -71,4 +223,16 @@ import axiosUtil from '@/modules/axiosUtil';
 </template>
 
 <style scoped>
+.book-cover-wrapper{
+  max-width: 140px;
+  min-width: 140px;
+}
+
+.book-img{
+  max-height: 150px;
+}
+
+.book-info div{
+  font-family: "BIZ UDPGothic";
+}
 </style>

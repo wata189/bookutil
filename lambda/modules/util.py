@@ -32,7 +32,6 @@ def fetch_menus(is_auth: bool):
 
 ## toreadの行を取得する処理
 ## isAuthがfalseの場合はモック用の本のみ表示する
-
 SQL_FETCH_TOREAD = """
 SELECT 
     id
@@ -78,40 +77,78 @@ JOIN(
 
 ON book.id = tag.book_id
 """
-def fetch_toread(is_auth, my_sql):
+def fetch_toread(is_auth, mysql):
 
     # DBから取得
     result = []
     if is_auth:
-        result = my_sql.select(SQL_FETCH_TOREAD)
+        result = mysql.select(SQL_FETCH_TOREAD)
     else:
         # TODO:isAuthがfalseの場合はモック用の本のみ表示する
-        result = my_sql.select(SQL_FETCH_TOREAD)
+        result = mysql.select(SQL_FETCH_TOREAD)
 
     toread_rows = [
         {
-            "id":                 row["id"],
-            "book_name":          row["book_name"],
-            "isbn":               row["isbn"],
-            "author_name":        row["author_name"],
-            "publisher_name":     row["publisher_name"],
-            "page":               row["page"],
-            "other_url":          row["other_url"],
-            "new_book_check_flg": row["new_book_check_flg"],
-            "update_at":          row["update_at"].timestamp(),
-            "tags":               row["tags"].split(TAG_SEPARATOR)
+            "id":              row["id"],
+            "bookName":        row["book_name"],
+            "isbn":            row["isbn"],
+            "coverUrl":        create_cover_url(row["isbn"]),
+            "authorName":      row["author_name"],
+            "publisherName":   row["publisher_name"],
+            "page":            row["page"],
+            "otherUrl":        row["other_url"],
+            "newBookCheckFlg": row["new_book_check_flg"],
+            "updateAt":        row["update_at"].timestamp(),
+            "tags":            row["tags"].split(TAG_SEPARATOR)
         } for row in result
     ]
 
     return toread_rows
 
+# カバーのURLをISBNから取得
+def create_cover_url(isbn:str):
+    # isbnない場合はプレースホルダー
+    cover_url = "/img/cover_placeholder.jpg"
+    if isbn:
+        cover_url = f"https://cover.openbd.jp/{isbn_10_to_13(isbn)}.jpg"
+    return cover_url        
+
+#isbn10桁→13桁への変換
+def isbn_10_to_13(isbn:str):
+    # nullの場合はnull返却
+    if not isbn: return None
+    # 10桁じゃない場合はそのまま返す
+    if len(isbn) != 10: return isbn
+
+    # プレフィックスつけて末尾1桁を削除して12ケタに
+    isbn_12 = "978" + isbn[:-1]
+
+    #　チェックディジット計算
+    sum = 0
+    for i, chr in enumerate(isbn_12):
+        # ウェイトは1→3→1→3の順
+        coefficient = 1 if i % 2 == 0 else 3
+        sum += int(chr) * coefficient
+    
+    #10で割ったあまり出す
+    remainder = sum % 10
+    
+    #あまりが0の場合は0、それ以外は10-あまり
+    check_digit = 0 if remainder == 0 else 10 - remainder
+
+    return isbn_12 + str(check_digit)
+
+
+
+
 
 SQL_FETCH_TOREAD_TAGS = """
 SELECT tag FROM v_toread_tag
 """
-def fetch_toread_tags(my_sql):
+def fetch_toread_tags(mysql):
     # DBから取得
-    result = my_sql.select(SQL_FETCH_TOREAD_TAGS)
+    result = mysql.select(SQL_FETCH_TOREAD_TAGS)
     toread_tags = [row["tag"] for row in result]
 
+    # 
     return list(dict.fromkeys(toread_tags))
