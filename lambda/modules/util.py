@@ -1,5 +1,3 @@
-TAG_SEPARATOR = ","
-
 # ユーザーに応じてメニュー情報を返却する処理
 def fetch_menus(is_auth: bool):
     menus = [
@@ -69,7 +67,7 @@ FROM(
 ) book
 
 JOIN(
-    SELECT book_id, GROUP_CONCAT(tag SEPARATOR ",") as tags
+    SELECT book_id, GROUP_CONCAT(tag SEPARATOR "/") as tags
     FROM t_toread_tag
     WHERE delete_flg = 0
     GROUP BY book_id
@@ -99,7 +97,7 @@ def fetch_toread(is_auth, mysql):
             "otherUrl":        row["other_url"],
             "newBookCheckFlg": row["new_book_check_flg"],
             "updateAt":        row["update_at"].timestamp(),
-            "tags":            row["tags"].split(TAG_SEPARATOR)
+            "tags":            row["tags"]
         } for row in result
     ]
 

@@ -4,9 +4,11 @@ import { ref } from '@vue/reactivity';
 import axiosUtil from '@/modules/axiosUtil';
 import util from "@/modules/util";
 import CRoundBtn from '@/components/c-round-btn.vue';
+import CDialog from "@/components/c-dialog.vue";
+import CInputTag from "@/components/c-input-tag.vue";
 
 const searchWord = ref('');
-const tags = ref('');
+const tags = ref("");
 
 type Book = {
   id: string,
@@ -19,7 +21,7 @@ type Book = {
   otherUrl: string | null,
   newBookCheckFlg: Ref<number>,
   updateAt: number,
-  tags: string[],
+  tags: string,
   isChecked: Ref<boolean>
 };
 
@@ -113,8 +115,41 @@ const openPageAsNewTab = (url: string) => {
   util.openPageAsNewTab(url);
 };
 
+const bookDialog = ref({
+  isShow: false,
+  bookId: "",
+  headerText: "",
+  okLabel: "",
+  form: {
+    bookName: "",
+    isbn: "",
+    authorName: "",
+    publisherName: "",
+    page: null,
+    otherUrl: "",
+    newBookCheckFlg: 0,
+    tags: ""
+  }
+});
+const showNewBookDialog = () => {
+  bookDialog.value.bookId = "";
+  bookDialog.value.headerText = "新規作成";
+  bookDialog.value.okLabel = "新規作成";
+  bookDialog.value.form = {
+    bookName: "",
+    isbn: "",
+    authorName: "",
+    publisherName: "",
+    page: null,
+    otherUrl: "",
+    newBookCheckFlg: 0,
+    tags: ""
+  };
+  bookDialog.value.isShow = true;
+};
 const showBookDialog = (bookId:string) => {
   // TODO:編集ダイアログ表示
+
   return bookId;
 };
 
@@ -150,7 +185,7 @@ onMounted(async () => {
                   {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
                 </div>
                 <div>
-                  <q-chip v-for="tag in book.tags" dense color="teal">{{ tag }}</q-chip>
+                  <q-chip v-for="tag in book.tags.split('/')" dense color="teal">{{ tag }}</q-chip>
                 </div>
                 <q-btn
                   v-for="link in links"
@@ -193,7 +228,7 @@ onMounted(async () => {
                     <c-round-btn
                       title="編集"
                       icon="edit"
-                      color="teal"
+                      color="primary"
                       @click="showBookDialog(book.id)"
                     >
 
@@ -212,13 +247,13 @@ onMounted(async () => {
           <q-input dense v-model="searchWord" label="検索"></q-input>
         </div>
         <div class="col-12 col-sm-8 q-pa-sm">
-          <q-select
-            use-input
-            v-model="tags" 
-            :options="toreadTagOptions"
-            dense 
+          <c-input-tag
+            v-model="tags"
             label="タグ"
-          ></q-select>
+            dense
+            hint=",/スペースで区切られます"
+            :options="toreadTagOptions"
+          ></c-input-tag>
         </div>
       </div>
       <div class="row">
@@ -230,8 +265,76 @@ onMounted(async () => {
         </div>
         <div class="col-0  col-sm-3 col-md-6"></div>
         <div class="col-12 col-sm-3 col-md-2 q-pa-sm">
-          <q-btn color="primary" class="full-width">新規作成</q-btn>
+          <q-btn color="primary" class="full-width" @click="showNewBookDialog">新規作成</q-btn>
         </div>
+        <c-dialog
+          v-model="bookDialog.isShow"
+          :headerText="bookDialog.headerText"
+          :okLabel = "bookDialog.okLabel"
+          @ok=""
+        >
+          <div class="row">
+            <div class="col-12 q-pa-xs">
+              <q-input
+                v-model="bookDialog.form.bookName"
+                label="書籍名"
+              ></q-input>
+            </div>
+            <div class="col-8 col-md-2 q-pa-xs">
+              <q-input
+                v-model="bookDialog.form.isbn"
+                label="ISBN"
+                mask="#########X###"
+              ></q-input>
+            </div>
+            <div class="col-4 col-md-2 q-pa-xs">
+              <q-input
+                v-model.number="bookDialog.form.page"
+                type="number"
+                min="1"
+                label="ページ数"
+              ></q-input>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+              <q-input
+                v-model="bookDialog.form.authorName"
+                label="著者名"
+              ></q-input>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+              <q-input
+                v-model="bookDialog.form.publisherName"
+                label="出版社名"
+              ></q-input>
+            </div>
+            <div class="col-12 q-pa-xs">
+              <q-input
+                v-model="bookDialog.form.otherUrl"
+                label="その他URL"
+              ></q-input>
+            </div>
+            <div class="col-12 q-pa-xs">
+              <c-input-tag
+                v-model="tags"
+                label="タグ"
+                hint=",/スペースで区切られます"
+                :options="toreadTagOptions"
+              ></c-input-tag>
+            </div>
+            <div class="col-12 q-pa-xs">
+              <q-toggle
+                v-model="bookDialog.form.newBookCheckFlg"
+                :true-value="1"
+                :false-value="0"
+                color="teal"
+              >
+                新刊チェック
+              </q-toggle>
+            </div>
+          </div>
+
+
+        </c-dialog>
       </div>
     </q-footer>
 

@@ -1,68 +1,68 @@
 <script setup lang="ts">
-  import { computed, ref } from 'vue';
-  import { Dark } from 'quasar';
-  import { useRouter } from "vue-router";
-  import { onMounted } from '@vue/runtime-core';
-  import CRoundBtn from '@/components/c-round-btn.vue';
-  import authUtil from '@/modules/authUtil';
+import { computed, ref } from 'vue';
+import { Dark } from 'quasar';
+import { useRouter } from "vue-router";
+import { onMounted } from '@vue/runtime-core';
+import CRoundBtn from '@/components/c-round-btn.vue';
+import authUtil from '@/modules/authUtil';
 
-  interface Menu {
-    name: string,
-    to: string,
-    icon: string,
-    description: string
-  };
-  interface User {
-    email: string
-  }
-  interface Props {
-    pageName: string,
-    menus: Array<Menu>,
-    user: User
-  };
-  const props = defineProps<Props>();
+interface Menu {
+  name: string,
+  to: string,
+  icon: string,
+  description: string
+};
+interface User {
+  email: string
+}
+interface Props {
+  pageName: string,
+  menus: Array<Menu>,
+  user: User
+};
+const props = defineProps<Props>();
 
-  const router = useRouter();
-  // ダークモード情報をlocalstorageから取り出して設定
-  const isDarkMode = ref(false);
-  if(localStorage.isDarkMode === "true"){
-    isDarkMode.value = true;
-  }
+const router = useRouter();
+// ダークモード情報をlocalstorageから取り出して設定
+const isDarkMode = ref(false);
+if(localStorage.isDarkMode === "true"){
+  isDarkMode.value = true;
+}
 
-  const themeChangeTitle = computed(() => {
-    const pre = isDarkMode.value ? "ライト" : "ダーク";
-    return pre + "モードに切り替え";
-  });
-  const themeChangeIcon = computed(() => {
-    return isDarkMode.value ? "dark_mode" : "light_mode";
-  });
+const themeChangeTitle = computed(() => {
+  const pre = isDarkMode.value ? "ライト" : "ダーク";
+  return pre + "モードに切り替え";
+});
+const themeChangeIcon = computed(() => {
+  return isDarkMode.value ? "dark_mode" : "light_mode";
+});
 
-  const transite = (to:string) => {
-    router.push(to);
-  };
-  const toggleMode = () => {
-    setMode(!isDarkMode.value); //ダークモードをトグルして設定
-  };
-  const setMode = (isDark: boolean) => {
-    isDarkMode.value = isDark;
-    Dark.set(isDark);
+const transite = (to:string) => {
+  router.push(to);
+};
+const toggleMode = () => {
+  setMode(!isDarkMode.value); //ダークモードをトグルして設定
+};
+const setMode = (isDark: boolean) => {
+  isDarkMode.value = isDark;
+  Dark.set(isDark);
 
-    // ダークモードの値をlocalStorageに保存
-    localStorage.isDarkMode = isDark;
-  };
-  const login = () => {
-    authUtil.login();
-  };
-  const logout = () => {
-    // アクセストークン初期化
-    localStorage.accessToken = "";
+  // ダークモードの値をlocalStorageに保存
+  localStorage.isDarkMode = isDark;
+};
+const login = () => {
+  authUtil.login();
+};
+const logout = () => {
+  // アクセストークン初期化
+  localStorage.accessToken = "";
 
-    authUtil.logout();
-  };
+  authUtil.logout();
+};
 
-  onMounted(() => {
-    setMode(isDarkMode.value);
-  });
+onMounted(() => {
+  setMode(isDarkMode.value);
+});
 
 </script>
 
