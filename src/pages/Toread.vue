@@ -2,6 +2,7 @@
 import { onMounted, Ref } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
 import axiosUtil from '@/modules/axiosUtil';
+import util from "@/modules/util";
 import CRoundBtn from '@/components/c-round-btn.vue';
 
 const searchWord = ref('');
@@ -98,7 +99,7 @@ const links:Link[] = [
     }
   }
 ];
-const showPage = (isbn:string | null, bookName:string, link:Link) => {
+const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
   let searchUrl = "";
   if(isbn && link.searchUrl.isbn){
     searchUrl = link.searchUrl.isbn.replace(SEARCH_PLACEHOLDER, isbn);
@@ -106,7 +107,10 @@ const showPage = (isbn:string | null, bookName:string, link:Link) => {
     searchUrl = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, bookName);
   }
 
-  window.open(searchUrl, "_blank")
+  openPageAsNewTab(searchUrl);
+};
+const openPageAsNewTab = (url: string) => {
+  util.openPageAsNewTab(url);
 };
 
 const showBookDialog = (bookId:string) => {
@@ -139,27 +143,39 @@ onMounted(async () => {
                   {{ book.bookName }}
               </div>
               <q-menu fit class="q-pa-md book-info">
-                <div>
+                <div class="text-bold">
                   {{ book.bookName }}
                 </div>
                 <div>
-                  {{ book.authorName }} {{ book.publisherName }}
+                  {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
                 </div>
                 <div>
                   <q-chip v-for="tag in book.tags" dense color="teal">{{ tag }}</q-chip>
                 </div>
                 <q-btn
                   v-for="link in links"
-                  size="md"
                   round
                   padding="none"
                   :title="link.title"
                   class="q-mx-xs"
-                  @click="showPage(book.isbn, book.bookName, link)"
+                  @click="openExternalPage(book.isbn, book.bookName, link)"
                 >
-                  <q-avatar size="32px">
+                  <q-avatar size="32.58px">
                     <q-img :src="link.imgUrl"></q-img>
                   </q-avatar>
+                </q-btn>
+                <q-btn
+                  v-if="book.otherUrl"
+                  size="19px"
+                  round
+                  padding="none"
+                  class="q-mx-xs"
+                  icon="link"
+                  color="white"
+                  text-color="black"
+                  title="外部リンク"
+                  @click="openPageAsNewTab(book.otherUrl)"
+                >
                 </q-btn>
                 <div class="row">
                   <div class="col-auto">
