@@ -1,3 +1,6 @@
+import util
+import re
+
 # ユーザーに応じてメニュー情報を返却する処理
 def fetch_menus(is_auth: bool):
     menus = [
@@ -28,7 +31,8 @@ def fetch_menus(is_auth: bool):
 
     return menus
 
-## toreadの行を取得する処理
+
+## toreadの本を取得する処理
 ## isAuthがfalseの場合はモック用の本のみ表示する
 SQL_FETCH_TOREAD = """
 SELECT 
@@ -105,40 +109,12 @@ def fetch_toread(is_auth, mysql):
 
 # カバーのURLをISBNから取得
 def create_cover_url(isbn:str):
+    # TODO: ISBNをチェック
     # isbnない場合はプレースホルダー
     cover_url = "/img/cover_placeholder.jpg"
     if isbn:
-        cover_url = f"https://cover.openbd.jp/{isbn_10_to_13(isbn)}.jpg"
-    return cover_url        
-
-#isbn10桁→13桁への変換
-def isbn_10_to_13(isbn:str):
-    # nullの場合はnull返却
-    if not isbn: return None
-    # 10桁じゃない場合はそのまま返す
-    if len(isbn) != 10: return isbn
-
-    # プレフィックスつけて末尾1桁を削除して12ケタに
-    isbn_12 = "978" + isbn[:-1]
-
-    #　チェックディジット計算
-    sum = 0
-    for i, chr in enumerate(isbn_12):
-        # ウェイトは1→3→1→3の順
-        coefficient = 1 if i % 2 == 0 else 3
-        sum += int(chr) * coefficient
-    
-    #10で割ったあまり出す
-    remainder = sum % 10
-    
-    #あまりが0の場合は0、それ以外は10-あまり
-    check_digit = 0 if remainder == 0 else 10 - remainder
-
-    return isbn_12 + str(check_digit)
-
-
-
-
+        cover_url = f"https://cover.openbd.jp/{util.isbn_10_to_13(isbn)}.jpg"
+    return cover_url
 
 SQL_FETCH_TOREAD_TAGS = """
 SELECT tag FROM v_toread_tag
@@ -148,5 +124,73 @@ def fetch_toread_tags(mysql):
     result = mysql.select(SQL_FETCH_TOREAD_TAGS)
     toread_tags = [row["tag"] for row in result]
 
-    # 
+    # dict→listに変換して重複を削除
+    # setだと並び順が保証されないためdictを使用
     return list(dict.fromkeys(toread_tags))
+
+
+def create_toread(form, mysql):
+    #bookテーブルにINSERT
+    new_id = create_toread_book(form, mysql)
+    #tagテーブルにINSERT
+    create_toread_tag(new_id, form, mysql)
+    return
+
+def update_toread(form, mysql):
+    #TODO:bookテーブルUPDATE
+    #TODO:tagテーブルいったんdelete
+    #tagテーブルにINSERT
+    create_toread_tag(form["id"], form, mysql)
+    return
+
+SQL_CREATE_TOREAD_BOOK = """
+INSERT INTO t_toread_book( 
+      book_name
+    , isbn
+    , author_name
+    , publisher_name
+    , page
+    , other_url
+    , new_book_check_flg
+    , create_user
+    , update_user
+) 
+VALUES ( 
+      %s
+    , %s
+    , %s
+    , %s
+    , %s
+    , %s
+    , %s
+    , %s
+    , %s
+)
+"""
+def create_toread_book(form, mysql):
+    params = [
+        form["book_name"],
+        form["isbn"],
+        form["author_name"],
+        form["publisher_name"],
+        form["page"],
+        form["other_url"],
+        form["new_book_check_flg"],
+        form["user"],
+        form["user"]
+    ]
+    new_id = mysql.insert(SQL_CREATE_TOREAD_BOOK, params)
+    return new_id
+
+SQL_CREATE_TOREAD_TAG = """
+INSERT INTO t_toread_tag (book_id, tag) VALUES (%s, %s)
+"""
+def create_toread_tag(id, form, mysql):
+    # /,スペースで分割
+    tags = re.split("[ 　/,]", form["tags"])
+
+    if len(tags) > 0:
+        params = [ [id, tag] for tag in tags]
+        mysql.insert_multi(SQL_CREATE_TOREAD_TAG, params)
+
+    return

@@ -1,12 +1,12 @@
 import jwt
 import os
 
-ENV = os.environ['ENV']
-USE_AUTH = True if os.environ['USE_AUTH'] == "True" else False 
-IS_AUTH = True if os.environ['IS_AUTH'] == "True" else False 
-region = os.environ['AUTH_REGION']
-user_pool_id = os.environ['AUTH_USER_POOL_ID']
-client_id = os.environ['AUTH_CRIENT_ID']
+ENV = os.getenv('ENV')
+USE_AUTH = True if os.getenv('USE_AUTH') == "True" else False 
+IS_AUTH = True if os.getenv('IS_AUTH') == "True" else False 
+region = os.getenv('AUTH_REGION')
+user_pool_id = os.getenv('AUTH_USER_POOL_ID')
+client_id = os.getenv('AUTH_CRIENT_ID')
 
 issuer = f'https://cognito-idp.{region}.amazonaws.com/{user_pool_id}'
 jwks_url = f'{issuer}/.well-known/jwks.json'
