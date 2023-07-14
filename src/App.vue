@@ -56,7 +56,7 @@ onMounted(async () => {
     ></c-header>
     <q-page-container>
       <q-page>
-        <RouterView :menus="menus" />
+        <RouterView :menus="menus" :user="user" />
         <q-ajax-bar
           :hijak-filter="isBookutilUrl"
           position="bottom"

@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
+import { QForm} from "quasar";
 import axiosUtil from '@/modules/axiosUtil';
 import util from "@/modules/util";
+import validationUtil from "@/modules/validationUtil";
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
-const searchWord = ref('');
+interface User {
+  email: string
+}
+interface Props {
+  user: User
+};
+const props = defineProps<Props>();
+
+const searchWord = ref("");
 const tags = ref("");
 
 type Book = {
@@ -24,9 +34,6 @@ type Book = {
   tags: string,
   isChecked: Ref<boolean>
 };
-
-
-
 
 const toreadBooks: Ref<Book[]> = ref([]);
 
@@ -115,11 +122,69 @@ const openPageAsNewTab = (url: string) => {
   util.openPageAsNewTab(url);
 };
 
+const bookDialogForm:Ref<QForm | undefined> = ref();
+const createBook = () => {
+  // フォームのバリデーション処理
+  if(!bookDialogForm.value){return;}
+  bookDialogForm.value.validate().then(async (success:boolean) => {
+    if(!success){return;}
+
+    // formを送る
+    const params = createCreateParams(bookDialog.value.form);
+    const response = await axiosUtil.post(`/toread/create`, params);
+    if(response){
+      // 画面情報取得し直し
+      await initToread();
+      // ダイアログ消す
+      bookDialog.value.isShow = false;
+    }
+  });
+};
+
+type BookForm = {
+    bookName: string,
+    isbn: string,
+    authorName: string,
+    publisherName: string,
+    page: number | null
+    otherUrl: string;
+    newBookCheckFlg: number;
+    tags: string;
+}
+const createCreateParams = (form:BookForm) => {
+  const params = createBookParams(form);
+
+  return params;
+};
+const createBookParams = (form:BookForm) => {
+
+  const params = {
+    id: null,
+    create_at: null,
+    user: props.user.email,
+
+    // フォームのパラメータ
+    book_name: form.bookName.trim(),
+    isbn: form.isbn.trim() || null,
+    page: form.page || null,
+    author_name: form.authorName.trim() || null,
+    publisher_name: form.publisherName.trim() || null,
+    other_url: form.otherUrl.trim() || null,
+    new_book_check_flg: form.newBookCheckFlg,
+    tags: form.tags.trim() || "",
+
+    // アクセストークン
+    access_token: localStorage.accessToken || ""
+  };
+  
+  return params;
+};
 const bookDialog = ref({
   isShow: false,
   bookId: "",
   headerText: "",
   okLabel: "",
+  okFunction: () => {},
   form: {
     bookName: "",
     isbn: "",
@@ -135,6 +200,7 @@ const showNewBookDialog = () => {
   bookDialog.value.bookId = "";
   bookDialog.value.headerText = "新規作成";
   bookDialog.value.okLabel = "新規作成";
+  bookDialog.value.okFunction = createBook;
   bookDialog.value.form = {
     bookName: "",
     isbn: "",
@@ -147,6 +213,24 @@ const showNewBookDialog = () => {
   };
   bookDialog.value.isShow = true;
 };
+
+const labels = {
+  bookName: "書籍名",
+  isbn: "ISBN",
+  page: "ページ数",
+  authorName: "著者名",
+  publisherName: "出版社名",
+  otherUrl: "その他URL",
+  tags: "タグ",
+  newBookCheckFlg: "新刊チェック"
+};
+const validationRules = {
+  bookName: [validationUtil.isExist(labels.bookName)],
+  isbn: [validationUtil.isIsbn(labels.isbn)],
+  page: [validationUtil.isNumber(labels.page)],
+  otherUrl: [validationUtil.isUrl(labels.otherUrl)]
+};
+
 const showBookDialog = (bookId:string) => {
   // TODO:編集ダイアログ表示
 
@@ -230,9 +314,7 @@ onMounted(async () => {
                       icon="edit"
                       color="primary"
                       @click="showBookDialog(book.id)"
-                    >
-
-                    </c-round-btn>
+                    ></c-round-btn>
                   </div>
                 </div>
               </q-menu>
@@ -271,19 +353,21 @@ onMounted(async () => {
           v-model="bookDialog.isShow"
           :headerText="bookDialog.headerText"
           :okLabel = "bookDialog.okLabel"
-          @ok=""
+          @ok="bookDialog.okFunction"
         >
-          <div class="row">
+          <q-form ref="bookDialogForm" class="row">
             <div class="col-12 q-pa-xs">
               <q-input
                 v-model="bookDialog.form.bookName"
-                label="書籍名"
+                :label="labels.bookName"
+                :rules="validationRules.bookName"
               ></q-input>
             </div>
             <div class="col-8 col-md-2 q-pa-xs">
               <q-input
                 v-model="bookDialog.form.isbn"
-                label="ISBN"
+                :label="labels.isbn"
+                :rules="validationRules.isbn"
                 mask="#########X###"
               ></q-input>
             </div>
@@ -292,31 +376,33 @@ onMounted(async () => {
                 v-model.number="bookDialog.form.page"
                 type="number"
                 min="1"
-                label="ページ数"
+                :label="labels.page"
+                :rules="validationRules.page"
               ></q-input>
             </div>
             <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
               <q-input
                 v-model="bookDialog.form.authorName"
-                label="著者名"
+                :label="labels.authorName"
               ></q-input>
             </div>
             <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
               <q-input
                 v-model="bookDialog.form.publisherName"
-                label="出版社名"
+                :label="labels.publisherName"
               ></q-input>
             </div>
-            <div class="col-12 q-pa-xs">
+            <div class="col-12 col-md-6 q-pa-xs">
               <q-input
                 v-model="bookDialog.form.otherUrl"
-                label="その他URL"
+                :label="labels.otherUrl"
+                :rules="validationRules.otherUrl"
               ></q-input>
             </div>
-            <div class="col-12 q-pa-xs">
+            <div class="col-12 col-md-6 q-pa-xs">
               <c-input-tag
-                v-model="tags"
-                label="タグ"
+                v-model="bookDialog.form.tags"
+                :label="labels.tags"
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
               ></c-input-tag>
@@ -326,14 +412,10 @@ onMounted(async () => {
                 v-model="bookDialog.form.newBookCheckFlg"
                 :true-value="1"
                 :false-value="0"
-                color="teal"
-              >
-                新刊チェック
-              </q-toggle>
+                :label="labels.newBookCheckFlg"
+              ></q-toggle>
             </div>
-          </div>
-
-
+          </q-form>
         </c-dialog>
       </div>
     </q-footer>

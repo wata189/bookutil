@@ -3,7 +3,7 @@ import axiosBase from "axios";
 const axios = axiosBase.create({
   baseURL: import.meta.env.VITE_LAMBDA_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json;charset=utf-8',
     'X-Requested-With': 'XMLHttpRequest'
   },
   responseType: 'json'  
@@ -18,8 +18,19 @@ const get = async (path:string, headerParams?:Object) => {
     // TODO: エラーハンドリング共通化
     console.log(error);
   }
-} 
+};
+const post = async (path:string, params?:Object) => {
+  try{
+    console.log(`axios post:${path}`);
+
+    return await axios.post(path, params);
+  }catch(error){
+    // TODO: エラーハンドリング共通化
+    console.log(error);
+  }
+};
 
 export default {
-  get
+  get,
+  post
 }
