@@ -16,7 +16,7 @@ CREATE TABLE `m_library` (
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新日時',
   `delete_flg` tinyint NOT NULL DEFAULT '0' COMMENT '削除フラグ',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 CREATE TABLE `m_library_business_hours` (
   `library_id` varchar(100) NOT NULL COMMENT '図書館ID',
@@ -31,7 +31,7 @@ CREATE TABLE `m_library_business_hours` (
   `delete_flg` tinyint NOT NULL DEFAULT '0' COMMENT '削除フラグ',
   PRIMARY KEY (`library_id`,`day_of_week`),
   CONSTRAINT `m_library_business_hours_ibfk_1` FOREIGN KEY (`library_id`) REFERENCES `m_library` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 
 
@@ -54,7 +54,7 @@ CREATE TABLE `t_toread_book` (
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新日時',
   `delete_flg` tinyint NOT NULL DEFAULT '0' COMMENT '削除フラグ',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 CREATE TABLE `t_toread_tag` (
   `book_id` bigint NOT NULL COMMENT '書籍ID',
@@ -66,7 +66,7 @@ CREATE TABLE `t_toread_tag` (
   `delete_flg` tinyint NOT NULL DEFAULT '0' COMMENT '削除フラグ',
   PRIMARY KEY (`book_id`,`tag`),
   CONSTRAINT `t_toread_tag_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `t_toread_book` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 CREATE VIEW `v_toread_tag` AS 
 SELECT `tag`
