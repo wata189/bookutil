@@ -279,5 +279,8 @@ lambda-sam/*/__pycache__
 
 lambda
 
+# jest
+coverage
+
 
 _memo.txt
