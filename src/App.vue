@@ -60,7 +60,7 @@ onMounted(async () => {
         <q-ajax-bar
           :hijak-filter="isBookutilUrl"
           position="bottom"
-          size="5px"
+          size="15px"
         >
 
         </q-ajax-bar>
