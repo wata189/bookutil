@@ -7,7 +7,7 @@ import axiosUtil from '@/modules/axiosUtil';
 import authUtil from '@/modules/authUtil';
 
 const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
-// TODO: メニューは権限に応じて取得
+// メニューは権限に応じて取得
 const menus = ref([]);
 
 const user = ref({email:""});
