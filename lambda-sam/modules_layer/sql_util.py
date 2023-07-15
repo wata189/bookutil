@@ -77,11 +77,16 @@ create_toread_tag = """
 INSERT INTO t_toread_tag (book_id, tag) VALUES (%s, %s)
 """
 
+is_create_unique_isbn = """
+SELECT id, isbn FROM t_toread_book WHERE delete_flg = 0 AND isbn = %s
+"""
+
 SQLS = {
     "fetch_toread": fetch_toread,
     "fetch_toread_tag": fetch_toread_tag,
     "create_toread_book": create_toread_book,
-    "create_toread_tag": create_toread_tag
+    "create_toread_tag": create_toread_tag,
+    "is_create_unique_isbn": is_create_unique_isbn
 }
 
 def get_sql(sql_name):
