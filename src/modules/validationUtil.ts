@@ -1,4 +1,4 @@
-
+import util from "@/modules/util";
 const isExist = (valName:string) => {
   return (val:any) => {
     return !!val || `${valName}を入力してください`;
@@ -17,11 +17,7 @@ const isIsbn = (valName:string) => {
   return (val:string) => {
     if(!val){return true;}
 
-    const isbn10Regex = /^[0-9]{9}[1-9X]$/;
-    const isbn13Regex = /^[0-9]{13}$/;
-    const isIsbn = isbn10Regex.test(val) || isbn13Regex.test(val);
-  
-    return isIsbn || `${valName}は10桁または13桁で入力してください`;
+    return util.isIsbn(val) || `${valName}は10桁または13桁で入力してください`;
   };
 };
 

@@ -2,20 +2,18 @@
 import { onMounted, Ref } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
 import { QForm} from "quasar";
+
 import axiosUtil from '@/modules/axiosUtil';
+import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
+import openBdUtil from "@/modules/openBdUtil";
+
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
-interface User {
-  email: string
-}
-interface Props {
-  user: User
-};
-const props = defineProps<Props>();
+
 
 const searchWord = ref("");
 const tags = ref("");
@@ -122,6 +120,23 @@ const openPageAsNewTab = (url: string) => {
   util.openPageAsNewTab(url);
 };
 
+const getBookInfo = async (isbn:string) => {
+  const trimedIsbn = isbn.trim()
+  if(!trimedIsbn){return;}
+  if(!util.isIsbn(trimedIsbn)){return;}
+
+  const bookInfo = await openBdUtil.getBookInfo(trimedIsbn);
+  // bookInfoがあったらフォームに設定
+  if(bookInfo){
+    bookDialog.value.form.isbn = bookInfo.isbn;
+    bookDialog.value.form.bookName = bookInfo.bookName;
+    bookDialog.value.form.authorName = bookInfo.authorName;
+    bookDialog.value.form.publisherName = bookInfo.publisherName;
+    bookDialog.value.form.page = bookInfo.page;
+  }
+
+};
+
 const bookDialogForm:Ref<QForm | undefined> = ref();
 const createBook = () => {
   // フォームのバリデーション処理
@@ -130,7 +145,7 @@ const createBook = () => {
     if(!success){return;}
 
     // formを送る
-    const params = createCreateParams(bookDialog.value.form);
+    const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報取得し直し
@@ -151,17 +166,19 @@ type BookForm = {
     newBookCheckFlg: number;
     tags: string;
 }
-const createCreateParams = (form:BookForm) => {
-  const params = createBookParams(form);
+const createCreateParams = async (form:BookForm) => {
+  const params = await createBookParams(form);
 
   return params;
 };
-const createBookParams = (form:BookForm) => {
-
+const createBookParams = async (form:BookForm) => {
+  const accessToken = localStorage.accessToken || "";
+  const user = await authUtil.getUserInfo(accessToken);
+  const email = user.email || "No User Data";
   const params = {
     id: null,
     create_at: null,
-    user: props.user.email,
+    user: email,
 
     // フォームのパラメータ
     book_name: form.bookName.trim(),
@@ -174,10 +191,20 @@ const createBookParams = (form:BookForm) => {
     tags: form.tags.trim() || "",
 
     // アクセストークン
-    access_token: localStorage.accessToken || ""
+    access_token: accessToken
   };
   
   return params;
+};
+const initBookDialogForm:BookForm = {
+  bookName: "",
+  isbn: "",
+  authorName: "",
+  publisherName: "",
+  page: null,
+  otherUrl: "",
+  newBookCheckFlg: 0,
+  tags: ""
 };
 const bookDialog = ref({
   isShow: false,
@@ -185,16 +212,7 @@ const bookDialog = ref({
   headerText: "",
   okLabel: "",
   okFunction: () => {},
-  form: {
-    bookName: "",
-    isbn: "",
-    authorName: "",
-    publisherName: "",
-    page: null,
-    otherUrl: "",
-    newBookCheckFlg: 0,
-    tags: ""
-  }
+  form: initBookDialogForm
 });
 const showNewBookDialog = () => {
   bookDialog.value.bookId = "";
@@ -369,7 +387,17 @@ onMounted(async () => {
                 :label="labels.isbn"
                 :rules="validationRules.isbn"
                 mask="#########X###"
-              ></q-input>
+              >
+                <template v-slot:append>
+                  <q-btn 
+                    round 
+                    dense 
+                    flat 
+                    icon="search"
+                    @click="getBookInfo(bookDialog.form.isbn)"
+                  ></q-btn>
+                </template>
+              </q-input>
             </div>
             <div class="col-4 col-md-2 q-pa-xs">
               <q-input
