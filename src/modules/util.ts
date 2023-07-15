@@ -8,7 +8,13 @@ const isIsbn = (isbn: string):boolean => {
   return isbn10Regex.test(isbn) || isbn13Regex.test(isbn);
 };
 
+const NOT_EXISTS = ["", null, undefined]
+const isExist = (val:any) => {
+  return !NOT_EXISTS.includes(val);
+}
+
 export default {
   openPageAsNewTab,
-  isIsbn
+  isIsbn,
+  isExist
 }

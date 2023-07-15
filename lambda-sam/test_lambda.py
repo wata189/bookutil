@@ -97,6 +97,8 @@ def test_is_exist_7():
 
 def test_is_number_1():
     assert validation_util.is_number(None) == True
+def test_is_number_E():
+    assert validation_util.is_number(-1) == True
 def test_is_number_2():
     assert validation_util.is_number(0) == True
 def test_is_number_3():
@@ -105,6 +107,8 @@ def test_is_number_4():
     assert validation_util.is_number(9) == True
 def test_is_number_5():
     assert validation_util.is_number(1234567890) == True
+def test_is_number_F():
+    assert validation_util.is_number("-1") == True
 def test_is_number_6():
     assert validation_util.is_number("0") == True
 def test_is_number_7():
@@ -121,6 +125,12 @@ def test_is_number_C():
     assert validation_util.is_number(True) == False
 def test_is_number_D():
     assert validation_util.is_number(False) == False
+def test_is_number_G():
+    assert validation_util.is_number("－１") == False
+def test_is_number_H():
+    assert validation_util.is_number("０") == False
+def test_is_number_I():
+    assert validation_util.is_number("１") == False
 
 def test_is_plus_1():
     assert validation_util.is_plus(None) == True

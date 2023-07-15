@@ -8,7 +8,7 @@ def is_exist(val):
 def is_number(val):
     if not is_exist(val): return True
 
-    return not(not re.match("^[0-9]*$", str(val)))
+    return not(not re.match("^-?[0-9]*$", str(val)))
 
 def is_plus(val):
     if not is_exist(val): return True
