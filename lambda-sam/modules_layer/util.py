@@ -1,4 +1,5 @@
 import json
+import os
 
 # ステータスコード
 STATUS_CODE = {
@@ -19,7 +20,11 @@ def create_response(status_code_str:str, body={}, msg=""):
         "statusCode": STATUS_CODE[status_code_str],
         "body": json.dumps(body),
         "headers": {
-            'Content-type': 'application/json;charset=utf-8'
+            'Content-type': 'application/json;charset=utf-8',
+            'Access-Control-Allow-Headers': 'Content-Type,X-CSRF-TOKEN',
+            'Access-Control-Allow-Origin': os.getenv("CLIENT_URL"),
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+            "Access-Control-Allow-Credentials": True,
         },
     }
 

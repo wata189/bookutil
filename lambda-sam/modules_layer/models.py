@@ -187,7 +187,8 @@ INSERT INTO t_toread_tag (book_id, tag) VALUES (%s, %s)
 """
 def create_toread_tag(id, form, mysql):
     # /,スペースで分割
-    tags = re.split("[ 　/,]", form["tags"])
+    # set→list変換で重複削除
+    tags = list(set(re.split("[ 　/,]", form["tags"])))
 
     if len(tags) > 0:
         params = [ [id, tag] for tag in tags]
