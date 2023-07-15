@@ -275,6 +275,7 @@ lambda-sam/*.lnk
 lambda-sam/*/build/*
 lambda-sam/.aws-sam/
 lambda-sam/env.json
+lambda-sam/*/__pycache__
 
 lambda
 

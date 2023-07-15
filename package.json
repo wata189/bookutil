@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "devVue": "vite",
-    "devLambda": "cd lambda-sam && pyenv shell 3.9.13 && sam build && sam local start-api --env-vars env.json --docker-network host",
+    "devLambda": "cd lambda-sam && sam build && sam local start-api --env-vars env.json --docker-network host",
+    "testLambda": "cd lambda-sam && pytest test_lambda.py",
     "buildVue": "vue-tsc && vite build",
     "previewVue": "vite preview"
   },

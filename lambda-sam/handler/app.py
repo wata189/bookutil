@@ -45,7 +45,7 @@ def handler_create_toread(event, context):
     
     def create_toread(mysql):
         # バリデーション処理
-        if not validation_util.is_valid_book(post_body, mysql):
+        if not validation_util.is_valid_book(post_body):
             return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
         # ISBN被りチェック
         if not validation_util.is_create_unique_isbn(post_body["isbn"], mysql):

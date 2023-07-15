@@ -1,7 +1,9 @@
 import util from "@/modules/util";
+
+const NOT_EXISTS = ["", null, undefined]
 const isExist = (valName:string) => {
   return (val:any) => {
-    return !!val || `${valName}を入力してください`;
+    return !(NOT_EXISTS.includes(val)) || `${valName}を入力してください`;
   };
 };
 
@@ -25,11 +27,7 @@ const isUrl = (valName:string) => {
   return (val:string) => {
     if(!val){return true;}
 
-    const httpRegex = /^http:\/\//;
-    const httpsRegex = /^https:\/\//;
-    const isUrl = httpRegex.test(val) || httpsRegex.test(val);
-
-    return isUrl || `${valName}はURLを入力してください`;
+    return /^https?:\/\//.test(val) || `${valName}はURLを入力してください`;
   }
   
 

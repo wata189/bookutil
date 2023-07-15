@@ -16,8 +16,9 @@ STATUS_CODE = {
 }
 
 def create_response(status_code_str:str, body={}, msg=""):
+    print(f"{status_code_str} {msg} {body}")
     body["msg"] = msg
-    return {
+    response = {
         "statusCode": STATUS_CODE[status_code_str],
         "body": json.dumps(body),
         "headers": {
@@ -28,12 +29,13 @@ def create_response(status_code_str:str, body={}, msg=""):
             "Access-Control-Allow-Credentials": True,
         },
     }
+    return response
 
-def is_isbn(str: str):
+def is_isbn(isbn: str):
     isbn_13_pattern = "^[0-9]{13}$"
     isbn_10_pattern = "^[0-9]{9}[1-9X]$"
 
-    return re.match(isbn_10_pattern, str) or re.match(isbn_13_pattern)
+    return not(not re.match(isbn_10_pattern, isbn)) or not(not re.match(isbn_13_pattern, isbn))
 
 #isbn10桁→13桁への変換
 def isbn_10_to_13(isbn:str):
