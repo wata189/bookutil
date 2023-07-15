@@ -1,5 +1,6 @@
 import pymysql.cursors
 import os
+from sql_util import get_sql
 
 HOST        = os.getenv('MYSQL_HOST')
 PORT        = int(os.getenv("MYSQL_PORT"))
@@ -17,37 +18,42 @@ class Mysql:
         print(sql % tuple(params))
 
     # SQL実行の共通処理
-    def execute(self, sql, params=[]):
+    def execute(self, sql_name, params=[]):
+        sql = self.get_sql(sql_name)
         self.log_sql(sql, params)
         self.cursor.execute(sql, params)
 
     # 取得
-    def select(self, sql, params=[]):
-        self.execute(sql, params)
+    def select(self, sql_name, params=[]):
+        self.execute(sql_name, params)
         return self.cursor.fetchall()
     
     # 追加
-    def insert(self, sql, values):
-        return self.insert_multi(sql, [values])
+    def insert(self, sql_name, values):
+        return self.insert_multi(sql_name, [values])
     
     # 追加 複数行
-    def insert_multi(self, sql, values):
+    def insert_multi(self, sql_name, values):
+        sql = self.get_sql(sql_name)
         self.log_sql(sql, values[0])
         self.cursor.executemany(sql, values)
         return self.cursor.lastrowid
     
     # 更新
-    def update(self, sql, params=[]):
-        self.execute(sql, params)
+    def update(self, sql_name, params=[]):
+        self.execute(sql_name, params)
     
     # 論理削除
-    def delete_logically(self, sql, params=[]):
-        self.update(sql, params)
+    def delete_logically(self, sql_name, params=[]):
+        self.update(sql_name, params)
     
     # 物理削除
-    def delete_physically(self, sql, params=[]):
-        self.execute(sql, params)
+    def delete_physically(self, sql_name, params=[]):
+        self.execute(sql_name, params)
         
+    # SQLファイル取得
+    def get_sql(self, sql_name):
+        return get_sql(sql_name)
         
 
 def tran(func):

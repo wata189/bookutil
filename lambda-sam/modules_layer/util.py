@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 # ステータスコード
 STATUS_CODE = {
@@ -28,11 +29,18 @@ def create_response(status_code_str:str, body={}, msg=""):
         },
     }
 
+def is_isbn(str: str):
+    isbn_13_pattern = "^[0-9]{13}$"
+    isbn_10_pattern = "^[0-9]{9}[1-9X]$"
+
+    return re.match(isbn_10_pattern, str) or re.match(isbn_13_pattern)
+
 #isbn10桁→13桁への変換
 def isbn_10_to_13(isbn:str):
-    # TODO: ISBNをチェック
     # nullの場合はnull返却
     if not isbn: return None
+    # isbnじゃない場合はnull返却
+    if not is_isbn(isbn): return None
     # 10桁じゃない場合はそのまま返す
     if len(isbn) != 10: return isbn
 
