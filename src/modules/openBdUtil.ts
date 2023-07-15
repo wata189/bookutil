@@ -21,12 +21,15 @@ const getBookInfo = async (isbn:string):Promise<Book | null> => {
     if(response && response.data && response.data[0]){
       const onix = response.data[0].onix
       const descriptiveDetail = onix.DescriptiveDetail;
-      // 書名、サブタイトル、レーベルをbookNameに
+      // 書名、PartNumber、サブタイトル、レーベルをbookNameに
       let bookName = descriptiveDetail.TitleDetail.TitleElement.TitleText.content;
+      if(descriptiveDetail.TitleDetail.TitleElement.PartNumber){
+        bookName += ` ${descriptiveDetail.TitleDetail.TitleElement.PartNumber}`
+      }
       if(descriptiveDetail.TitleDetail.TitleElement.Subtitle){
         bookName += ` ${descriptiveDetail.TitleDetail.TitleElement.Subtitle.content}`
       }
-      if(descriptiveDetail.Collection.TitleDetail && descriptiveDetail.Collection.TitleDetail.TitleElement[0]){
+      if(descriptiveDetail.Collection && descriptiveDetail.Collection.TitleDetail && descriptiveDetail.Collection.TitleDetail.TitleElement[0]){
         bookName += ` ${descriptiveDetail.Collection.TitleDetail.TitleElement[0].TitleText.content}`;
       }
       const author = descriptiveDetail.Contributor.find((contributor:any) => contributor.ContributorRole[0] === "A01");

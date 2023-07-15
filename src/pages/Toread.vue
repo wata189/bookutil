@@ -435,13 +435,29 @@ onMounted(async () => {
                 :options="toreadTagOptions"
               ></c-input-tag>
             </div>
-            <div class="col-12 q-pa-xs">
+            <div>
               <q-toggle
                 v-model="bookDialog.form.newBookCheckFlg"
                 :true-value="1"
                 :false-value="0"
                 :label="labels.newBookCheckFlg"
               ></q-toggle>
+            </div>
+            <q-space />
+            <div>
+              <q-btn
+                v-for="link in links"
+                :disable="!bookDialog.form.isbn"
+                round
+                padding="none"
+                :title="link.title"
+                class="q-mx-xs"
+                @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
+              >
+                <q-avatar size="32.58px">
+                  <q-img :src="link.imgUrl"></q-img>
+                </q-avatar>
+              </q-btn>
             </div>
           </q-form>
         </c-dialog>
