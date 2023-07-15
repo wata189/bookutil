@@ -3,6 +3,7 @@ import CHeader from '@/components/c-header.vue';
 
 import { onMounted } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
+import util from '@/modules/util';
 import axiosUtil from '@/modules/axiosUtil';
 import authUtil from '@/modules/authUtil';
 
@@ -12,8 +13,8 @@ const menus = ref([]);
 
 const user = ref({email:""});
 
-const isBookutilUrl = (url:string) => {
-  return /^http/.test(url)
+const isUrl = (url:string) => {
+  return util.isUrl(url);
 };
 
 onMounted(async () => {
@@ -58,7 +59,7 @@ onMounted(async () => {
       <q-page>
         <RouterView :menus="menus" />
         <q-ajax-bar
-          :hijak-filter="isBookutilUrl"
+          :hijak-filter="isUrl"
           position="bottom"
           size="15px"
         >

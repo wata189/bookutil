@@ -40,7 +40,8 @@ def handler_create_toread(event, context):
     print(post_body)
 
     is_auth = auth_util.is_auth(post_body["access_token"])
-    if not is_auth:
+    # ログイン済みでも外部連携でもなければログインエラー
+    if not is_auth and not post_body["is_external_cooperation"]:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
     
     def create_toread(mysql):

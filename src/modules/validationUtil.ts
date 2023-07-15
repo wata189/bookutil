@@ -26,7 +26,7 @@ const isUrl = (valName:string) => {
   return (val:string) => {
     if(!util.isExist(val)){return true;}
 
-    return /^https?:\/\//.test(val) || `${valName}はURLを入力してください`;
+    return util.isUrl(val) || `${valName}はURLを入力してください`;
   }
   
 

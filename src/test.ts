@@ -38,6 +38,22 @@ describe.each([
     expect(util.isExist(param)).toBe(expected);
   })
 });
+describe.each([
+  ["", false],
+  ["h", false],
+  ["http://example.com", true],
+  ["https://example.com", true],
+  ["http:/example.com", false],
+  ["https:/example.com", false],
+  ["http//example.com", false],
+  ["https//example.com", false],
+  ["ttp://example.com", false],
+  ["ttps://example.com", false],
+])("isUrl(%p)", (param, expected) => {
+  test(`returns ${expected}`, () => {
+    expect(util.isUrl(param)).toBe(expected);
+  })
+});
 
 
 

@@ -14,7 +14,6 @@ import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
 
-
 const searchWord = ref("");
 const tags = ref("");
 
@@ -191,7 +190,9 @@ const createBookParams = async (form:BookForm) => {
     tags: form.tags.trim() || "",
 
     // アクセストークン
-    access_token: accessToken
+    access_token: accessToken,
+    // 外部連携フラグ
+    is_external_cooperation: isExternalCooperation
   };
   
   return params;
@@ -255,8 +256,20 @@ const showBookDialog = (bookId:string) => {
   return bookId;
 };
 
+// 外部連携フラグ
+let isExternalCooperation = false;
+
 onMounted(async () => {
   await initToread();
+  
+  // パラメータにisbnがあったらいきなりダイアログ表示
+  const urlParams = (new URL(window.location.href)).searchParams;
+  const urlParamIsbn = urlParams.get('isbn');
+  if(urlParamIsbn && util.isIsbn(urlParamIsbn)){
+    isExternalCooperation = true;
+    showNewBookDialog();
+    await getBookInfo(urlParamIsbn);
+  }
 });
 </script>
 

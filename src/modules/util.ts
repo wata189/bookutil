@@ -11,10 +11,15 @@ const isIsbn = (isbn: string):boolean => {
 const NOT_EXISTS = ["", null, undefined]
 const isExist = (val:any) => {
   return !NOT_EXISTS.includes(val);
-}
+};
+
+const isUrl = (url:string):boolean => {
+  return /^https?:\/\//.test(url);
+};
 
 export default {
   openPageAsNewTab,
   isIsbn,
-  isExist
+  isExist,
+  isUrl
 }
