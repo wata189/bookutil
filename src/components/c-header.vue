@@ -60,6 +60,8 @@ const logout = () => {
   authUtil.logout();
 };
 
+const iconSize = "24px";
+
 onMounted(() => {
   setMode(isDarkMode.value);
 });
@@ -71,7 +73,10 @@ onMounted(() => {
     <q-toolbar>
       <q-toolbar-title class="toolbar-title">
         <!--TODO:アイコンを設定-->
-        <div @click="transite('/')">{{ props.pageName }}</div>
+        <div @click="transite('/')">
+          <q-img src="img/icon.svg" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
+          <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
+        </div>
       </q-toolbar-title>
 
       <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
