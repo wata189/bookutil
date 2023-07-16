@@ -13,10 +13,6 @@ const menus = ref([]);
 
 const user = ref({email:""});
 
-const isUrl = (url:string) => {
-  return util.isUrl(url);
-};
-
 onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
   const urlParams = (new URL(window.location.href)).searchParams;
@@ -59,7 +55,7 @@ onMounted(async () => {
       <q-page>
         <RouterView :menus="menus" />
         <q-ajax-bar
-          :hijak-filter="isUrl"
+          :hijak-filter="util.isUrl"
           position="bottom"
           size="15px"
         >
