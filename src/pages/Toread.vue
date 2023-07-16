@@ -14,11 +14,6 @@ import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
 
-const filterCond = ref({
-  word: "",
-  tags: "",
-  isOnlyNewBookCheckFlg: false
-});
 
 type Book = {
   id: string,
@@ -37,8 +32,54 @@ type Book = {
 
 const toreadBooks: Ref<Book[]> = ref([]);
 
-const filteredToreadBooks = computed({
+const filterCond = ref({
+  word: "",
+  tags: "",
+  isOnlyNewBook: false
+});
+
+const isShowFilterCond = ref(true);
+// TODO: スマホの場合はフィルター条件隠す
+
+const SORT_KEY = {
+  ID: "追加日",
+  PAGE: "ページ数",
+  WANT: "よみたい度"
+};
+const sortKeyOptions = Object.values(SORT_KEY)
+const sortCond = ref({
+  isDesc: true,
+  key: SORT_KEY.ID
+});
+const isDescIcon = computed(() => {
+  return sortCond.value.isDesc ? "keyboard_double_arrow_down" : "keyboard_double_arrow_up"
+});
+const isDescTitle = computed(() => {
+  return sortCond.value.isDesc ? "昇順にする" : "降順にする"
+});
+// ソートキー変更時の降順昇順変更
+// 追加日→Desc、ページ数→Asc、よみたい順→desc
+const onChangeSortCondKey = (value:string) => {
+  if(value === SORT_KEY.ID){
+    sortCond.value.isDesc = true;
+  }else if(value === SORT_KEY.PAGE){
+    sortCond.value.isDesc = false;
+  }else{
+    sortCond.value.isDesc = true
+  }
+};
+
+const dispToreadBooks = computed({
   get: () => {
+    // 条件キャッシュ
+    const filterWord = filterCond.value.word;
+    const filterTags = util.strToTag(filterCond.value.tags);
+    const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
+
+    const sortKey = sortCond.value.key;
+    const isDesc = sortCond.value.isDesc;
+
+    /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
       // 検索ワードでの検索
       const searchedText = [
@@ -49,21 +90,59 @@ const filteredToreadBooks = computed({
         book.tags
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
       .replace(/ 　,/g, ""); // 空白など削除
-      return searchedText.includes(filterCond.value.word); // TODO:wordの複数検索は？
+      return searchedText.includes(filterWord); // TODO:wordの複数検索は？
     }).filter((book:Book) => {
       // タグでの検索
-      const filterTags = util.strToTag(filterCond.value.tags);
       const bookTags = util.strToTag(book.tags);
-      return true;
+      return filterTags
+            .filter(filterTag => bookTags.includes(filterTag))
+            .length === filterTags.length;
     }).filter((book:Book) => {
       // 新刊のみでのフィルター
-      return !filterCond.value.isOnlyNewBookCheckFlg || book.newBookCheckFlg.value;
+      return !filterIsOnlyNewBook || book.newBookCheckFlg;
+
+
+    /////// ソート
+    }).sort((aBook:Book, bBook:Book) => {
+      if(sortKey === SORT_KEY.ID){
+        // ID(追加順)でソート
+        return isDesc ? Number(bBook.id) - Number(aBook.id) : Number(aBook.id) - Number(bBook.id)
+      }else if(sortKey === SORT_KEY.PAGE){
+        // ページ数順でソート
+        if(isDesc){
+          const aPage = aBook.page || 0;
+          const bPage = bBook.page || 0;
+          return bPage - aPage;
+        }else{
+          const aPage = aBook.page || Infinity;
+          const bPage = bBook.page || Infinity;
+          return aPage - bPage;
+        }
+      }else{
+        // よみたい順でソート
+        // よみたい順の場合はisDesc無視ですべて降順
+        return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
+      }
     });
   },
   set: (value) => {
     toreadBooks.value = value
   }
 });
+
+// よみたい度算出
+// すごくよみたい→2ポイント　よみたい→1ポイント
+const getWantPoint = (tagsStr:string):number => {
+  const tags = util.strToTag(tagsStr);
+
+  let wantPoint = 0;
+  if(tags.includes("すごくよみたい")){
+    wantPoint = 2;
+  }else if(tags.includes("よみたい")){
+    wantPoint = 1;
+  }
+  return wantPoint;
+};
 
 const toreadTagOptions = ref([]);
 
@@ -312,10 +391,11 @@ onMounted(async () => {
     <q-page-container>
       <q-page>
         <div class="row">
-          <div v-for="book in filteredToreadBooks" class="col book-cover-wrapper q-pa-sm">
+          <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-pa-sm">
             <q-card class="q-pb-sm" :title="book.bookName">
               <q-checkbox
                 v-model="book.isChecked"
+                dense
               >
               </q-checkbox>
               <q-img
@@ -388,130 +468,184 @@ onMounted(async () => {
         </div>
       </q-page>
     </q-page-container>
-    <q-footer class="bg-grey">
-      <div class="row">
-        <div class="col-12 col-sm-4 q-pa-sm">
-          <q-input dense v-model="filterCond.word" label="検索"></q-input>
-        </div>
-        <div class="col-12 col-sm-8 q-pa-sm">
-          <c-input-tag
-            v-model="filterCond.tags"
-            label="タグ"
-            dense
-            hint=",/スペースで区切られます"
-            :options="toreadTagOptions"
-          ></c-input-tag>
-        </div>
-        <!-- TODO: isOnlyNewBook-->
-      </div>
-      <div class="row">
-        <div class="col-6  col-sm-3 col-md-2 q-pa-sm">
-          <q-btn color="negative" class="full-width">一括削除</q-btn>
-        </div>
-        <div class="col-6  col-sm-3 col-md-2 q-pa-sm">
-          <q-btn color="primary" class="full-width">一括タグ</q-btn>
-        </div>
-        <div class="col-0  col-sm-3 col-md-6"></div>
-        <div class="col-12 col-sm-3 col-md-2 q-pa-sm">
-          <q-btn color="primary" class="full-width" @click="showNewBookDialog">新規作成</q-btn>
-        </div>
-        <c-dialog
-          v-model="bookDialog.isShow"
-          :headerText="bookDialog.headerText"
-          :okLabel = "bookDialog.okLabel"
-          @ok="bookDialog.okFunction"
-        >
-          <q-form ref="bookDialogForm" class="row">
-            <div class="col-12 q-pa-xs">
-              <q-input
-                v-model="bookDialog.form.bookName"
-                :label="labels.bookName"
-                :rules="validationRules.bookName"
-              ></q-input>
+    <q-footer elevated :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
+      <q-expansion-item
+        expand-icon-toggle
+        expand-separator
+        v-model="isShowFilterCond"
+      >
+        
+        <template v-slot:header>
+          <q-item-section>
+            
+            <div class="row">
+              <div class="col-auto q-pa-sm">
+                <q-select 
+                  label="ソート"
+                  v-model="sortCond.key" 
+                  dense 
+                  :options="sortKeyOptions"
+                  class="select-sort-key"
+                  @update:model-value="onChangeSortCondKey"
+                >
+                  <template v-slot:before>
+
+                    <c-round-btn
+                      :title="isDescTitle"  
+                      :icon="isDescIcon"
+                      @click="sortCond.isDesc = !sortCond.isDesc"
+                    ></c-round-btn>
+                  </template>
+                </q-select>
+              </div>
+              <div class="col-auto q-pa-sm">
+                <c-round-btn
+                  title="一括削除"  
+                  icon="delete"
+                  color="negative"
+                  @click=""
+                ></c-round-btn>
+                <c-round-btn
+                  title="一括タグ"  
+                  icon="tag"
+                  color="secondary"
+                  @click=""
+                ></c-round-btn>
+                <c-round-btn
+                  title="新規作成"  
+                  icon="add"
+                  color="primary"
+                  @click="showNewBookDialog"
+                ></c-round-btn>
+              </div>
             </div>
-            <div class="col-8 col-md-2 q-pa-xs">
-              <q-input
-                v-model="bookDialog.form.isbn"
-                :label="labels.isbn"
-                :rules="validationRules.isbn"
-                mask="#########X###"
-              >
-                <template v-slot:append>
-                  <q-btn 
-                    round 
-                    dense 
-                    flat 
-                    icon="search"
-                    @click="getBookInfo(bookDialog.form.isbn)"
-                  ></q-btn>
-                </template>
-              </q-input>
+          </q-item-section>
+        </template>
+        <q-card>
+
+          <q-separator inset></q-separator>
+          <div class="row">
+            <div class="col-12 col-sm-4 q-pa-sm">
+              <q-input dense v-model="filterCond.word" label="検索"></q-input>
             </div>
-            <div class="col-4 col-md-2 q-pa-xs">
-              <q-input
-                v-model.number="bookDialog.form.page"
-                type="number"
-                min="1"
-                :label="labels.page"
-                :rules="validationRules.page"
-              ></q-input>
-            </div>
-            <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
-              <q-input
-                v-model="bookDialog.form.authorName"
-                :label="labels.authorName"
-              ></q-input>
-            </div>
-            <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
-              <q-input
-                v-model="bookDialog.form.publisherName"
-                :label="labels.publisherName"
-              ></q-input>
-            </div>
-            <div class="col-12 col-md-6 q-pa-xs">
-              <q-input
-                v-model="bookDialog.form.otherUrl"
-                :label="labels.otherUrl"
-                :rules="validationRules.otherUrl"
-              ></q-input>
-            </div>
-            <div class="col-12 col-md-6 q-pa-xs">
+            <div class="col q-pa-sm">
               <c-input-tag
-                v-model="bookDialog.form.tags"
-                :label="labels.tags"
+                v-model="filterCond.tags"
+                label="タグ"
+                dense
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
               ></c-input-tag>
             </div>
-            <div>
+            <div class="col-auto q-pa-sm">
               <q-toggle
-                v-model="bookDialog.form.newBookCheckFlg"
-                :true-value="1"
-                :false-value="0"
-                :label="labels.newBookCheckFlg"
+                v-model="filterCond.isOnlyNewBook"
+                label="新刊のみ"
               ></q-toggle>
             </div>
-            <q-space />
-            <div>
-              <q-btn
-                v-for="link in links"
-                :disable="!bookDialog.form.isbn"
-                round
-                padding="none"
-                :title="link.title"
-                class="q-mx-xs"
-                @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
-              >
-                <q-avatar size="32.58px">
-                  <q-img :src="link.imgUrl"></q-img>
-                </q-avatar>
-              </q-btn>
-            </div>
-          </q-form>
-        </c-dialog>
-      </div>
+          </div>
+        </q-card>
+      </q-expansion-item>
     </q-footer>
 
+
+
+    
+    <!-- 新規作成・編集ダイアログ -->
+    <c-dialog
+      v-model="bookDialog.isShow"
+      :headerText="bookDialog.headerText"
+      :okLabel = "bookDialog.okLabel"
+      @ok="bookDialog.okFunction"
+    >
+      <q-form ref="bookDialogForm" class="row">
+        <div class="col-12 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.bookName"
+            :label="labels.bookName"
+            :rules="validationRules.bookName"
+          ></q-input>
+        </div>
+        <div class="col-8 col-md-2 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.isbn"
+            :label="labels.isbn"
+            :rules="validationRules.isbn"
+            mask="#########X###"
+          >
+            <template v-slot:append>
+              <q-btn 
+                round 
+                dense 
+                flat 
+                icon="search"
+                @click="getBookInfo(bookDialog.form.isbn)"
+              ></q-btn>
+            </template>
+          </q-input>
+        </div>
+        <div class="col-4 col-md-2 q-pa-xs">
+          <q-input
+            v-model.number="bookDialog.form.page"
+            type="number"
+            min="1"
+            :label="labels.page"
+            :rules="validationRules.page"
+          ></q-input>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.authorName"
+            :label="labels.authorName"
+          ></q-input>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.publisherName"
+            :label="labels.publisherName"
+          ></q-input>
+        </div>
+        <div class="col-12 col-md-6 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.otherUrl"
+            :label="labels.otherUrl"
+            :rules="validationRules.otherUrl"
+          ></q-input>
+        </div>
+        <div class="col-12 col-md-6 q-pa-xs">
+          <c-input-tag
+            v-model="bookDialog.form.tags"
+            :label="labels.tags"
+            hint=",/スペースで区切られます"
+            :options="toreadTagOptions"
+          ></c-input-tag>
+        </div>
+        <div>
+          <q-toggle
+            v-model="bookDialog.form.newBookCheckFlg"
+            :true-value="1"
+            :false-value="0"
+            :label="labels.newBookCheckFlg"
+          ></q-toggle>
+        </div>
+        <q-space />
+        <div>
+          <q-btn
+            v-for="link in links"
+            :disable="!bookDialog.form.isbn"
+            round
+            padding="none"
+            :title="link.title"
+            class="q-mx-xs"
+            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
+          >
+            <q-avatar size="32.58px">
+              <q-img :src="link.imgUrl"></q-img>
+            </q-avatar>
+          </q-btn>
+        </div>
+      </q-form>
+    </c-dialog>
   </q-layout>
 </template>
 
@@ -527,5 +661,9 @@ onMounted(async () => {
 
 .book-info div{
   font-family: "BIZ UDPGothic";
+}
+
+.select-sort-key{
+  width: 148px;
 }
 </style>

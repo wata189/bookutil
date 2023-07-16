@@ -1,3 +1,6 @@
+
+import { Dark } from 'quasar';
+
 const openPageAsNewTab = (url:string) => {
   window.open(url, "_blank");
 };
@@ -22,10 +25,15 @@ const strToTag = (tagStr:string):string[] => {
                 .filter(tag => tag); // 空文字排除
 };
 
+const isDarkMode = ():boolean => {
+  return Dark.isActive;
+};
+
 export default {
   openPageAsNewTab,
   isIsbn,
   isExist,
   isUrl,
-  strToTag
+  strToTag,
+  isDarkMode
 }
