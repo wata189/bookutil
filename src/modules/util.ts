@@ -17,9 +17,15 @@ const isUrl = (url:string):boolean => {
   return /^https?:\/\//.test(url);
 };
 
+const strToTag = (tagStr:string):string[] => {
+  return tagStr.split(/[ 　\,\/]/)
+                .filter(tag => tag); // 空文字排除
+};
+
 export default {
   openPageAsNewTab,
   isIsbn,
   isExist,
-  isUrl
+  isUrl,
+  strToTag
 }

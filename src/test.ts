@@ -54,6 +54,28 @@ describe.each([
     expect(util.isUrl(param)).toBe(expected);
   })
 });
+describe.each([
+  ["", 0],
+  ["1", 1],
+
+  ["1/1", 2],
+  ["1 1", 2],
+  ["1　1", 2],
+  ["1,1", 2],
+  ["1,/ 　1", 2],
+
+  [" 1 ", 1],
+  ["/1/", 1],
+  ["　1　", 1],
+  [",a,", 1],
+
+  ["1,1 1　1/1", 5],
+  
+])("strTotag(%p)", (param, expected) => {
+  test(`length = ${expected}`, () => {
+    expect(util.strToTag(param).length).toBe(expected);
+  })
+});
 
 
 
