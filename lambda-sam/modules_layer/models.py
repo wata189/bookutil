@@ -37,12 +37,11 @@ def fetch_menus(is_auth: bool):
 def fetch_toread(is_auth, mysql):
 
     # DBから取得
-    result = []
-    if is_auth:
-        result = mysql.select("fetch_toread")
-    else:
-        # TODO:isAuthがfalseの場合はモック用の本のみ表示する
-        result = mysql.select("fetch_toread")
+    result = mysql.select("fetch_toread")
+
+    # モック用 ログインしていない場合はプログラミングタグを持つ本のみ表示
+    if not is_auth:
+        result = list(filter(lambda row: "プログラミング" in row["tags"], result))
 
     toread_rows = [
         {
@@ -59,6 +58,7 @@ def fetch_toread(is_auth, mysql):
             "tags":            row["tags"]
         } for row in result
     ]
+
 
     return toread_rows
 
