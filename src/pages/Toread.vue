@@ -69,18 +69,26 @@ const onChangeSortCondKey = (value:string) => {
   }
 };
 
-const dispToreadBooks = computed({
-  get: () => {
+const pagination = ref({
+  number: 1,
+
+  dispMax: 10 //TODO: テストのために10件ぐらいにしてるけど本当は50-100件ぐらい
+});
+const paginationMax = computed(() => {
+  return Math.ceil(toreadBooks.value.length / pagination.value.dispMax)
+});
+const isShowPagination = computed(() => {
+  return filterToreadBooks(toreadBooks.value).length > pagination.value.dispMax;
+});
+
+const filterToreadBooks = (books:Book[]) => {
     // 条件キャッシュ
     const filterWord = filterCond.value.word;
     const filterTags = util.strToTag(filterCond.value.tags);
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
 
-    const sortKey = sortCond.value.key;
-    const isDesc = sortCond.value.isDesc;
-
     /////// フィルター
-    return toreadBooks.value.filter((book:Book) => {
+    return books.filter((book:Book) => {
       // 検索ワードでの検索
       const searchedText = [
         book.bookName,
@@ -100,10 +108,16 @@ const dispToreadBooks = computed({
     }).filter((book:Book) => {
       // 新刊のみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-
+    });
+}
+const dispToreadBooks = computed({
+  get: () => {
+    // 条件キャッシュ
+    const sortKey = sortCond.value.key;
+    const isDesc = sortCond.value.isDesc;
 
     /////// ソート
-    }).sort((aBook:Book, bBook:Book) => {
+    return filterToreadBooks(toreadBooks.value).sort((aBook:Book, bBook:Book) => {
       if(sortKey === SORT_KEY.ID){
         // ID(追加順)でソート
         return isDesc ? Number(bBook.id) - Number(aBook.id) : Number(aBook.id) - Number(bBook.id)
@@ -119,11 +133,17 @@ const dispToreadBooks = computed({
           return aPage - bPage;
         }
       }else{
-        // よみたい順でソート
-        // よみたい順の場合はisDesc無視ですべて降順
+        // よみたい順でソート よみたい順の場合はisDesc無視ですべて降順
         return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
       }
-    });
+    
+    /////////// ページネーション
+    }).slice(
+      // start: ページ番号 - 1 * 表示件数
+      (pagination.value.number - 1) * pagination.value.dispMax,
+      // end: ページ番号*表示件数 or 最後
+      Math.min(pagination.value.number * pagination.value.dispMax, toreadBooks.value.length)
+    );
   },
   set: (value) => {
     toreadBooks.value = value
@@ -390,6 +410,26 @@ onMounted(async () => {
   <q-layout view="hHh lpr fFf">
     <q-page-container>
       <q-page>
+        <div class="row lt-md">
+          <q-space></q-space>
+          <div class="q-pa-sm">
+            <q-pagination
+              v-if="isShowPagination"
+              v-model="pagination.number"
+              :max="paginationMax"
+              direction-links
+              boundary-links
+              flat
+              :max-pages="6"
+              color="secondary"
+              icon-first="skip_previous"
+              icon-last="skip_next"
+              icon-prev="fast_rewind"
+              icon-next="fast_forward"
+            />
+          </div>
+          <q-space></q-space>
+        </div>
         <div class="row">
           <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-pa-sm">
             <q-card class="q-pb-sm" :title="book.bookName">
@@ -466,6 +506,26 @@ onMounted(async () => {
             </q-card>
           </div>
         </div>
+        <div class="row lt-md">
+          <q-space></q-space>
+          <div class="q-pa-sm">
+            <q-pagination
+              v-if="isShowPagination"
+              v-model="pagination.number"
+              :max="paginationMax"
+              direction-links
+              boundary-links
+              flat
+              :max-pages="6"
+              color="secondary"
+              icon-first="skip_previous"
+              icon-last="skip_next"
+              icon-prev="fast_rewind"
+              icon-next="fast_forward"
+            />
+          </div>
+          <q-space></q-space>
+        </div>
       </q-page>
     </q-page-container>
     <q-footer elevated :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
@@ -518,6 +578,22 @@ onMounted(async () => {
                   @click="showNewBookDialog"
                 ></c-round-btn>
               </div>
+              <q-space></q-space>
+              <q-pagination
+                v-if="isShowPagination"
+                v-model="pagination.number"
+                :max="paginationMax"
+                direction-links
+                boundary-links
+                flat
+                :max-pages="6"
+                class="gt-sm"
+                color="secondary"
+                icon-first="skip_previous"
+                icon-last="skip_next"
+                icon-prev="fast_rewind"
+                icon-next="fast_forward"
+              />
             </div>
           </q-item-section>
         </template>
