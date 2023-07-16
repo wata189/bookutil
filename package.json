@@ -6,7 +6,7 @@
   "scripts": {
     "testVue": "jest",
     "devVue": "jest && vite",
-    "testLambda": "cd lambda-sam && pytest test_lambda.py",
+    "testLambda": "cd lambda-sam && pytest test_lambda.py -v --cov modules_layer",
     "devLambda": "cd lambda-sam && pytest test_lambda.py && sam build && sam local start-api --env-vars env.json --docker-network host",
     "buildVue": "vue-tsc && vite build",
     "previewVue": "vite preview"
