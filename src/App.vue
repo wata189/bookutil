@@ -5,14 +5,34 @@ import { onMounted } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
 
 import util from '@/modules/util';
-import axiosUtil from '@/modules/axiosUtil';
 import authUtil from '@/modules/authUtil';
+import AxiosUtil from '@/modules/axiosUtil';
+const axiosUtil = new AxiosUtil((status, statusText, msg) => {
+  showErrorDialog(status, statusText, msg)
+});
 
 const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
 // メニューは権限に応じて取得
 const menus = ref([]);
 
 const user = ref({email:""});
+
+const errorDialog = ref({
+  isShow: false,
+  status: 500,
+  statusText: "",
+  msg: ""
+});
+const showErrorDialog = (status: number, statusText: string, msg: string) => {
+  // エラーダイアログ表示
+  errorDialog.value = {
+    isShow: true,
+    status,
+    statusText,
+    msg
+  };
+};
+
 
 onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
@@ -37,6 +57,7 @@ onMounted(async () => {
   }
 
   // メニュー情報取得
+  // TODO: メニューの取得はヘッダーで行ってからRouterViewにわたす動きにすべき
   const paramAccessToken = accessToken || '';
   const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
   if(response){
@@ -54,7 +75,10 @@ onMounted(async () => {
     ></c-header>
     <q-page-container>
       <q-page>
-        <RouterView :menus="menus" />
+        <RouterView 
+          :menus="menus"
+          @show-error-dialog="showErrorDialog"
+        />
         <q-ajax-bar
           :hijak-filter="util.isUrl"
           position="bottom"
@@ -64,6 +88,25 @@ onMounted(async () => {
         </q-ajax-bar>
       </q-page>
     </q-page-container>
+
+
+    <!-- エラー表示するダイアログ -->
+    <q-dialog
+      v-model="errorDialog.isShow"
+      persistent
+    >
+      <q-card>
+        <q-card-section class="bg-negative text-white">
+          <span class="text-h6">{{ errorDialog.status }} {{ errorDialog.statusText }}</span>
+        </q-card-section>
+        <q-card-section class="bg-red-5 text-white">
+          <span>{{ errorDialog.msg }}</span>
+        </q-card-section>
+        <q-card-actions class="bg-red-5 text-white" align="right">
+          <q-btn flat label="OK" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 

@@ -1,35 +1,45 @@
-import axiosBase from "axios";
+import axiosBase, { AxiosError, AxiosInstance } from "axios";
 
-const axios = axiosBase.create({
-  baseURL: import.meta.env.VITE_LAMBDA_URL,
-  headers: {
-    'Content-Type': 'application/json;charset=utf-8'
-  },
-  responseType: 'json'  
-});
+type ErrorData = {
+  msg: string
+};
 
-const get = async (path:string, headerParams?:Object) => {
-  try{
+class AxiosUtil{
+  axios: AxiosInstance;
+
+  // コンストラクタでエラーをハンドリングする関数設定
+  constructor(errorFunction: (status:number, statusText:string, msg:string) => void){
+    this.axios = axiosBase.create({
+      baseURL: import.meta.env.VITE_LAMBDA_URL,
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      },
+      responseType: 'json'  
+    });
+
+    // インターセプターを利用したエラー処理ハンドリング
+    this.axios.interceptors.response.use((response) => {
+      // 成功時は普通にresponse返却
+      return response;
+    }, (error:AxiosError<ErrorData>) => {
+      console.log(error);
+      const status = error.response?.status || 500;
+      const statusText = error.response?.statusText || "Server Error";
+      const msg = error.response?.data?.msg || "不明なエラーが発生しました";
+      // エラー内容をコンストラクタに設定した関数にわたす
+      errorFunction(status, statusText, msg);
+    });
+  }
+
+  async get(path:string, headerParams?:Object){
     console.log(`axios get:${path}`);
-
-    return await axios.get(path, headerParams);
-  }catch(error){
-    // TODO: エラーハンドリング共通化
-    console.log(error);
+    return await this.axios.get(path, headerParams);
   }
-};
-const post = async (path:string, params?:Object) => {
-  try{
+
+  async post(path:string, params?:Object){
     console.log(`axios post:${path}`);
-
-    return await axios.post(path, params);
-  }catch(error){
-    // TODO: エラーハンドリング共通化
-    console.log(error);
+    return await this.axios.post(path, params);
   }
-};
-
-export default {
-  get,
-  post
 }
+
+export default AxiosUtil

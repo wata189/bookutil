@@ -24,6 +24,7 @@ interface Props {
 };
 const props = defineProps<Props>();
 
+
 // ダークモード情報をlocalstorageから取り出して設定
 const isDarkMode = ref(false);
 if(localStorage.isDarkMode === "true"){

@@ -27,10 +27,7 @@ const isUrl = (valName:string) => {
     if(!util.isExist(val)){return true;}
 
     return util.isUrl(val) || `${valName}はURLを入力してください`;
-  }
-  
-
-
+  };
 };
 
 

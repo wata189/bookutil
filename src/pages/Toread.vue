@@ -3,17 +3,21 @@ import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref } from 'vue';
 import { QForm} from "quasar";
 
-import axiosUtil from '@/modules/axiosUtil';
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import openBdUtil from "@/modules/openBdUtil";
+import AxiosUtil from '@/modules/axiosUtil';
 
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
-
+// axiosUtilのインスタンス作成
+const emits = defineEmits(["show-error-dialog"]);
+const axiosUtil = new AxiosUtil((status, statusText, msg) => {
+  emits("show-error-dialog", status, statusText, msg);
+});
 
 type Book = {
   id: string,
@@ -534,10 +538,8 @@ onMounted(async () => {
         expand-separator
         v-model="isShowFilterCond"
       >
-        
         <template v-slot:header>
           <q-item-section>
-            
             <div class="row">
               <div class="col-auto q-pa-sm">
                 <q-select 
