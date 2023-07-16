@@ -10,22 +10,10 @@
     ],
     "service_worker": "background.js"
   },
-  
-  "content_scripts": [
-    {
-      "matches": [
-        "https://www.amazon.co.jp/dp/*",
-        "https://calil.jp/book/*"
-      ],
-      "run_at":"document_start",
-      "js": ["content.js"]
-    }
-  ],
   "permissions": [
     "activeTab",
     "contextMenus",
-    "tabs",
-    "runtime"
+    "tabs"
   ],
   "icons": {
     "16": "icons/icon16.png",
