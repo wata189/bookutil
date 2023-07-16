@@ -1,5 +1,6 @@
 
 import { Dark } from 'quasar';
+import { useRouter } from "vue-router";
 
 const openPageAsNewTab = (url:string) => {
   window.open(url, "_blank");
@@ -29,11 +30,17 @@ const isDarkMode = ():boolean => {
   return Dark.isActive;
 };
 
+const router = useRouter();
+const transite = (to:string) => {
+  router.push(to);
+};
+
 export default {
   openPageAsNewTab,
   isIsbn,
   isExist,
   isUrl,
   strToTag,
-  isDarkMode
+  isDarkMode,
+  transite
 }

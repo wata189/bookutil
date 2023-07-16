@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Dark } from 'quasar';
-import { useRouter } from "vue-router";
 import { onMounted } from '@vue/runtime-core';
+
 import CRoundBtn from '@/components/c-round-btn.vue';
+
+import util from '@/modules/util';
 import authUtil from '@/modules/authUtil';
 
 interface Menu {
@@ -22,7 +24,6 @@ interface Props {
 };
 const props = defineProps<Props>();
 
-const router = useRouter();
 // ダークモード情報をlocalstorageから取り出して設定
 const isDarkMode = ref(false);
 if(localStorage.isDarkMode === "true"){
@@ -37,9 +38,6 @@ const themeChangeIcon = computed(() => {
   return isDarkMode.value ? "dark_mode" : "light_mode";
 });
 
-const transite = (to:string) => {
-  router.push(to);
-};
 const toggleMode = () => {
   setMode(!isDarkMode.value); //ダークモードをトグルして設定
 };
@@ -73,7 +71,7 @@ onMounted(() => {
     <q-toolbar>
       <q-toolbar-title class="toolbar-title">
         <!--TODO:アイコンを設定-->
-        <div @click="transite('/')">
+        <div @click="util.transite('/')">
           <q-img src="img/icon.svg" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
