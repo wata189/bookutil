@@ -25,6 +25,7 @@ const value = computed({
   <q-dialog
     v-model="value"
     :full-width="true"
+    persistent
   >
     <q-card>
       <q-card-section class="row">

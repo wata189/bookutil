@@ -8,7 +8,7 @@ class AxiosUtil{
   axios: AxiosInstance;
 
   // コンストラクタでエラーをハンドリングする関数設定
-  constructor(errorFunction: (status:number, statusText:string, msg:string) => void){
+  constructor(emits: (event:"show-error-dialog", ...args: any[]) => void){
     this.axios = axiosBase.create({
       baseURL: import.meta.env.VITE_LAMBDA_URL,
       headers: {
@@ -26,8 +26,8 @@ class AxiosUtil{
       const status = error.response?.status || 500;
       const statusText = error.response?.statusText || "Server Error";
       const msg = error.response?.data?.msg || "不明なエラーが発生しました";
-      // エラー内容をコンストラクタに設定した関数にわたす
-      errorFunction(status, statusText, msg);
+      // エラー内容を上のコンポーネントにemitする
+      emits("show-error-dialog", status, statusText, msg);
     });
   }
 

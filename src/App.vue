@@ -7,9 +7,11 @@ import { ref } from '@vue/reactivity';
 import util from '@/modules/util';
 import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
-const axiosUtil = new AxiosUtil((status, statusText, msg) => {
-  showErrorDialog(status, statusText, msg)
-});
+
+// axiosUtilのインスタンス作成
+// TODO:menus取得処理をc-headerに移したら削除
+const emits = defineEmits(["show-error-dialog"]);
+const axiosUtil = new AxiosUtil(emits);
 
 const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
 // メニューは権限に応じて取得

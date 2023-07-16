@@ -15,9 +15,7 @@ import CInputTag from "@/components/c-input-tag.vue";
 
 // axiosUtilのインスタンス作成
 const emits = defineEmits(["show-error-dialog"]);
-const axiosUtil = new AxiosUtil((status, statusText, msg) => {
-  emits("show-error-dialog", status, statusText, msg);
-});
+const axiosUtil = new AxiosUtil(emits);
 
 type Book = {
   id: string,
@@ -263,6 +261,9 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.authorName = bookInfo.authorName;
     bookDialog.value.form.publisherName = bookInfo.publisherName;
     bookDialog.value.form.page = bookInfo.page;
+  }else{
+    // なかったらエラーダイアログ
+    emits("show-error-dialog", null, "取得失敗", "OpenBDからデータを取得できませんでした")
   }
 
 };
@@ -396,16 +397,15 @@ onMounted(async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
-  if(urlParamIsbn){
+  if(urlParamIsbn && util.isIsbn(urlParamIsbn)){
     isExternalCooperation = true;
     showNewBookDialog();
 
-    if(util.isIsbn(urlParamIsbn)){
-      await getBookInfo(urlParamIsbn);
-    }else{
-      // TODO: ISBNが取得できなかったことをアラートで表示
-      bookDialog.value.form.bookName = "ISBNが取得できませんでした"
-    }
+    bookDialog.value.form.isbn = urlParamIsbn;
+    await getBookInfo(urlParamIsbn);
+  }else{
+    // ISBNが取得できなかったことをアラートで表示
+    emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
   }
 });
 </script>
