@@ -12,6 +12,7 @@ import AxiosUtil from '@/modules/axiosUtil';
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
+import CPagination from '@/components/c-pagination.vue';
 
 // axiosUtilのインスタンス作成
 const emits = defineEmits(["show-error-dialog"]);
@@ -417,20 +418,11 @@ onMounted(async () => {
         <div class="row lt-md">
           <q-space></q-space>
           <div class="q-pa-sm">
-            <q-pagination
+            <c-pagination
               v-if="isShowPagination"
               v-model="pagination.number"
               :max="paginationMax"
-              direction-links
-              boundary-links
-              flat
-              :max-pages="6"
-              color="secondary"
-              icon-first="skip_previous"
-              icon-last="skip_next"
-              icon-prev="fast_rewind"
-              icon-next="fast_forward"
-            />
+            ></c-pagination>
           </div>
           <q-space></q-space>
         </div>
@@ -513,20 +505,11 @@ onMounted(async () => {
         <div class="row lt-md">
           <q-space></q-space>
           <div class="q-pa-sm">
-            <q-pagination
+            <c-pagination
               v-if="isShowPagination"
               v-model="pagination.number"
               :max="paginationMax"
-              direction-links
-              boundary-links
-              flat
-              :max-pages="6"
-              color="secondary"
-              icon-first="skip_previous"
-              icon-last="skip_next"
-              icon-prev="fast_rewind"
-              icon-next="fast_forward"
-            />
+            ></c-pagination>
           </div>
           <q-space></q-space>
         </div>
@@ -581,21 +564,12 @@ onMounted(async () => {
                 ></c-round-btn>
               </div>
               <q-space></q-space>
-              <q-pagination
+              <c-pagination
                 v-if="isShowPagination"
                 v-model="pagination.number"
                 :max="paginationMax"
-                direction-links
-                boundary-links
-                flat
-                :max-pages="6"
                 class="gt-sm"
-                color="secondary"
-                icon-first="skip_previous"
-                icon-last="skip_next"
-                icon-prev="fast_rewind"
-                icon-next="fast_forward"
-              />
+              ></c-pagination>
             </div>
           </q-item-section>
         </template>
