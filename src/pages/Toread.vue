@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
-import { ref } from '@vue/reactivity';
+import { computed, ref } from 'vue';
 import { QForm} from "quasar";
 
 import axiosUtil from '@/modules/axiosUtil';
@@ -14,8 +14,11 @@ import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 
 
-const searchWord = ref("");
-const tags = ref("");
+const filterCond = ref({
+  word: "",
+  tags: "",
+  isOnlyNewBookCheckFlg: false
+});
 
 type Book = {
   id: string,
@@ -33,6 +36,34 @@ type Book = {
 };
 
 const toreadBooks: Ref<Book[]> = ref([]);
+
+const filteredToreadBooks = computed({
+  get: () => {
+    return toreadBooks.value.filter((book:Book) => {
+      // 検索ワードでの検索
+      const searchedText = [
+        book.bookName,
+        book.isbn,
+        book.authorName,
+        book.publisherName,
+        book.tags
+      ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
+      .replace(/ 　,/g, ""); // 空白など削除
+      return searchedText.includes(filterCond.value.word); // TODO:wordの複数検索は？
+    }).filter((book:Book) => {
+      // タグでの検索
+      const filterTags = util.strToTag(filterCond.value.tags);
+      const bookTags = util.strToTag(book.tags);
+      return true;
+    }).filter((book:Book) => {
+      // 新刊のみでのフィルター
+      return !filterCond.value.isOnlyNewBookCheckFlg || book.newBookCheckFlg.value;
+    });
+  },
+  set: (value) => {
+    toreadBooks.value = value
+  }
+});
 
 const toreadTagOptions = ref([]);
 
@@ -113,10 +144,7 @@ const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
     searchUrl = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, bookName);
   }
 
-  openPageAsNewTab(searchUrl);
-};
-const openPageAsNewTab = (url: string) => {
-  util.openPageAsNewTab(url);
+  util.openPageAsNewTab(searchUrl);
 };
 
 const getBookInfo = async (isbn:string) => {
@@ -284,7 +312,7 @@ onMounted(async () => {
     <q-page-container>
       <q-page>
         <div class="row">
-          <div v-for="book in toreadBooks" class="col book-cover-wrapper q-pa-sm">
+          <div v-for="book in filteredToreadBooks" class="col book-cover-wrapper q-pa-sm">
             <q-card class="q-pb-sm" :title="book.bookName">
               <q-checkbox
                 v-model="book.isChecked"
@@ -306,7 +334,7 @@ onMounted(async () => {
                   {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
                 </div>
                 <div>
-                  <q-chip v-for="tag in book.tags.split('/')" dense color="teal">{{ tag }}</q-chip>
+                  <q-chip v-for="tag in util.strToTag(book.tags)" dense color="teal">{{ tag }}</q-chip>
                 </div>
                 <q-btn
                   v-for="link in links"
@@ -330,7 +358,7 @@ onMounted(async () => {
                   color="white"
                   text-color="black"
                   title="外部リンク"
-                  @click="openPageAsNewTab(book.otherUrl)"
+                  @click="util.openPageAsNewTab(book.otherUrl)"
                 >
                 </q-btn>
                 <div class="row">
@@ -363,17 +391,18 @@ onMounted(async () => {
     <q-footer class="bg-grey">
       <div class="row">
         <div class="col-12 col-sm-4 q-pa-sm">
-          <q-input dense v-model="searchWord" label="検索"></q-input>
+          <q-input dense v-model="filterCond.word" label="検索"></q-input>
         </div>
         <div class="col-12 col-sm-8 q-pa-sm">
           <c-input-tag
-            v-model="tags"
+            v-model="filterCond.tags"
             label="タグ"
             dense
             hint=",/スペースで区切られます"
             :options="toreadTagOptions"
           ></c-input-tag>
         </div>
+        <!-- TODO: isOnlyNewBook-->
       </div>
       <div class="row">
         <div class="col-6  col-sm-3 col-md-2 q-pa-sm">
