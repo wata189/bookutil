@@ -171,7 +171,7 @@ const toreadTagOptions = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = localStorage.accessToken;
+  const accessToken = authUtil.getLocalStorageAccessToken();
   const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
   if(response){
     toreadBooks.value = response.data.toreadRows.map((book:Book):Book => {
@@ -346,7 +346,7 @@ const createUpdateParams = async (bookId:string, updateAt:number, form:BookForm)
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = localStorage.accessToken || "";
+  const accessToken = authUtil.getLocalStorageAccessToken();
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
   const params:BookParams = {

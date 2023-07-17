@@ -52,18 +52,14 @@ onMounted(async () => {
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get('code');
 
-
   // トークン取得
   if(code){
     localStorage.code = code;
-    const tokens = await authUtil.getToken(code);
-
-    localStorage.accessToken = tokens.accessToken;
-    localStorage.idToken = tokens.idToken;
+    await authUtil.getToken(code);
   }
 
   // ユーザー情報取得
-  const accessToken = localStorage.accessToken;
+  const accessToken = authUtil.getLocalStorageAccessToken();
   if(accessToken){
     const userInfo = await authUtil.getUserInfo(accessToken);
     user.value = userInfo;

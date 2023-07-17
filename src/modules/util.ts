@@ -29,6 +29,7 @@ const isDarkMode = ():boolean => {
   return Dark.isActive;
 };
 
+
 export default {
   openPageAsNewTab,
   isIsbn,

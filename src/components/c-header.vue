@@ -56,15 +56,6 @@ const setMode = (isDark: boolean) => {
   // ダークモードの値をlocalStorageに保存
   localStorage.isDarkMode = isDark;
 };
-const login = () => {
-  authUtil.login();
-};
-const logout = () => {
-  // アクセストークン初期化
-  localStorage.accessToken = "";
-
-  authUtil.logout();
-};
 
 const iconSize = "24px";
 
@@ -72,8 +63,7 @@ onMounted(async () => {
   setMode(isDarkMode.value);
 
   // メニュー情報取得
-  // TODO: アクセストークンのsetとgetはauthUtilでやる
-  const paramAccessToken = localStorage.accessToken || '';
+  const paramAccessToken = authUtil.getLocalStorageAccessToken();
   const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
   if(response){
     emits("fetch-menus", response.data.menus)
@@ -116,11 +106,11 @@ onMounted(async () => {
               <q-item v-close-popup>
                 <q-item-section>{{ user.email }}</q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="logout">
+              <q-item clickable v-close-popup @click="authUtil.logout">
                 <q-item-section>ログアウト</q-item-section>
               </q-item>
             </template>
-            <q-item v-else clickable v-close-popup @click="login">
+            <q-item v-else clickable v-close-popup @click="authUtil.login">
               <q-item-section>ログイン</q-item-section>
             </q-item>
           </q-list>

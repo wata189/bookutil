@@ -32,9 +32,12 @@ const getToken = async (code: string):Promise<Tokens> =>{
       tokens.idToken = data.id_token;
       tokens.accessToken = data.access_token;
     }
-    return tokens;
   }catch(error){
     console.log(error);
+  }finally{
+    // トークンをローカルストレージに設定
+    localStorage.accessToken = tokens.accessToken;
+    localStorage.idToken = tokens.idToken;
     return tokens;
   }
 } 
@@ -67,14 +70,22 @@ const login = () => {
 };
 // ログアウト
 const logout = () => {
+  // アクセストークン初期化
+  localStorage.accessToken = "";
+  localStorage.idToken = "";
+
   const url = `${authUrl}/logout?client_id=${clientId}&logout_uri=${redirectUrl}`;
   window.location.href = url;
 };
 
+const getLocalStorageAccessToken = ():string => {
+  return localStorage.accessToken || '';
+};
 
 export default {
   getToken,
   getUserInfo,
   login,
-  logout
+  logout,
+  getLocalStorageAccessToken
 }
