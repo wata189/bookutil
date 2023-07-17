@@ -237,6 +237,14 @@ const links:Link[] = [
       isbn: "https://www.amazon.co.jp/dp/" + SEARCH_PLACEHOLDER,
       bookName: "https://www.amazon.co.jp/s?k=" + SEARCH_PLACEHOLDER +"&i=stripbooks"
     }
+  },
+  {
+    title: "国会図書館",
+    imgUrl: "img/ndl.png",
+    searchUrl: {
+      isbn: "https://ndlonline.ndl.go.jp/#!/search?isbn=" + SEARCH_PLACEHOLDER,
+      bookName: "https://ndlonline.ndl.go.jp/#!/search?title=" + SEARCH_PLACEHOLDER
+    }
   }
 ];
 const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
@@ -478,7 +486,7 @@ onMounted(async () => {
       emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
     }
   }
-  
+
   await initToread();
   
 });
