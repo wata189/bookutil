@@ -5,17 +5,22 @@ import { onMounted } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
 
 import util from '@/modules/util';
-import authUtil from '@/modules/authUtil';
-import AxiosUtil from '@/modules/axiosUtil';
+import authUtil from '@/modules/authUtil'
+import { Ref } from 'vue';
 
-// axiosUtilのインスタンス作成
-// TODO:menus取得処理をc-headerに移したら削除
-const emits = defineEmits(["show-error-dialog"]);
-const axiosUtil = new AxiosUtil(emits);
 
 const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
-// メニューは権限に応じて取得
-const menus = ref([]);
+
+interface Menu {
+  name: string,
+  to: string,
+  icon: string,
+  description: string
+};
+const menus:Ref<Menu[]> = ref([]);
+const setMenus = (fetchedMenus:Menu[]) => {
+  menus.value = fetchedMenus;
+};
 
 const user = ref({email:""});
 
@@ -58,13 +63,6 @@ onMounted(async () => {
     user.value = userInfo;
   }
 
-  // メニュー情報取得
-  // TODO: メニューの取得はヘッダーで行ってからRouterViewにわたす動きにすべき
-  const paramAccessToken = accessToken || '';
-  const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
-  if(response){
-    menus.value = response.data.menus
-  }
 });
 </script>
 
@@ -74,6 +72,8 @@ onMounted(async () => {
       :page-name="pageName"
       :menus="menus"
       :user="user"
+      @fetch-menus="setMenus"
+      @show-error-dialog="showErrorDialog"
     ></c-header>
     <q-page-container>
       <q-page>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import util from "@/modules/util";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 interface Menu {
   name: string,
@@ -18,7 +20,7 @@ const props = defineProps<Props>();
   <div class="row justify-center">
     <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
       <div v-for="menu in props.menus" class="q-pa-md">
-        <q-card class="card-menu" @click="util.transite(menu.to)">
+        <q-card class="card-menu" @click="router.push(menu.to)">
           <q-card-section>
             <div class="text-h6">
               <q-icon :name="menu.icon"></q-icon>

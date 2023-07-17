@@ -2,11 +2,19 @@
 import { computed, ref } from 'vue';
 import { Dark } from 'quasar';
 import { onMounted } from '@vue/runtime-core';
+import { useRouter } from 'vue-router';
 
 import CRoundBtn from '@/components/c-round-btn.vue';
 
-import util from '@/modules/util';
 import authUtil from '@/modules/authUtil';
+import AxiosUtil from '@/modules/axiosUtil';
+
+// axiosUtilのインスタンス作成
+// TODO:menus取得処理をc-headerに移したら削除
+const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
+const axiosUtil = new AxiosUtil(emits);
+
+const router = useRouter();
 
 interface Menu {
   name: string,
@@ -61,8 +69,17 @@ const logout = () => {
 
 const iconSize = "24px";
 
-onMounted(() => {
+onMounted(async () => {
   setMode(isDarkMode.value);
+
+  // メニュー情報取得
+  // TODO: アクセストークンのsetとgetはauthUtilでやる
+  const paramAccessToken = localStorage.accessToken || '';
+  const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
+  if(response){
+    emits("fetch-menus", response.data.menus)
+  }
+
 });
 
 </script>
@@ -72,7 +89,7 @@ onMounted(() => {
     <q-toolbar>
       <q-toolbar-title class="toolbar-title">
         <!--TODO:アイコンを設定-->
-        <div @click="util.transite('/')">
+        <div @click="router.push('/')">
           <q-img src="img/icon.svg" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
