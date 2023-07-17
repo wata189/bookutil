@@ -273,7 +273,7 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.page = bookInfo.page;
   }else{
     // なかったらエラーダイアログ
-    emits("show-error-dialog", null, "取得失敗", "OpenBDからデータを取得できませんでした")
+    emits("show-error-dialog", null, "エラー", "OpenBDからデータを取得できませんでした")
   }
 
 };
@@ -358,7 +358,7 @@ type BookParams = {
     other_url: string | null;
     new_book_check_flg: number;
     tags: string;
-    access_token: any;
+    access_token: string;
     is_external_cooperation: boolean;
 }
 const createCreateParams = async (form:BookForm) => {
@@ -398,6 +398,41 @@ const createBookParams = async (form:BookForm) => {
   };
   
   return params;
+};
+
+type DeleteBook = {
+  id: string,
+  update_at: number
+}
+type DeleteBookParams = {
+  deleteBooks: DeleteBook[];
+  user: string;
+  access_token: string;
+}
+const deleteBooks = async () => {
+  const books:DeleteBook[] = toreadBooks.value.filter(book => book.isChecked)
+                                        .map(book => {
+                                          return {id:book.id, update_at:book.updateAt}
+                                        });
+  // 0件選択の場合はエラーダイアログ
+  if(books.length === 0){
+    emits("show-error-dialog", null, "エラー", "削除する本を選択してください")
+    return;
+  }
+  // TODO: 確認ダイアログ
+
+  const accessToken = authUtil.getLocalStorageAccessToken()
+  const user = await authUtil.getUserInfo(accessToken);
+  const params:DeleteBookParams = {
+    deleteBooks: books,
+    user: user.email || "No User Data",
+    access_token: accessToken
+  };
+  const response = await axiosUtil.post(`/toread/delete`, params);
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+  }
 };
 
 type BookDialog = {
@@ -500,7 +535,7 @@ onMounted(async () => {
       await getBookInfo(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
-      emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
+      emits("show-error-dialog", null, "エラー", "ISBNを取得できませんでした")
     }
   }
 
@@ -647,7 +682,7 @@ onMounted(async () => {
                   title="一括削除"  
                   icon="delete"
                   color="negative"
-                  @click=""
+                  @click="deleteBooks"
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
