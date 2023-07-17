@@ -506,10 +506,10 @@ onMounted(async () => {
               </q-checkbox>
               <q-img
                 :src="book.coverUrl"
-                class="book-img"
+                class="book-img book-card-item"
                 fit="contain"
               ></q-img>
-              <div class="ellipsis q-px-sm">
+              <div class="ellipsis q-px-sm book-card-item">
                   {{ book.bookName }}
               </div>
               <q-menu fit class="q-pa-md book-info">
@@ -775,6 +775,10 @@ onMounted(async () => {
 .book-cover-wrapper{
   max-width: 140px;
   min-width: 140px;
+}
+
+.book-card-item{
+  cursor: pointer;
 }
 
 .book-img{
