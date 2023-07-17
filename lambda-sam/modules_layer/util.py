@@ -33,7 +33,7 @@ def create_response(status_code_str:str, body={}, msg=""):
 
 def is_isbn(isbn: str):
     isbn_13_pattern = "^[0-9]{13}$"
-    isbn_10_pattern = "^[0-9]{9}[1-9X]$"
+    isbn_10_pattern = "^[0-9]{9}[0-9X]$"
 
     return not(not re.match(isbn_10_pattern, isbn)) or not(not re.match(isbn_13_pattern, isbn))
 

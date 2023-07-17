@@ -6,7 +6,7 @@ const openPageAsNewTab = (url:string) => {
 };
 
 const isIsbn = (isbn: string):boolean => {
-  const isbn10Regex = /^[0-9]{9}[1-9X]$/;
+  const isbn10Regex = /^[0-9]{9}[0-9X]$/;
   const isbn13Regex = /^[0-9]{13}$/;
   return isbn10Regex.test(isbn) || isbn13Regex.test(isbn);
 };

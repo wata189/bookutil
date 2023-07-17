@@ -27,7 +27,7 @@ def test_is_isbn_2():
 def test_is_isbn_3():
     assert util.is_isbn("123456789") == False
 def test_is_isbn_D():
-    assert util.is_isbn("1234567890") == False
+    assert util.is_isbn("1234567890") == True
 def test_is_isbn_E():
     assert util.is_isbn("1234567891") == True
 def test_is_isbn_4():
@@ -152,7 +152,7 @@ def test_validation_util_is_isbn_2():
 def test_validation_util_is_isbn_3():
     assert validation_util.is_isbn("123456789") == False
 def test_validation_util_is_isbn_4():
-    assert validation_util.is_isbn("1234567890") == False
+    assert validation_util.is_isbn("1234567890") == True
 def test_validation_util_is_isbn_5():
     assert validation_util.is_isbn("1234567891") == True
 def test_validation_util_is_isbn_6():
