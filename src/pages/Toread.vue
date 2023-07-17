@@ -398,15 +398,18 @@ onMounted(async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
-  if(urlParamIsbn && util.isIsbn(urlParamIsbn)){
-    isExternalCooperation = true;
-    showNewBookDialog();
+  if(urlParamIsbn){
 
-    bookDialog.value.form.isbn = urlParamIsbn;
-    await getBookInfo(urlParamIsbn);
-  }else{
-    // ISBNが取得できなかったことをアラートで表示
-    emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
+    if(util.isIsbn(urlParamIsbn)){
+      isExternalCooperation = true;
+      showNewBookDialog();
+
+      bookDialog.value.form.isbn = urlParamIsbn;
+      await getBookInfo(urlParamIsbn);
+    }else{
+      // ISBNが取得できなかったことをアラートで表示
+      emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
+    }
   }
 });
 </script>
