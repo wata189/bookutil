@@ -286,8 +286,27 @@ const createBook = () => {
     }
   });
 };
-const updateBook = () => {
-  // TODO:更新処理
+const editBook = () => {
+  // フォームのバリデーション処理
+  if(!bookDialogForm.value){return;}
+  bookDialogForm.value.validate().then(async (success:boolean) => {
+    if(!success){return;}
+
+    // formを送る
+    const updateAt = bookDialog.value.updateAt || 0;
+    const response = await updateBook(bookDialog.value.bookId, updateAt, bookDialog.value.form);
+    if(response){
+      // 画面情報取得し直し
+      await initToread();
+      // ダイアログ消す
+      bookDialog.value.isShow = false;
+    }
+  });
+};
+const updateBook = async (bookId:string, updateAt:number, form:BookForm) => {
+  const params = await createUpdateParams(bookId, updateAt, form);
+  const response = await axiosUtil.post(`/toread/update`, params);
+  return response;
 };
 
 type BookForm = {
@@ -300,16 +319,37 @@ type BookForm = {
     newBookCheckFlg: number;
     tags: string;
 }
+type BookParams = {
+    id: string | null;
+    update_at: number | null;
+    user: string;
+    book_name: string;
+    isbn: string | null;
+    page: number | null;
+    author_name: string | null;
+    publisher_name: string | null;
+    other_url: string | null;
+    new_book_check_flg: number;
+    tags: string;
+    access_token: any;
+    is_external_cooperation: boolean;
+}
 const createCreateParams = async (form:BookForm) => {
   const params = await createBookParams(form);
 
+  return params;
+};
+const createUpdateParams = async (bookId:string, updateAt:number, form:BookForm) => {
+  const params = await createBookParams(form);
+  params.id = bookId;
+  params.update_at = updateAt;
   return params;
 };
 const createBookParams = async (form:BookForm) => {
   const accessToken = localStorage.accessToken || "";
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
-  const params = {
+  const params:BookParams = {
     id: null,
     update_at: null,
     user: email,
@@ -379,11 +419,11 @@ const showNewBookDialog = () => {
 };
 
 // 編集ダイアログ表示
-const showBookDialog = (book:Book) => {
+const showEditBookDialog = (book:Book) => {
   bookDialog.value.bookId = book.id;
   bookDialog.value.headerText = "編集";
   bookDialog.value.okLabel = "更新";
-  bookDialog.value.okFunction = updateBook;
+  bookDialog.value.okFunction = editBook;
   bookDialog.value.updateAt = book.updateAt;
   bookDialog.value.form = {
     bookName: book.bookName,
@@ -524,7 +564,7 @@ onMounted(async () => {
                       title="編集"
                       icon="edit"
                       color="primary"
-                      @click="showBookDialog(book)"
+                      @click="showEditBookDialog(book)"
                     ></c-round-btn>
                   </div>
                 </div>

@@ -1,9 +1,5 @@
 import axiosBase, { AxiosError, AxiosInstance } from "axios";
 
-type ErrorData = {
-  msg: string
-};
-
 class AxiosUtil{
   axios: AxiosInstance;
 
@@ -21,11 +17,12 @@ class AxiosUtil{
     this.axios.interceptors.response.use((response) => {
       // 成功時は普通にresponse返却
       return response;
-    }, (error:AxiosError<ErrorData>) => {
+    }, (error:AxiosError) => {
       console.log(error);
-      const status = error.response?.status || 500;
-      const statusText = error.response?.statusText || "Server Error";
-      const msg = error.response?.data?.msg || "不明なエラーが発生しました";
+      const status = error.status || null;
+      const statusText = error.message || "Server Error";
+      const data:any = error.response?.data;
+      const msg = data?.msg || "不明なエラーが発生しました";
       // エラー内容を上のコンポーネントにemitする
       emits("show-error-dialog", status, statusText, msg);
     });
