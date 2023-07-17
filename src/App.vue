@@ -24,9 +24,15 @@ const setMenus = (fetchedMenus:Menu[]) => {
 
 const user = ref({email:""});
 
-const errorDialog = ref({
+type ErrorDialog = {
+  isShow: boolean,
+  status: number | null,
+  statusText: string,
+  msg: string
+}
+const errorDialog:Ref<ErrorDialog> = ref({
   isShow: false,
-  status: 500,
+  status: null,
   statusText: "",
   msg: ""
 });
@@ -99,7 +105,7 @@ onMounted(async () => {
     >
       <q-card>
         <q-card-section class="bg-negative text-white">
-          <span class="text-h6">{{ errorDialog.status }} {{ errorDialog.statusText }}</span>
+          <span class="text-h6"><span v-if="errorDialog.status">{{ errorDialog.status }} </span>{{ errorDialog.statusText }}</span>
         </q-card-section>
         <q-card-section class="bg-red-5 text-white">
           <span>{{ errorDialog.msg }}</span>
