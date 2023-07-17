@@ -40,9 +40,7 @@ const filterCond = ref({
   tags: "",
   isOnlyNewBook: false
 });
-
-const isShowFilterCond = ref(true);
-// TODO: スマホの場合はフィルター条件隠す
+const isShowFilterCond = ref(!util.isSmartPhone());
 
 const SORT_KEY = {
   ID: "追加日",
@@ -101,7 +99,7 @@ const filterToreadBooks = (books:Book[]) => {
         book.tags
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
       .replace(/ 　,/g, ""); // 空白など削除
-      return searchedText.includes(filterWord); // TODO:wordの複数検索は？
+      return searchedText.includes(filterWord);
     }).filter((book:Book) => {
       // タグでの検索
       const bookTags = util.strToTag(book.tags);

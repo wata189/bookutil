@@ -29,6 +29,9 @@ const isDarkMode = ():boolean => {
   return Dark.isActive;
 };
 
+const isSmartPhone = ():boolean => {
+  return window.matchMedia('(max-width: 600px)').matches;
+}
 
 export default {
   openPageAsNewTab,
@@ -36,5 +39,6 @@ export default {
   isExist,
   isUrl,
   strToTag,
-  isDarkMode
+  isDarkMode,
+  isSmartPhone
 }
