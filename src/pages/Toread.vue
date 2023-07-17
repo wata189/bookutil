@@ -27,7 +27,7 @@ type Book = {
   publisherName: string | null,
   page: number | null,
   otherUrl: string | null,
-  newBookCheckFlg: Ref<number>,
+  newBookCheckFlg: number,
   updateAt: number,
   tags: string,
   isChecked: Ref<boolean>
@@ -179,7 +179,6 @@ const initToread = async () => {
         ...book,
         isChecked: ref(false)
       };
-      retBook.newBookCheckFlg = ref(book.newBookCheckFlg);
       return retBook;
     });
     toreadTagOptions.value = response.data.toreadTags;
@@ -287,6 +286,9 @@ const createBook = () => {
     }
   });
 };
+const updateBook = () => {
+  // TODO:更新処理
+};
 
 type BookForm = {
     bookName: string,
@@ -309,7 +311,7 @@ const createBookParams = async (form:BookForm) => {
   const email = user.email || "No User Data";
   const params = {
     id: null,
-    create_at: null,
+    update_at: null,
     user: email,
 
     // フォームのパラメータ
@@ -330,23 +332,33 @@ const createBookParams = async (form:BookForm) => {
   
   return params;
 };
-const initBookDialogForm:BookForm = {
-  bookName: "",
-  isbn: "",
-  authorName: "",
-  publisherName: "",
-  page: null,
-  otherUrl: "",
-  newBookCheckFlg: 0,
-  tags: ""
-};
-const bookDialog = ref({
+
+type BookDialog = {
+  isShow: boolean,
+  bookId: string,
+  updateAt: number | null,
+  headerText: string,
+  okLabel: string,
+  okFunction: Function,
+  form: BookForm
+}
+const bookDialog:Ref<BookDialog> = ref({
   isShow: false,
   bookId: "",
+  updateAt: null,
   headerText: "",
   okLabel: "",
   okFunction: () => {},
-  form: initBookDialogForm
+  form: {
+    bookName: "",
+    isbn: "",
+    authorName: "",
+    publisherName: "",
+    page: null,
+    otherUrl: "",
+    newBookCheckFlg: 0,
+    tags: ""
+  }
 });
 const showNewBookDialog = () => {
   bookDialog.value.bookId = "";
@@ -366,6 +378,27 @@ const showNewBookDialog = () => {
   bookDialog.value.isShow = true;
 };
 
+// 編集ダイアログ表示
+const showBookDialog = (book:Book) => {
+  bookDialog.value.bookId = book.id;
+  bookDialog.value.headerText = "編集";
+  bookDialog.value.okLabel = "更新";
+  bookDialog.value.okFunction = updateBook;
+  bookDialog.value.updateAt = book.updateAt;
+  bookDialog.value.form = {
+    bookName: book.bookName,
+    isbn: book.isbn || "",
+    authorName: book.authorName || "",
+    publisherName: book.publisherName || "",
+    page: book.page,
+    otherUrl: book.otherUrl || "",
+    newBookCheckFlg: book.newBookCheckFlg,
+    tags: book.tags
+  };
+  bookDialog.value.isShow = true;
+
+};
+
 const labels = {
   bookName: "書籍名",
   isbn: "ISBN",
@@ -381,12 +414,6 @@ const validationRules = {
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
   otherUrl: [validationUtil.isUrl(labels.otherUrl)]
-};
-
-const showBookDialog = (bookId:string) => {
-  // TODO:編集ダイアログ表示
-
-  return bookId;
 };
 
 // 外部連携フラグ
@@ -497,7 +524,7 @@ onMounted(async () => {
                       title="編集"
                       icon="edit"
                       color="primary"
-                      @click="showBookDialog(book.id)"
+                      @click="showBookDialog(book)"
                     ></c-round-btn>
                   </div>
                 </div>
