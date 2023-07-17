@@ -56,7 +56,7 @@ def test_isbn_10_to_13_2():
 def test_isbn_10_to_13_3():
     assert util.isbn_10_to_13("415209205X") == "9784152092052"
 def test_isbn_10_to_13_4():
-    assert util.isbn_10_to_13("4152092050") == None
+    assert util.isbn_10_to_13("415209205Y") == None
 def test_isbn_10_to_13_5():
     assert util.isbn_10_to_13("9784152092052") == "9784152092052"
 def test_isbn_10_to_13_6():
@@ -328,7 +328,7 @@ def test_create_cover_url_3():
 def test_create_cover_url_4():
     assert models.create_cover_url("415209205X") == "https://cover.openbd.jp/9784152092052.jpg"
 def test_create_cover_url_5():
-    assert models.create_cover_url("4152092050") == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url("415209205Y") == "/img/cover_placeholder.jpg"
 def test_create_cover_url_6():
     assert models.create_cover_url("9784152092052") == "https://cover.openbd.jp/9784152092052.jpg"
 def test_create_cover_url_7():
