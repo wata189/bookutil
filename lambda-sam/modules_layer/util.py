@@ -16,7 +16,7 @@ STATUS_CODE = {
 }
 
 def create_response(status_code_str:str, body={}, msg=""):
-    print(f"{status_code_str} {msg} {body}")
+    print(f"{status_code_str} {msg}")
     body["msg"] = msg
     response = {
         "statusCode": STATUS_CODE[status_code_str],
