@@ -2,6 +2,8 @@ import json
 import os
 import re
 
+from mysql_util import Mysql
+
 # ステータスコード
 STATUS_CODE = {
     "OK": 200,
@@ -63,3 +65,6 @@ def isbn_10_to_13(isbn:str):
     check_digit = 0 if remainder == 0 else 10 - remainder
 
     return isbn_12 + str(check_digit)
+
+def get_toread_book(bookId:str, mysql:Mysql):
+    return mysql.select("get_toread_book", [bookId])

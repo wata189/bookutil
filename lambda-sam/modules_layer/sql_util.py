@@ -101,6 +101,14 @@ delete_physically_toread_tag = """
 DELETE FROM t_toread_tag WHERE book_id = %s
 """
 
+get_toread_book = """
+SELECT * FROM t_toread_book WHERE id = %s AND delete_flg = 0
+"""
+
+is_update_unique_isbn = """
+SELECT id FROM t_toread_book WHERE id != %s AND isbn = %s AND delete_flg = 0
+"""
+
 SQLS = {
     "fetch_toread": fetch_toread,
     "fetch_toread_tag": fetch_toread_tag,
@@ -108,7 +116,9 @@ SQLS = {
     "create_toread_tag": create_toread_tag,
     "update_toread_book": update_toread_book,
     "is_create_unique_isbn": is_create_unique_isbn,
-    "delete_physically_toread_tag": delete_physically_toread_tag
+    "delete_physically_toread_tag": delete_physically_toread_tag,
+    "get_toread_book": get_toread_book,
+    "is_update_unique_isbn": is_update_unique_isbn
 }
 
 def get_sql(sql_name):
