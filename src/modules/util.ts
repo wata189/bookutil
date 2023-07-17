@@ -1,6 +1,5 @@
 
 import { Dark } from 'quasar';
-import { useRouter } from "vue-router";
 
 const openPageAsNewTab = (url:string) => {
   window.open(url, "_blank");
