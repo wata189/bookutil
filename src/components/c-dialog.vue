@@ -24,7 +24,6 @@ const value = computed({
 <template>
   <q-dialog
     v-model="value"
-    :full-width="true"
     persistent
   >
     <q-card>

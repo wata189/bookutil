@@ -690,8 +690,9 @@ onMounted(async () => {
       :headerText="bookDialog.headerText"
       :okLabel = "bookDialog.okLabel"
       @ok="bookDialog.okFunction"
+      class="book-dialog"
     >
-      <q-form ref="bookDialogForm" class="row">
+      <q-form ref="bookDialogForm" class="row book-dialog-card">
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.bookName"
@@ -699,7 +700,7 @@ onMounted(async () => {
             :rules="validationRules.bookName"
           ></q-input>
         </div>
-        <div class="col-8 col-md-2 q-pa-xs">
+        <div class="col-8 q-pa-xs">
           <q-input
             v-model="bookDialog.form.isbn"
             :label="labels.isbn"
@@ -717,7 +718,7 @@ onMounted(async () => {
             </template>
           </q-input>
         </div>
-        <div class="col-4 col-md-2 q-pa-xs">
+        <div class="col-4 q-pa-xs">
           <q-input
             v-model.number="bookDialog.form.page"
             type="number"
@@ -726,26 +727,26 @@ onMounted(async () => {
             :rules="validationRules.page"
           ></q-input>
         </div>
-        <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             v-model="bookDialog.form.authorName"
             :label="labels.authorName"
           ></q-input>
         </div>
-        <div class="col-12 col-sm-6 col-md-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             v-model="bookDialog.form.publisherName"
             :label="labels.publisherName"
           ></q-input>
         </div>
-        <div class="col-12 col-md-6 q-pa-xs">
+        <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.otherUrl"
             :label="labels.otherUrl"
             :rules="validationRules.otherUrl"
           ></q-input>
         </div>
-        <div class="col-12 col-md-6 q-pa-xs">
+        <div class="col-12 q-pa-xs">
           <c-input-tag
             v-model="bookDialog.form.tags"
             :label="labels.tags"
@@ -802,5 +803,9 @@ onMounted(async () => {
 
 .select-sort-key{
   width: 148px;
+}
+
+.q-dialog .q-card{
+  max-width: 1000px!important;
 }
 </style>
