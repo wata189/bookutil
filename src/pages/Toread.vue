@@ -75,7 +75,7 @@ const onChangeSortCondKey = (value:string) => {
 const pagination = ref({
   number: 1,
 
-  dispMax: 10 //TODO: テストのために10件ぐらいにしてるけど本当は50-100件ぐらい
+  dispMax: 50
 });
 const paginationMax = computed(() => {
   return Math.ceil(toreadBooks.value.length / pagination.value.dispMax)

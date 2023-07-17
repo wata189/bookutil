@@ -10,7 +10,6 @@ import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
 
 // axiosUtilのインスタンス作成
-// TODO:menus取得処理をc-headerに移したら削除
 const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
 const axiosUtil = new AxiosUtil(emits);
 
@@ -88,7 +87,6 @@ onMounted(async () => {
   <q-header reveal elevated :class="isDarkMode ? 'bg-dark' : 'bg-white text-black'">
     <q-toolbar>
       <q-toolbar-title class="toolbar-title">
-        <!--TODO:アイコンを設定-->
         <div @click="router.push('/')">
           <q-img src="img/icon.svg" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>

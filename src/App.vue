@@ -9,7 +9,7 @@ import authUtil from '@/modules/authUtil'
 import { Ref } from 'vue';
 
 
-const pageName = 'Bookutil'; //TODO:ページ名をページごとに取得
+const pageName = 'Bookutil';
 
 interface Menu {
   name: string,

@@ -36,7 +36,6 @@ const isIsbn = (isbn) => {
 };
 
 //画面を開く処理
-const BOOKUTIL_URL = "http://localhost:5173/toread"; //TODO:本番環境
 const toBookutil = (pageUrl, tabId) => {
   console.log("toBookutil");
 
