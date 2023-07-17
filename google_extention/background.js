@@ -30,7 +30,7 @@ chrome.contextMenus.onClicked.addListener(function (item, tab) {
 
 // isbn判定
 const isIsbn = (isbn) => {
-  const isbn10Regex = /^[0-9]{9}[1-9X]$/;
+  const isbn10Regex = /^[0-9]{9}[0-9X]$/;
   const isbn13Regex = /^[0-9]{13}$/;
   return isbn10Regex.test(isbn) || isbn13Regex.test(isbn);
 };
