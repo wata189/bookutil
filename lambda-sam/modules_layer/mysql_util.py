@@ -2,14 +2,6 @@ import pymysql.cursors
 import os
 from sql_util import get_sql
 
-HOST        = os.getenv('MYSQL_HOST')
-PORT        = int(os.getenv("MYSQL_PORT"))
-USER        = os.getenv('MYSQL_USER')
-PASSWORD    = os.getenv('MYSQL_PASSWORD')
-DATABASE    = os.getenv('MYSQL_DATABASE')
-CURSORCLASS = pymysql.cursors.DictCursor
-CHARSET = "utf8"
-
 class Mysql:
     def __init__(self, cursor) -> None:
         self.cursor = cursor
@@ -58,6 +50,13 @@ class Mysql:
 
 def tran(func):
     # データベース接続
+    HOST        = os.getenv('MYSQL_HOST')
+    PORT        = int(os.getenv("MYSQL_PORT"))
+    USER        = os.getenv('MYSQL_USER')
+    PASSWORD    = os.getenv('MYSQL_PASSWORD')
+    DATABASE    = os.getenv('MYSQL_DATABASE')
+    CURSORCLASS = pymysql.cursors.DictCursor
+    CHARSET = "utf8"
     connection = pymysql.connect(
         host=HOST,
         port=PORT,

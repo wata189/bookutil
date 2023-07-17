@@ -68,17 +68,19 @@ def handler_update_toread(event, context):
     # ログイン済みででなければログインエラー
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
-    
-    def update_toread(mysql):
-        # # バリデーション処理
-        # if not validation_util.is_valid_book(post_body):
-        #     return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
-        # # ISBN被りチェック
-        # if not validation_util.is_create_unique_isbn(post_body["isbn"], mysql):
-        #     return util.create_response("BAD_REQUEST", msg="同じISBNの本があります")
+    # TODO: form情報以外のパラメータチェック
+    # バリデーションチェック
+    if not validation_util.is_valid_book(post_body):
+        return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
 
-        # # DBに格納する
-        # models.update_toread(post_body, mysql)
+    def update_toread(mysql):
+        # # ISBN被りチェック
+        # if not validation_util.is_update_unique_isbn(post_body["isbn"], mysql):
+        #     return util.create_response("BAD_REQUEST", msg="同じISBNの本があります")
+        # TODO: コンフリクトチェック
+
+        # DBに格納する
+        models.update_toread(post_body, mysql)
         return init_toread(is_auth, mysql)
 
     response = mysql_util.tran(update_toread)

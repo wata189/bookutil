@@ -1,5 +1,6 @@
 import util
 import re
+from mysql_util import Mysql
 
 # ユーザーに応じてメニュー情報を返却する処理
 def fetch_menus(is_auth: bool):
@@ -34,7 +35,7 @@ def fetch_menus(is_auth: bool):
 
 ## toreadの本を取得する処理
 ## isAuthがfalseの場合はモック用の本のみ表示する
-def fetch_toread(is_auth, mysql):
+def fetch_toread(is_auth:bool, mysql:Mysql):
 
     # DBから取得
     result = mysql.select("fetch_toread")
@@ -55,7 +56,7 @@ def fetch_toread(is_auth, mysql):
             "otherUrl":        row["other_url"],
             "newBookCheckFlg": row["new_book_check_flg"],
             "updateAt":        row["update_at"].timestamp(),
-            "tags":            row["tags"]
+            "tags":            row["tags"] or ""
         } for row in result
     ]
 
@@ -71,7 +72,7 @@ def create_cover_url(isbn:str):
     return cover_url
 
 
-def fetch_toread_tags(mysql):
+def fetch_toread_tags(mysql:Mysql):
     # DBから取得
     result = mysql.select("fetch_toread_tag")
     toread_tags = [row["tag"] for row in result]
@@ -81,21 +82,39 @@ def fetch_toread_tags(mysql):
     return list(dict.fromkeys(toread_tags))
 
 
-def create_toread(form, mysql):
+def create_toread(form, mysql:Mysql):
     #bookテーブルにINSERT
     new_id = create_toread_book(form, mysql)
     #tagテーブルにINSERT
     create_toread_tag(new_id, form, mysql)
     return
 
-def update_toread(form, mysql):
+def update_toread(form, mysql:Mysql):
     #TODO:bookテーブルUPDATE
-    #TODO:tagテーブルいったんdelete
+    update_toread_book(form, mysql)
+    #tagテーブルいったんdelete
+    delete_physically_toread_tag(form["id"], mysql)
     #tagテーブルにINSERT
     create_toread_tag(form["id"], form, mysql)
     return
 
-def create_toread_book(form, mysql):
+def update_toread_book(form, mysql:Mysql):
+
+    params = [
+        form["book_name"],
+        form["isbn"],
+        form["author_name"],
+        form["publisher_name"],
+        form["page"],
+        form["other_url"],
+        form["new_book_check_flg"],
+        form["user"],
+        form["id"]
+    ]
+    mysql.update("update_toread_book", params)
+    return
+
+def create_toread_book(form, mysql:Mysql):
     params = [
         form["book_name"],
         form["isbn"],
@@ -110,7 +129,7 @@ def create_toread_book(form, mysql):
     new_id = mysql.insert("create_toread_book", params)
     return new_id
 
-def create_toread_tag(id, form, mysql):
+def create_toread_tag(id, form, mysql:Mysql):
     # /,スペースで分割
     # set→list変換で重複削除
     tags = list(set(re.split("[ 　/,]", form["tags"])))
@@ -120,3 +139,7 @@ def create_toread_tag(id, form, mysql):
         mysql.insert_multi("create_toread_tag", params)
 
     return
+
+def delete_physically_toread_tag(id, mysql:Mysql):
+    params = [id]
+    mysql.delete_physically("delete_physically_toread_tag", params)

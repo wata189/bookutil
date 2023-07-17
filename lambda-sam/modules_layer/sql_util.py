@@ -34,7 +34,7 @@ FROM(
     WHERE delete_flg = 0
 ) book
 
-JOIN(
+LEFT JOIN(
     SELECT book_id, GROUP_CONCAT(tag SEPARATOR "/") as tags
     FROM t_toread_tag
     WHERE delete_flg = 0
@@ -81,12 +81,34 @@ is_create_unique_isbn = """
 SELECT id, isbn FROM t_toread_book WHERE delete_flg = 0 AND isbn = %s
 """
 
+update_toread_book = """
+UPDATE t_toread_book SET
+    book_name = %s
+    , isbn = %s
+    , author_name = %s
+    , publisher_name = %s
+    , page = %s
+    , other_url = %s
+    , new_book_check_flg = %s
+    , update_user = %s
+    , update_at = CURRENT_TIMESTAMP
+WHERE
+    id = %s
+
+"""
+
+delete_physically_toread_tag = """
+DELETE FROM t_toread_tag WHERE book_id = %s
+"""
+
 SQLS = {
     "fetch_toread": fetch_toread,
     "fetch_toread_tag": fetch_toread_tag,
     "create_toread_book": create_toread_book,
     "create_toread_tag": create_toread_tag,
-    "is_create_unique_isbn": is_create_unique_isbn
+    "update_toread_book": update_toread_book,
+    "is_create_unique_isbn": is_create_unique_isbn,
+    "delete_physically_toread_tag": delete_physically_toread_tag
 }
 
 def get_sql(sql_name):
