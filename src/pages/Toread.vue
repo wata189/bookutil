@@ -524,9 +524,9 @@ onMounted(async () => {
           </div>
           <q-space></q-space>
         </div>
-        <div class="row">
-          <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-pa-sm">
-            <q-card class="q-pb-sm" :title="book.bookName">
+        <div class="row justify-center q-pa-md">
+          <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-my-sm">
+            <q-card class="q-pb-sm q-mx-sm" :flat="!util.isDarkMode()" :class="util.isDarkMode() ? 'bg-dark' : 'bg-transparent' " :title="book.bookName">
               <q-checkbox
                 v-model="book.isChecked"
                 dense
@@ -548,7 +548,7 @@ onMounted(async () => {
                   {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
                 </div>
                 <div>
-                  <q-chip v-for="tag in util.strToTag(book.tags)" dense color="teal">{{ tag }}</q-chip>
+                  <q-chip v-for="tag in util.strToTag(book.tags)" dense color="teal" text-color="white">{{ tag }}</q-chip>
                 </div>
                 <q-btn
                   v-for="link in links"
@@ -825,5 +825,39 @@ onMounted(async () => {
 
 .q-dialog .q-card{
   max-width: 1000px!important;
+}
+
+.body--light .book-cover-wrapper{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(208, 147, 82, 0.6),
+      rgba(192, 134, 70, 0.6) 60%,
+      rgba(208, 147, 82, 0.6)
+    ),
+    repeating-radial-gradient(
+      ellipse at 60% 500%,
+      #c08646,
+      #c08646 0.2%,
+      #d09352 0.6%,
+      #d09352 1%
+    );
+}
+
+.body--light .q-page-container{
+  background:
+    repeating-radial-gradient(
+      circle at -1000% 0%,
+      rgba(116, 77, 48, 0.7),
+      #573216 7.5%,
+      rgba(116, 77, 48, 0.9) 10%
+    ),
+    repeating-radial-gradient(
+      circle at -1000% 0%,
+      #573216,
+      #573216 0.1%,
+      #744d30 0.4%,
+      #744d30 0.5%
+    );
 }
 </style>
