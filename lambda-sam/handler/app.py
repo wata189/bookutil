@@ -15,23 +15,23 @@ def handler_fetch_menus(event, context):
     return response
 
 
+def init_toread(is_auth, mysql):
+    toread_rows = models.fetch_toread(is_auth, mysql)
+    toread_tags = models.fetch_toread_tags(mysql)
+
+    body = {
+        'toreadRows': toread_rows,
+        'toreadTags': toread_tags
+    }
+    return util.create_response("OK", body)
+
 ## toread初期化処理
 def handler_init_toread(event, context):
     # ユーザーが認証されているかを確認
     token = event.get('queryStringParameters').get('access_token')
     is_auth = auth_util.is_auth(token)
 
-    def init_toread(mysql):
-        toread_rows = models.fetch_toread(is_auth, mysql)
-        toread_tags = models.fetch_toread_tags(mysql)
-
-        body = {
-            'toreadRows': toread_rows,
-            'toreadTags': toread_tags
-        }
-        return util.create_response("OK", body)
-
-    response = mysql_util.tran(init_toread)
+    response = mysql_util.tran(lambda mysql: init_toread(is_auth, mysql))
     return response
 
 ## toread新規作成処理
@@ -54,7 +54,7 @@ def handler_create_toread(event, context):
 
         # DBに格納する
         models.create_toread(post_body, mysql)
-        return util.create_response("OK")
+        return init_toread(is_auth, mysql)
 
     response = mysql_util.tran(create_toread)
     return response
@@ -79,7 +79,7 @@ def handler_update_toread(event, context):
 
         # # DBに格納する
         # models.update_toread(post_body, mysql)
-        return util.create_response("OK")
+        return init_toread(is_auth, mysql)
 
     response = mysql_util.tran(update_toread)
     return response

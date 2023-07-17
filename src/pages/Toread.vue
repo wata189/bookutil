@@ -165,22 +165,26 @@ const getWantPoint = (tagsStr:string):number => {
   return wantPoint;
 };
 
-const toreadTagOptions = ref([]);
+const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
   const accessToken = authUtil.getLocalStorageAccessToken();
   const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
   if(response){
-    toreadBooks.value = response.data.toreadRows.map((book:Book):Book => {
-      const retBook = {
-        ...book,
-        isChecked: ref(false)
-      };
-      return retBook;
-    });
-    toreadTagOptions.value = response.data.toreadTags;
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
   }
+};
+
+const setInitInfo = (toreadRows:Book[], toreadTags: string[]) => {
+  toreadBooks.value = toreadRows.map((book:Book):Book => {
+    const retBook = {
+      ...book,
+      isChecked: ref(false)
+    };
+    return retBook;
+  });
+  toreadTagOptions.value = toreadTags;
 };
 
 
@@ -277,8 +281,8 @@ const createBook = () => {
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
-      // 画面情報取得し直し
-      await initToread();
+      // 画面情報再設定
+      setInitInfo(response.data.toreadRows, response.data.toreadTags);
       // ダイアログ消す
       bookDialog.value.isShow = false;
     }
@@ -294,8 +298,8 @@ const editBook = () => {
     const updateAt = bookDialog.value.updateAt || 0;
     const response = await updateBook(bookDialog.value.bookId, updateAt, bookDialog.value.form);
     if(response){
-      // 画面情報取得し直し
-      await initToread();
+      // 画面情報再設定
+      setInitInfo(response.data.toreadRows, response.data.toreadTags);
       // ダイアログ消す
       bookDialog.value.isShow = false;
     }
