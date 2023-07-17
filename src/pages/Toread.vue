@@ -318,6 +318,23 @@ const updateBook = async (bookId:string, updateAt:number, form:BookForm) => {
   const response = await axiosUtil.post(`/toread/update`, params);
   return response;
 };
+const toggleNewBookCheckFlg = async (book:Book) => {
+  const form:BookForm = {
+    bookName: book.bookName,
+    isbn: book.isbn || "",
+    authorName: book.authorName || "",
+    publisherName: book.publisherName || "",
+    page: book.page,
+    otherUrl: book.otherUrl || "",
+    newBookCheckFlg: book.newBookCheckFlg,
+    tags: book.tags
+  };
+  const response = await updateBook(book.id, book.updateAt, form);
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+  }
+};
 
 type BookForm = {
     bookName: string,
@@ -565,6 +582,7 @@ onMounted(async () => {
                       :true-value="1"
                       :false-value="0"
                       color="teal"
+                      @update:model-value="toggleNewBookCheckFlg(book)"
                     >
                       新刊チェック
                     </q-toggle>
