@@ -87,11 +87,11 @@ Resources:
             Method: post
       Layers:
         - !Ref ModulesLayer
-  Test:
+  UpdateToread:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: handler/
-      Handler: app.handler_test
+      Handler: app.handler_update_toread
       Runtime: python3.9
       Architectures:
       - x86_64
@@ -99,7 +99,7 @@ Resources:
         Test:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /test
+            Path: /toread/update
             Method: post
       Layers:
         - !Ref ModulesLayer

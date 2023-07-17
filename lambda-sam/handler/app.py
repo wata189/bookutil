@@ -59,10 +59,27 @@ def handler_create_toread(event, context):
     response = mysql_util.tran(create_toread)
     return response
 
-def handler_test(event, context):
+## toread更新処理
+def handler_update_toread(event, context):
     post_body = json.loads(event.get("body"))
     print(post_body)
-    body = {
-        "body": event.get("body")
-    }
-    return util.create_response("OK", body=post_body)
+
+    is_auth = auth_util.is_auth(post_body["access_token"])
+    # ログイン済みででなければログインエラー
+    if not is_auth:
+        return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
+    
+    def update_toread(mysql):
+        # # バリデーション処理
+        # if not validation_util.is_valid_book(post_body):
+        #     return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
+        # # ISBN被りチェック
+        # if not validation_util.is_create_unique_isbn(post_body["isbn"], mysql):
+        #     return util.create_response("BAD_REQUEST", msg="同じISBNの本があります")
+
+        # # DBに格納する
+        # models.update_toread(post_body, mysql)
+        return util.create_response("OK")
+
+    response = mysql_util.tran(update_toread)
+    return response
