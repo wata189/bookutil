@@ -19,8 +19,8 @@ class AxiosUtil{
       return response;
     }, (error:AxiosError) => {
       console.log(error);
-      const status = error.status || null;
-      const statusText = error.message || "Server Error";
+      const status = error.response?.status || null;
+      const statusText = error.code || "Server Error";
       const data:any = error.response?.data;
       const msg = data?.msg || "不明なエラーが発生しました";
       // エラー内容を上のコンポーネントにemitする
