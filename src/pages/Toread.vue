@@ -462,8 +462,6 @@ const validationRules = {
 let isExternalCooperation = false;
 
 onMounted(async () => {
-  await initToread();
-  
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
@@ -480,6 +478,9 @@ onMounted(async () => {
       emits("show-error-dialog", null, "取得失敗", "ISBNを取得できませんでした")
     }
   }
+  
+  await initToread();
+  
 });
 </script>
 
