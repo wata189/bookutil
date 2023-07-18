@@ -43,7 +43,7 @@ const filterCond = ref({
 const isShowFilterCond = ref(!util.isSmartPhone());
 
 const SORT_KEY = {
-  ID: "追加日",
+  ID: "更新日",
   PAGE: "ページ数",
   WANT: "よみたい度"
 };
@@ -118,7 +118,7 @@ const filteredSortedToreadBooks = computed({
     }).sort((aBook:Book, bBook:Book) => {
       if(sortKey === SORT_KEY.ID){
         // ID(追加順)でソート
-        return isDesc ? Number(bBook.id) - Number(aBook.id) : Number(aBook.id) - Number(bBook.id)
+        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt
       }else if(sortKey === SORT_KEY.PAGE){
         // ページ数順でソート
         if(isDesc){
