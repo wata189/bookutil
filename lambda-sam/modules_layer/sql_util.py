@@ -74,7 +74,7 @@ VALUES (
 """
 
 create_toread_tag = """
-INSERT INTO t_toread_tag (book_id, tag) VALUES (%s, %s)
+INSERT INTO t_toread_tag (book_id, tag, create_user, update_user) VALUES (%s, %s, %s, %s)
 """
 
 is_create_unique_isbn = """

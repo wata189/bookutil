@@ -134,8 +134,10 @@ def create_toread_tag(id, form, mysql:Mysql):
     # set→list変換で重複削除
     tags = list(set(re.split("[ 　/,]", form["tags"])))
 
+    user = form["user"]
+
     if len(tags) > 0:
-        params = [ [id, tag] for tag in tags]
+        params = [ [id, tag, user, user] for tag in tags]
         mysql.insert_multi("create_toread_tag", params)
 
     return
