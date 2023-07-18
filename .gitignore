@@ -31,6 +31,7 @@ batch/evernote2csv/evernotes
 batch/evernote2csv/_old
 batch/evernote2csv/*.csv
 batch/evernote2csv/*.txt
+batch/*/__pycache__
 
 
 # sam

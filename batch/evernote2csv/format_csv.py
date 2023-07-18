@@ -1,7 +1,5 @@
 print("start format_csv")
 
-from lxml import etree
-import os
 import csv
 import shutil
 
