@@ -76,20 +76,26 @@ const pagination = ref({
   dispMax: 50
 });
 const paginationMax = computed(() => {
-  return Math.ceil(toreadBooks.value.length / pagination.value.dispMax)
+  return Math.ceil(filteredSortedToreadBooks.value.length / pagination.value.dispMax)
 });
 const isShowPagination = computed(() => {
-  return filterToreadBooks(toreadBooks.value).length > pagination.value.dispMax;
+  return filteredSortedToreadBooks.value.length > pagination.value.dispMax;
 });
+const toTopPagenation = () => {
+  pagination.value.number = 1;
+}
 
-const filterToreadBooks = (books:Book[]) => {
+const filteredSortedToreadBooks = computed({
+  get: () => {
     // 条件キャッシュ
     const filterWord = filterCond.value.word;
     const filterTags = util.strToTag(filterCond.value.tags);
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
+    const sortKey = sortCond.value.key;
+    const isDesc = sortCond.value.isDesc;
 
     /////// フィルター
-    return books.filter((book:Book) => {
+    return toreadBooks.value.filter((book:Book) => {
       // 検索ワードでの検索
       const searchedText = [
         book.bookName,
@@ -109,16 +115,7 @@ const filterToreadBooks = (books:Book[]) => {
     }).filter((book:Book) => {
       // 新刊のみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-    });
-}
-const dispToreadBooks = computed({
-  get: () => {
-    // 条件キャッシュ
-    const sortKey = sortCond.value.key;
-    const isDesc = sortCond.value.isDesc;
-
-    /////// ソート
-    return filterToreadBooks(toreadBooks.value).sort((aBook:Book, bBook:Book) => {
+    }).sort((aBook:Book, bBook:Book) => {
       if(sortKey === SORT_KEY.ID){
         // ID(追加順)でソート
         return isDesc ? Number(bBook.id) - Number(aBook.id) : Number(aBook.id) - Number(bBook.id)
@@ -137,9 +134,17 @@ const dispToreadBooks = computed({
         // よみたい順でソート よみたい順の場合はisDesc無視ですべて降順
         return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
       }
-    
-    /////////// ページネーション
-    }).slice(
+    });
+
+  },
+  set: (value) => {
+    toreadBooks.value = value
+  }
+})
+const dispToreadBooks = computed({
+  get: () => {
+    /////// ソート
+    return filteredSortedToreadBooks.value.slice(
       // start: ページ番号 - 1 * 表示件数
       (pagination.value.number - 1) * pagination.value.dispMax,
       // end: ページ番号*表示件数 or 最後
@@ -712,7 +717,12 @@ onMounted(async () => {
           <q-separator inset></q-separator>
           <div class="row">
             <div class="col-12 col-sm-4 q-pa-sm">
-              <q-input dense v-model="filterCond.word" label="検索"></q-input>
+              <q-input 
+                dense 
+                v-model="filterCond.word" 
+                label="検索"
+                @update:model-value="toTopPagenation"
+              ></q-input>
             </div>
             <div class="col q-pa-sm">
               <c-input-tag
