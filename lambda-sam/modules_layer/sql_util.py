@@ -74,7 +74,8 @@ VALUES (
 """
 
 create_toread_tag = """
-INSERT INTO t_toread_tag (book_id, tag, create_user, update_user) VALUES (%s, %s, %s, %s)
+INSERT INTO t_toread_tag (book_id, tag, create_user, update_user, update_at) VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+ON DUPLICATE KEY UPDATE update_user = VALUES(update_user), update_at = VALUES(update_at)
 """
 
 is_create_unique_isbn = """

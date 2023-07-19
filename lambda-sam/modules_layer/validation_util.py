@@ -100,6 +100,14 @@ def is_valid_books(body):
 
     return not (False in validation_result)
 
+def is_valid_tag(body):
+    # バリデーション処理
+    validation_result = [
+        is_exist(body["tags"])
+    ]
+
+    return not (False in validation_result)
+
 # ID存在チェック 複数
 def is_exist_books_id(books, mysql:Mysql):
     result = True

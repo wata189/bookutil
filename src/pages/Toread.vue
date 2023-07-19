@@ -781,7 +781,7 @@ onMounted(async () => {
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
-                  icon="tag"
+                  icon="local_offer"
                   color="secondary"
                   @click="showAddTagDialog"
                 ></c-round-btn>

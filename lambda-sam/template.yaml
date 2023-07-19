@@ -119,6 +119,22 @@ Resources:
             Method: post
       Layers:
         - !Ref ModulesLayer
+  AddToreadTag:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: handler/
+      Handler: app.handler_add_toread_tag
+      Runtime: python3.9
+      Architectures:
+      - x86_64
+      Events:
+        Test:
+          Type: Api
+          Properties:
+            Path: /toread/tag/add
+            Method: post
+      Layers:
+        - !Ref ModulesLayer
         
   ModulesLayer:
     Type: AWS::Serverless::LayerVersion

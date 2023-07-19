@@ -121,3 +121,34 @@ def handler_delete_toread(event, context):
 
     response = mysql_util.tran(delete_toread)
     return response
+
+## toread設定処理
+def handler_add_toread_tag(event, context):
+    body = json.loads(event.get("body"))
+    print(body)
+
+    is_auth = auth_util.is_auth(body["access_token"])
+    # ログイン済みででなければログインエラー
+    if not is_auth:
+        return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
+    # パラメータチェック
+    if not validation_util.is_valid_books(body):
+        return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
+    # フォームパラメータチェック
+    if not validation_util.is_valid_tag(body):
+        return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
+
+    def add_toread_tag(mysql):
+        # ID存在チェック
+        if not validation_util.is_exist_books_id(body["books"], mysql):
+            return util.create_response("BAD_REQUEST", msg="本が削除されています")
+        # コンフリクトチェック
+        if not validation_util.is_not_conflict_books(body["books"], mysql):
+            return util.create_response("BAD_REQUEST", msg="本の情報が更新されています")
+
+        # DBに格納する
+        models.add_toread_tag(body, mysql)
+        return init_toread(is_auth, mysql)
+
+    response = mysql_util.tran(add_toread_tag)
+    return response

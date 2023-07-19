@@ -179,3 +179,9 @@ def delete_toread_tag(body, mysql:Mysql):
     params = [delete_book["id"] for delete_book in delete_books]
     params.insert(0, user)
     mysql.execute(sql, params)
+
+def add_toread_tag(body, mysql:Mysql):
+    for book in body["books"]:
+        create_toread_tag(book["id"], body, mysql)
+
+    return
