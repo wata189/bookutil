@@ -3,30 +3,36 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
-    name: 'top',
+    name: 'index',
     props: true,
     component: async () => {
-      const top = await import('@/pages/Top.vue');
-      return top;
+      return await import('@/pages/Top.vue');
     }
   },
   {
     path: '/top',
-    name: '/top',
+    name: 'top',
     props: true,
     component: async () => {
-      const top = await import('@/pages/Top.vue');
-      return top;
+      return await import('@/pages/Top.vue');
     }
   },
 
   {
     path: '/toread',
-    name: '/toread',
+    name: 'toread',
     props: true,
     component: async () => {
-      const toread = await import('@/pages/Toread.vue');
-      return toread;
+      return await import('@/pages/Toread.vue');
+    }
+  },
+
+  {
+    path: '/libraries',
+    name: 'libraries',
+    props: true,
+    component: async () => {
+      return await import('@/pages/Libraries.vue');
     }
   }
 ];

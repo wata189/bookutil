@@ -135,6 +135,22 @@ Resources:
             Method: post
       Layers:
         - !Ref ModulesLayer
+  FetchLibraries:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: handler/
+      Handler: app.handler_fetch_libraries
+      Runtime: python3.9
+      Architectures:
+      - x86_64
+      Events:
+        Test:
+          Type: Api
+          Properties:
+            Path: /libraries/fetch
+            Method: get
+      Layers:
+        - !Ref ModulesLayer
         
   ModulesLayer:
     Type: AWS::Serverless::LayerVersion

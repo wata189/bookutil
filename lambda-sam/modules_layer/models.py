@@ -185,3 +185,21 @@ def add_toread_tag(body, mysql:Mysql):
         create_toread_tag(book["id"], body, mysql)
 
     return
+
+def fetch_libraries(mysql:Mysql):
+    result = mysql.select("fetch_libraries")
+
+    libraries = [{
+        "id": row["id"],
+        "city": row["city"],
+        "name": row["name"],
+        "closestStation": row["closest_station"],
+        "url": row["url"],
+        "mapUrl": row["map_url"],
+        "dayOfWeek": row["day_of_week"],
+        "isOpen": row["is_open"],
+        "startTime": row["start_time"],
+        "endTime": row["end_time"]
+    } for row in result]
+
+    return libraries

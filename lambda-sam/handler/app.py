@@ -152,3 +152,16 @@ def handler_add_toread_tag(event, context):
 
     response = mysql_util.tran(add_toread_tag)
     return response
+
+def handler_fetch_libraries(event, context):
+
+    def fetch_toread(mysql):
+        libraries = models.fetch_libraries(mysql)
+        body = {
+            "libraries": libraries
+        }
+        return util.create_response("OK", body)
+
+
+    response = mysql_util.tran(fetch_toread)
+    return response
