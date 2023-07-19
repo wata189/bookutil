@@ -6,6 +6,11 @@ NOT_EXISTS = ["", None]
 def is_exist(val):
     return not(val in NOT_EXISTS)
 
+# TODO:てすとかく
+def is_exist_array(val:list):
+    if not is_exist(val): return True
+    return len(val) > 0
+
 def is_number(val):
     if not is_exist(val): return True
 
@@ -77,3 +82,38 @@ def is_exist_book_id(bookId:str, mysql:Mysql):
 def is_not_conflict_book(bookId:str, update_at:int, mysql:Mysql):
     result = util.get_toread_book(bookId, mysql)
     return result[0] and result[0]["update_at"].timestamp() == update_at
+
+# TODO:てすとかく
+def is_valid_delete_book(body):
+    # バリデーション処理
+    validation_result = [
+        is_exist(body["delete_books"]),
+        is_exist_array(body["delete_books"]),
+        is_exist(body["user"])
+    ]
+    for delete_book in body["delete_books"]:
+        validation_result.append(is_exist(delete_book["id"]))
+        validation_result.append(is_number(delete_book["id"]))
+        validation_result.append(is_exist(delete_book["update_at"]))
+        validation_result.append(is_number(delete_book["update_at"]))
+
+
+    return not (False in validation_result)
+
+# ID存在チェック 複数
+def is_exist_books_id(books, mysql:Mysql):
+    result = True
+    for book in books:
+        result = is_exist_book_id(book["id"], mysql)
+        if not result:break # False1件でもあったら終了
+
+    return result
+
+# コンフリクトチェック 複数
+def is_not_conflict_books(books, mysql:Mysql):
+    result = True
+    for book in books:
+        result = is_not_conflict_book(book["id"], book["update_at"], mysql)
+        if not result:break # False1件でもあったら終了
+
+    return result

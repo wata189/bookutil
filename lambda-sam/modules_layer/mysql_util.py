@@ -10,14 +10,14 @@ class Mysql:
         print(self.cursor._executed)
 
     # SQL実行の共通処理
-    def execute(self, sql_name, params=[]):
-        sql = self.get_sql(sql_name)
+    def execute(self, sql, params=[]):
         self.cursor.execute(sql, params)
         self.log_sql()
 
     # 取得
     def select(self, sql_name, params=[]):
-        self.execute(sql_name, params)
+        sql = self.get_sql(sql_name)
+        self.execute(sql, params)
         return self.cursor.fetchall()
     
     # 追加
@@ -33,15 +33,18 @@ class Mysql:
     
     # 更新
     def update(self, sql_name, params=[]):
-        self.execute(sql_name, params)
+        sql = self.get_sql(sql_name)
+        self.execute(sql, params)
     
     # 論理削除
     def delete_logically(self, sql_name, params=[]):
-        self.update(sql_name, params)
+        sql = self.get_sql(sql_name)
+        self.update(sql, params)
     
     # 物理削除
     def delete_physically(self, sql_name, params=[]):
-        self.execute(sql_name, params)
+        sql = self.get_sql(sql_name)
+        self.execute(sql, params)
         
     # SQLファイル取得
     def get_sql(self, sql_name):

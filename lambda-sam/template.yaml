@@ -56,7 +56,7 @@ Resources:
       Layers:
         - !Ref ModulesLayer
   InitToread:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: handler/
       Handler: app.handler_init_toread
@@ -65,14 +65,14 @@ Resources:
       - x86_64
       Events:
         Test:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /toread/init
             Method: get
       Layers:
         - !Ref ModulesLayer
   CreateToread:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: handler/
       Handler: app.handler_create_toread
@@ -81,14 +81,14 @@ Resources:
       - x86_64
       Events:
         Test:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /toread/create
             Method: post
       Layers:
         - !Ref ModulesLayer
   UpdateToread:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: handler/
       Handler: app.handler_update_toread
@@ -97,9 +97,25 @@ Resources:
       - x86_64
       Events:
         Test:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /toread/update
+            Method: post
+      Layers:
+        - !Ref ModulesLayer
+  DeleteToread:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: handler/
+      Handler: app.handler_delete_toread
+      Runtime: python3.9
+      Architectures:
+      - x86_64
+      Events:
+        Test:
+          Type: Api
+          Properties:
+            Path: /toread/delete
             Method: post
       Layers:
         - !Ref ModulesLayer

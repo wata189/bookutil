@@ -410,7 +410,7 @@ type DeleteBook = {
   update_at: number
 }
 type DeleteBookParams = {
-  deleteBooks: DeleteBook[];
+  delete_books: DeleteBook[];
   user: string;
   access_token: string;
 }
@@ -429,7 +429,7 @@ const deleteBooks = async () => {
   const accessToken = authUtil.getLocalStorageAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   const params:DeleteBookParams = {
-    deleteBooks: books,
+    delete_books: books,
     user: user.email || "No User Data",
     access_token: accessToken
   };

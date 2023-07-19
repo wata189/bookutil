@@ -109,6 +109,16 @@ is_update_unique_isbn = """
 SELECT id FROM t_toread_book WHERE id != %s AND isbn = %s AND delete_flg = 0
 """
 
+delete_toread_book = """
+UPDATE t_toread_book SET delete_flg = 1, update_user = %s, update_at = CURRENT_TIMESTAMP
+WHERE id IN (@WHERE_IN_PLACEHOLDER@)
+"""
+
+delete_toread_tag = """
+UPDATE t_toread_tag SET delete_flg = 1, update_user = %s, update_at = CURRENT_TIMESTAMP
+WHERE book_id IN (@WHERE_IN_PLACEHOLDER@)
+"""
+
 SQLS = {
     "fetch_toread": fetch_toread,
     "fetch_toread_tag": fetch_toread_tag,
@@ -118,7 +128,9 @@ SQLS = {
     "is_create_unique_isbn": is_create_unique_isbn,
     "delete_physically_toread_tag": delete_physically_toread_tag,
     "get_toread_book": get_toread_book,
-    "is_update_unique_isbn": is_update_unique_isbn
+    "is_update_unique_isbn": is_update_unique_isbn,
+    "delete_toread_book": delete_toread_book,
+    "delete_toread_tag": delete_toread_tag
 }
 
 def get_sql(sql_name):

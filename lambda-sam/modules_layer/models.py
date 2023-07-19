@@ -1,6 +1,7 @@
 import util
 import re
 from mysql_util import Mysql
+import sql_util
 
 # ユーザーに応じてメニュー情報を返却する処理
 def fetch_menus(is_auth: bool):
@@ -145,3 +146,36 @@ def create_toread_tag(id, form, mysql:Mysql):
 def delete_physically_toread_tag(id, mysql:Mysql):
     params = [id]
     mysql.delete_physically("delete_physically_toread_tag", params)
+
+def delete_toread(body, mysql:Mysql):
+    #bookテーブル削除
+    delete_toread_book(body, mysql)
+    #tagテーブル論理削除（機械学習に使う可能性があるため）
+    delete_toread_tag(body, mysql)
+    return
+
+def delete_toread_book(body, mysql:Mysql):
+    delete_books = body["delete_books"]
+    user = body["user"]
+
+    # パラメータを元にSQL生成
+    # in句のため1度replaceが必要
+    where_in_placeholder = ','.join(['%s'] * len(delete_books))
+    sql = sql_util.get_sql("delete_toread_book").replace("@WHERE_IN_PLACEHOLDER@", where_in_placeholder)
+
+    params = [delete_book["id"] for delete_book in delete_books]
+    params.insert(0, user)
+    mysql.execute(sql, params)
+
+def delete_toread_tag(body, mysql:Mysql):
+    delete_books = body["delete_books"]
+    user = body["user"]
+
+    # パラメータを元にSQL生成
+    # in句のため1度replaceが必要
+    where_in_placeholder = ','.join(['%s'] * len(delete_books))
+    sql = sql_util.get_sql("delete_toread_tag").replace("@WHERE_IN_PLACEHOLDER@", where_in_placeholder)
+
+    params = [delete_book["id"] for delete_book in delete_books]
+    params.insert(0, user)
+    mysql.execute(sql, params)

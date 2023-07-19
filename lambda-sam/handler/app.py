@@ -36,24 +36,24 @@ def handler_init_toread(event, context):
 
 ## toread新規作成処理
 def handler_create_toread(event, context):
-    post_body = json.loads(event.get("body"))
-    print(post_body)
+    body = json.loads(event.get("body"))
+    print(body)
 
-    is_auth = auth_util.is_auth(post_body["access_token"])
+    is_auth = auth_util.is_auth(body["access_token"])
     # ログイン済みでも外部連携でもなければログインエラー
-    if not is_auth and not post_body["is_external_cooperation"]:
+    if not is_auth and not body["is_external_cooperation"]:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
     
     def create_toread(mysql):
         # バリデーション処理
-        if not validation_util.is_valid_book(post_body):
+        if not validation_util.is_valid_book(body):
             return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
         # ISBN被りチェック
-        if not validation_util.is_create_unique_isbn(post_body["isbn"], mysql):
+        if not validation_util.is_create_unique_isbn(body["isbn"], mysql):
             return util.create_response("BAD_REQUEST", msg="同じISBNの本があります")
 
         # DBに格納する
-        models.create_toread(post_body, mysql)
+        models.create_toread(body, mysql)
         return init_toread(is_auth, mysql)
 
     response = mysql_util.tran(create_toread)
@@ -61,34 +61,63 @@ def handler_create_toread(event, context):
 
 ## toread更新処理
 def handler_update_toread(event, context):
-    post_body = json.loads(event.get("body"))
-    print(post_body)
+    body = json.loads(event.get("body"))
+    print(body)
 
-    is_auth = auth_util.is_auth(post_body["access_token"])
+    is_auth = auth_util.is_auth(body["access_token"])
     # ログイン済みででなければログインエラー
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
     # form情報以外のパラメータチェック
-    if not validation_util.is_valid_update_book(post_body):
+    if not validation_util.is_valid_update_book(body):
         return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
     # バリデーションチェック
-    if not validation_util.is_valid_book(post_body):
+    if not validation_util.is_valid_book(body):
         return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
 
     def update_toread(mysql):
         # ID存在チェック
-        if not validation_util.is_exist_book_id(post_body["id"], mysql):
+        if not validation_util.is_exist_book_id(body["id"], mysql):
             return util.create_response("BAD_REQUEST", msg="本が削除されています")
         # ISBN被りチェック
-        if not validation_util.is_update_unique_isbn(post_body["id"], post_body["isbn"], mysql):
+        if not validation_util.is_update_unique_isbn(body["id"], body["isbn"], mysql):
             return util.create_response("BAD_REQUEST", msg="同じISBNの本があります")
         # コンフリクトチェック
-        if not validation_util.is_not_conflict_book(post_body["id"], post_body["update_at"], mysql):
+        if not validation_util.is_not_conflict_book(body["id"], body["update_at"], mysql):
             return util.create_response("BAD_REQUEST", msg="本の情報が更新されています")
 
         # DBに格納する
-        models.update_toread(post_body, mysql)
+        models.update_toread(body, mysql)
         return init_toread(is_auth, mysql)
 
     response = mysql_util.tran(update_toread)
+    return response
+
+
+## toread削除処理
+def handler_delete_toread(event, context):
+    body = json.loads(event.get("body"))
+    print(body)
+
+    is_auth = auth_util.is_auth(body["access_token"])
+    # ログイン済みででなければログインエラー
+    if not is_auth:
+        return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
+    # パラメータチェック
+    if not validation_util.is_valid_delete_book(body):
+        return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
+
+    def delete_toread(mysql):
+        # ID存在チェック
+        if not validation_util.is_exist_books_id(body["delete_books"], mysql):
+            return util.create_response("BAD_REQUEST", msg="本が削除されています")
+        # コンフリクトチェック
+        if not validation_util.is_not_conflict_books(body["delete_books"], mysql):
+            return util.create_response("BAD_REQUEST", msg="本の情報が更新されています")
+
+        # DBに格納する
+        models.delete_toread(body, mysql)
+        return init_toread(is_auth, mysql)
+
+    response = mysql_util.tran(delete_toread)
     return response
