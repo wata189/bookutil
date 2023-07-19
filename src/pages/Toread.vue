@@ -72,6 +72,18 @@ const onChangeSortCondKey = (value:string) => {
   }
 };
 
+
+const labels = {
+  bookName: "書籍名",
+  isbn: "ISBN",
+  page: "ページ数",
+  authorName: "著者名",
+  publisherName: "出版社名",
+  otherUrl: "その他URL",
+  tags: "タグ",
+  newBookCheckFlg: "新刊チェック"
+};
+
 const pagination = ref({
   number: 1,
 
@@ -413,14 +425,16 @@ type SimpleBook = {
 }
 type BooksParams = {
   books: SimpleBook[];
+  tags?: string;
   user: string;
   access_token: string;
 }
-const getSelectedBooks = ():Book[] => {
+const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
-}
+})
+
 const deleteBooks = async () => {
-  const books = getSelectedBooks()
+  const books = selectedBooks.value;
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {id:book.id, update_at:book.updateAt}
   });
@@ -518,23 +532,87 @@ const showEditBookDialog = (book:Book) => {
 
 };
 
-const labels = {
-  bookName: "書籍名",
-  isbn: "ISBN",
-  page: "ページ数",
-  authorName: "著者名",
-  publisherName: "出版社名",
-  otherUrl: "その他URL",
-  tags: "タグ",
-  newBookCheckFlg: "新刊チェック"
+type AddTagForm = {
+  tags: string
+}
+type AddTagDialog = {
+  isShow: boolean,
+  headerText: string,
+  okLabel: string,
+  okFunction: Function,
+  form: AddTagForm
+}
+const addTagDialog:Ref<AddTagDialog> = ref({
+  isShow: false,
+  headerText: "",
+  okLabel: "",
+  okFunction: () => {},
+  form: {
+    tags: ""
+  }
+});
+const showAddTagDialog = () => {
+  const books = selectedBooks.value;
+  // 0件選択の場合はエラーダイアログ
+  if(books.length === 0){
+    emits(EMIT_NAME_ERROR, null, "エラー", "タグを設定する本を選択してください")
+    return;
+  }
+
+  addTagDialog.value = {
+    isShow: true,
+    headerText: "一括タグ追加",
+    okLabel: "タグ追加",
+    okFunction: addTag,
+    form: {
+      tags: ""
+    }
+  }
 };
+const addTagValidationRules = {
+  tags: [validationUtil.isExist(labels.tags)]
+};
+const addTagDialogForm:Ref<QForm | undefined> = ref();
+const addTag = () => {
+  // フォームのバリデーション処理
+  if(!addTagDialogForm.value){return;}
+  addTagDialogForm.value.validate().then(async (success:boolean) => {
+    if(!success){return;}
+
+    // formを送る
+    const params = await createAddTagParams(addTagDialog.value.form);
+    const response = await axiosUtil.post(`/toread/tag/add`, params);
+    if(response){
+      // 画面情報再設定
+      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+      // ダイアログ消す
+      addTagDialog.value.isShow = false;
+    }
+  });
+};
+
+const createAddTagParams = async (addTagDialogForm: AddTagForm):Promise<BooksParams> => {
+  const books = selectedBooks.value;
+  const simpleBooks:SimpleBook[] = books.map(book => {
+    return {id:book.id, update_at:book.updateAt}
+  });
+
+  const accessToken = authUtil.getLocalStorageAccessToken()
+  const user = await authUtil.getUserInfo(accessToken);
+  return {
+    books: simpleBooks,
+    user: user.email || "No User Data",
+    access_token: accessToken,
+    tags: addTagDialogForm.tags
+  };
+};
+
 const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
   otherUrl: [validationUtil.isUrl(labels.otherUrl)]
 };
-
 // 外部連携フラグ
 let isExternalCooperation = false;
 
@@ -705,7 +783,7 @@ onMounted(async () => {
                   title="一括タグ"  
                   icon="tag"
                   color="secondary"
-                  @click=""
+                  @click="showAddTagDialog"
                 ></c-round-btn>
                 <c-round-btn
                   title="新規作成"  
@@ -762,12 +840,11 @@ onMounted(async () => {
     <!-- 新規作成・編集ダイアログ -->
     <c-dialog
       v-model="bookDialog.isShow"
-      :headerText="bookDialog.headerText"
-      :okLabel = "bookDialog.okLabel"
+      :header-text="bookDialog.headerText"
+      :okLabel="bookDialog.okLabel"
       @ok="bookDialog.okFunction"
-      class="book-dialog"
     >
-      <q-form ref="bookDialogForm" class="row book-dialog-card">
+      <q-form ref="bookDialogForm" class="row">
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.bookName"
@@ -855,6 +932,25 @@ onMounted(async () => {
         </div>
       </q-form>
     </c-dialog>
+
+    <!-- 一括タグダイアログ -->
+    <c-dialog
+      v-model="addTagDialog.isShow"
+      :header-text="addTagDialog.headerText"
+      :okLabel="addTagDialog.okLabel"
+      @ok="addTag"
+    >
+      <q-form ref="addTagDialogForm">
+        <c-input-tag
+          v-model="addTagDialog.form.tags"
+          :label="labels.tags"
+          hint=",/スペースで区切られます"
+          :options="toreadTagOptions"
+          :rules="addTagValidationRules.tags"
+          class="set-tag-dialog-form-tags"
+        ></c-input-tag>
+      </q-form>
+    </c-dialog>
   </q-layout>
 </template>
 
@@ -880,8 +976,8 @@ onMounted(async () => {
   width: 148px;
 }
 
-.q-dialog .q-card{
-  max-width: 1000px!important;
+.set-tag-dialog-form-tags{
+  width: 300px;
 }
 
 .body--light .book-cover-wrapper{
