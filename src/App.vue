@@ -58,6 +58,10 @@ const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, ne
   };
 }; 
 
+const isShowInnerLoading = ref(false);
+const setIsShowInnerLoading = (bool:boolean) => {
+  isShowInnerLoading.value = bool
+}
 
 onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
@@ -96,13 +100,6 @@ onMounted(async () => {
           @show-error-dialog="showErrorDialog"
           @show-confirm-dialog="showConfirmDialog"
         />
-        <q-ajax-bar
-          :hijak-filter="util.isUrl"
-          position="bottom"
-          size="15px"
-        >
-
-        </q-ajax-bar>
       </q-page>
     </q-page-container>
 
@@ -117,6 +114,24 @@ onMounted(async () => {
     >
       {{ dialog.msg }}
     </c-confirm-dialog>
+
+    <!-- ajax-barのhijak-filter機能でAPI叩いたのを検知して、ローディングを表示させる -->
+    <q-ajax-bar
+      :hijak-filter="util.isUrl"
+      @start="setIsShowInnerLoading(true)"
+      @stop="setIsShowInnerLoading(false)"
+      color="transparent"
+    >
+
+    </q-ajax-bar>
+    <q-dialog
+      v-model="isShowInnerLoading"
+      persistent
+    >
+    <q-spinner-gears size="50px" color="secondary" />
+    </q-dialog>
+
+    
   </q-layout>
 </template>
 
