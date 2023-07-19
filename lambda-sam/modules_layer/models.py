@@ -155,7 +155,7 @@ def delete_toread(body, mysql:Mysql):
     return
 
 def delete_toread_book(body, mysql:Mysql):
-    delete_books = body["delete_books"]
+    delete_books = body["books"]
     user = body["user"]
 
     # パラメータを元にSQL生成
@@ -168,7 +168,7 @@ def delete_toread_book(body, mysql:Mysql):
     mysql.execute(sql, params)
 
 def delete_toread_tag(body, mysql:Mysql):
-    delete_books = body["delete_books"]
+    delete_books = body["books"]
     user = body["user"]
 
     # パラメータを元にSQL生成

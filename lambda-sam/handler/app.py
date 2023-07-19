@@ -104,15 +104,15 @@ def handler_delete_toread(event, context):
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
     # パラメータチェック
-    if not validation_util.is_valid_delete_book(body):
+    if not validation_util.is_valid_books(body):
         return util.create_response("BAD_REQUEST", msg="不正なパラメータがあります")
 
     def delete_toread(mysql):
         # ID存在チェック
-        if not validation_util.is_exist_books_id(body["delete_books"], mysql):
+        if not validation_util.is_exist_books_id(body["books"], mysql):
             return util.create_response("BAD_REQUEST", msg="本が削除されています")
         # コンフリクトチェック
-        if not validation_util.is_not_conflict_books(body["delete_books"], mysql):
+        if not validation_util.is_not_conflict_books(body["books"], mysql):
             return util.create_response("BAD_REQUEST", msg="本の情報が更新されています")
 
         # DBに格納する

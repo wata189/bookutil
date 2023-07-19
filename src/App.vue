@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import CHeader from '@/components/c-header.vue';
+import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 
 import { onMounted } from '@vue/runtime-core';
 import { ref } from '@vue/reactivity';
+import { Ref } from 'vue';
 
 import util from '@/modules/util';
 import authUtil from '@/modules/authUtil'
-import { Ref } from 'vue';
 
 
 const pageName = 'Bookutil';
@@ -24,27 +25,36 @@ const setMenus = (fetchedMenus:Menu[]) => {
 
 const user = ref({email:""});
 
-type ErrorDialog = {
+type Dialog = {
   isShow: boolean,
-  status: number | null,
-  statusText: string,
-  msg: string
-}
-const errorDialog:Ref<ErrorDialog> = ref({
+  headerText: string,
+  msg: string,
+  isError?: boolean,
+  next?: Function,
+  isNegative?: boolean
+};
+const dialog:Ref<Dialog> = ref({
   isShow: false,
-  status: null,
-  statusText: "",
+  headerText: "",
   msg: ""
 });
 const showErrorDialog = (status: number, statusText: string, msg: string) => {
-  // エラーダイアログ表示
-  errorDialog.value = {
+  dialog.value = {
     isShow: true,
-    status,
-    statusText,
-    msg
+    headerText: `${status} ${statusText}`,
+    msg,
+    isError: true
   };
 };
+const showConfirmDialog = (headerText:string, msg:string, next:Function) => {
+  dialog.value = {
+    isShow: true,
+    headerText,
+    msg,
+    next,
+    isNegative: true
+  };
+}; 
 
 
 onMounted(async () => {
@@ -82,6 +92,7 @@ onMounted(async () => {
         <RouterView 
           :menus="menus"
           @show-error-dialog="showErrorDialog"
+          @show-confirm-dialog="showConfirmDialog"
         />
         <q-ajax-bar
           :hijak-filter="util.isUrl"
@@ -94,23 +105,16 @@ onMounted(async () => {
     </q-page-container>
 
 
-    <!-- エラー表示するダイアログ -->
-    <q-dialog
-      v-model="errorDialog.isShow"
-      persistent
+    <!-- ダイアログ -->
+    <c-confirm-dialog
+      v-model="dialog.isShow"
+      :header-text="dialog.headerText"
+      :is-error="dialog.isError"
+      :is-negative="dialog.isNegative"
+      :next="dialog.next"
     >
-      <q-card>
-        <q-card-section class="bg-negative text-white">
-          <span class="text-h6"><span v-if="errorDialog.status">{{ errorDialog.status }} </span>{{ errorDialog.statusText }}</span>
-        </q-card-section>
-        <q-card-section class="bg-red-5 text-white">
-          <span>{{ errorDialog.msg }}</span>
-        </q-card-section>
-        <q-card-actions class="bg-red-5 text-white" align="right">
-          <q-btn flat label="OK" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      {{ dialog.msg }}
+    </c-confirm-dialog>
   </q-layout>
 </template>
 

@@ -84,14 +84,14 @@ def is_not_conflict_book(bookId:str, update_at:int, mysql:Mysql):
     return result[0] and result[0]["update_at"].timestamp() == update_at
 
 # TODO:てすとかく
-def is_valid_delete_book(body):
+def is_valid_books(body):
     # バリデーション処理
     validation_result = [
-        is_exist(body["delete_books"]),
-        is_exist_array(body["delete_books"]),
+        is_exist(body["books"]),
+        is_exist_array(body["books"]),
         is_exist(body["user"])
     ]
-    for delete_book in body["delete_books"]:
+    for delete_book in body["books"]:
         validation_result.append(is_exist(delete_book["id"]))
         validation_result.append(is_number(delete_book["id"]))
         validation_result.append(is_exist(delete_book["update_at"]))

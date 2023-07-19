@@ -15,7 +15,7 @@ import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 
 // axiosUtilのインスタンス作成
-const emits = defineEmits(["show-error-dialog"]);
+const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
 
 type Book = {
@@ -405,39 +405,49 @@ const createBookParams = async (form:BookForm) => {
   return params;
 };
 
-type DeleteBook = {
+type SimpleBook = {
   id: string,
   update_at: number
 }
-type DeleteBookParams = {
-  delete_books: DeleteBook[];
+type BooksParams = {
+  books: SimpleBook[];
   user: string;
   access_token: string;
 }
+const getSelectedBooks = ():Book[] => {
+  return toreadBooks.value.filter(book => book.isChecked);
+}
 const deleteBooks = async () => {
-  const books:DeleteBook[] = toreadBooks.value.filter(book => book.isChecked)
-                                        .map(book => {
-                                          return {id:book.id, update_at:book.updateAt}
-                                        });
+  const books = getSelectedBooks()
+  const simpleBooks:SimpleBook[] = books.map(book => {
+    return {id:book.id, update_at:book.updateAt}
+  });
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
     emits("show-error-dialog", null, "エラー", "削除する本を選択してください")
     return;
   }
-  // TODO: 確認ダイアログ
+  // 確認ダイアログ
+  const dispBooks = books.map(book => `・${book.bookName}`);
+  let confirmDialogMsg = `以下の本を削除します
 
-  const accessToken = authUtil.getLocalStorageAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
-  const params:DeleteBookParams = {
-    delete_books: books,
-    user: user.email || "No User Data",
-    access_token: accessToken
-  };
-  const response = await axiosUtil.post(`/toread/delete`, params);
-  if(response){
-    // 画面情報再設定
-    setInitInfo(response.data.toreadRows, response.data.toreadTags);
-  }
+${dispBooks.join("\n")}`;
+
+  emits("show-confirm-dialog", "確認", confirmDialogMsg, async () => {
+    const accessToken = authUtil.getLocalStorageAccessToken()
+    const user = await authUtil.getUserInfo(accessToken);
+    const params:BooksParams = {
+      books: simpleBooks,
+      user: user.email || "No User Data",
+      access_token: accessToken
+    };
+    const response = await axiosUtil.post(`/toread/delete`, params);
+    if(response){
+      // 画面情報再設定
+      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    }
+  });
+
 };
 
 type BookDialog = {
