@@ -6,14 +6,14 @@ class Mysql:
     def __init__(self, cursor) -> None:
         self.cursor = cursor
 
-    def log_sql(self, sql, params):
-        print(sql % tuple(params))
+    def log_sql(self):
+        print(self.cursor._executed)
 
     # SQL実行の共通処理
     def execute(self, sql_name, params=[]):
         sql = self.get_sql(sql_name)
-        self.log_sql(sql, params)
         self.cursor.execute(sql, params)
+        self.log_sql()
 
     # 取得
     def select(self, sql_name, params=[]):
@@ -27,8 +27,8 @@ class Mysql:
     # 追加 複数行
     def insert_multi(self, sql_name, values):
         sql = self.get_sql(sql_name)
-        self.log_sql(sql, values[0])
         self.cursor.executemany(sql, values)
+        self.log_sql()
         return self.cursor.lastrowid
     
     # 更新
