@@ -91,7 +91,7 @@ def create_toread(form, mysql:Mysql):
     return
 
 def update_toread(form, mysql:Mysql):
-    #TODO:bookテーブルUPDATE
+    #bookテーブルUPDATE
     update_toread_book(form, mysql)
     #tagテーブルいったんdelete
     delete_physically_toread_tag(form["id"], mysql)
