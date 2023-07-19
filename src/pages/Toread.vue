@@ -15,6 +15,8 @@ import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 
 // axiosUtilのインスタンス作成
+const EMIT_NAME_ERROR = "show-error-dialog";
+const EMIT_NAME_CONFIRM = "show-confirm-dialog";
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
 
@@ -278,7 +280,7 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.page = bookInfo.page;
   }else{
     // なかったらエラーダイアログ
-    emits("show-error-dialog", null, "エラー", "OpenBDからデータを取得できませんでした")
+    emits(EMIT_NAME_ERROR, null, "エラー", "OpenBDからデータを取得できませんでした")
   }
 
 };
@@ -424,7 +426,7 @@ const deleteBooks = async () => {
   });
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
-    emits("show-error-dialog", null, "エラー", "削除する本を選択してください")
+    emits(EMIT_NAME_ERROR, null, "エラー", "削除する本を選択してください")
     return;
   }
   // 確認ダイアログ
@@ -433,7 +435,7 @@ const deleteBooks = async () => {
 
 ${dispBooks.join("\n")}`;
 
-  emits("show-confirm-dialog", "確認", confirmDialogMsg, async () => {
+  emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
     const accessToken = authUtil.getLocalStorageAccessToken()
     const user = await authUtil.getUserInfo(accessToken);
     const params:BooksParams = {
@@ -550,7 +552,7 @@ onMounted(async () => {
       await getBookInfo(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
-      emits("show-error-dialog", null, "エラー", "ISBNを取得できませんでした")
+      emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした")
     }
   }
 

@@ -41,18 +41,20 @@ const dialog:Ref<Dialog> = ref({
 const showErrorDialog = (status: number, statusText: string, msg: string) => {
   dialog.value = {
     isShow: true,
-    headerText: `${status} ${statusText}`,
+    headerText: status ? `${status} ${statusText}` : statusText,
     msg,
     isError: true
   };
+
+  
 };
-const showConfirmDialog = (headerText:string, msg:string, next:Function) => {
+const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, next:Function) => {
   dialog.value = {
     isShow: true,
     headerText,
     msg,
     next,
-    isNegative: true
+    isNegative
   };
 }; 
 
