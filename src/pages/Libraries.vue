@@ -63,20 +63,22 @@ onMounted(async () => {
         <q-card class="q-pa-md">
           <div class="text-h6">
             
-            <a :href="library.url" target="_blank"><q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" class="q-pr-sm" />{{ library.name }}</a>
+            <a :href="library.url" target="_blank">
+              <q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" />{{library.city}}図書館
+            </a>
             <a :href="library.mapUrl" target="_blank">
             <q-icon name="place" class="q-px-sm" /></a>
             
+          </div>
+          <div>
+            {{ library.name }}
+            <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
           </div>
           <div>
             <span v-if="library.isOpen">{{ library.dispStartTime }} - {{ library.dispEndTime }}</span>
             <span v-else>休み</span>
           </div>
           
-          <div>
-            {{ library.city }}
-            <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
-          </div>
         </q-card>
       </div>
     </div>
