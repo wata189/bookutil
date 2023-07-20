@@ -127,7 +127,7 @@ def create_toread_book(form, mysql:Mysql):
 def create_toread_tag(id, form, mysql:Mysql):
     # /,スペースで分割
     # set→list変換で重複削除
-    tags = list(set(re.split("[ 　/,]", form["tags"])))
+    tags = [tag for tag in list(set(re.split("[ 　/,]", form["tags"]))) if tag != ""]
 
     user = form["user"]
 
