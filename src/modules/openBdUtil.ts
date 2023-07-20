@@ -4,15 +4,15 @@ const axios = axiosBase.create({
   baseURL: import.meta.env.VITE_OPEN_BD_URL
 });
 
-type Book = {
+type OpenBdBook = {
   bookName: string,
   isbn: string,
   authorName: string,
   publisherName: string,
   page: number
 }
-const getBookInfo = async (isbn:string):Promise<Book | null> => {
-  let book: Book | null = null;
+const getBookInfo = async (isbn:string):Promise<OpenBdBook | null> => {
+  let book: OpenBdBook | null = null;
   try{
     const path = `/get?isbn=${isbn}`
     console.log(`getBookInfo:${path}`)
