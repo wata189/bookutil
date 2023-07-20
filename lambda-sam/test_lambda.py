@@ -315,7 +315,7 @@ def test_is_valid_book_7():
 from modules_layer import models
 
 def test_fetch_menus_1():
-    assert len(models.fetch_menus(True)) == 3
+    assert len(models.fetch_menus(True)) == 2
 def test_fetch_menus_2():
     assert len(models.fetch_menus(False)) == 1
 

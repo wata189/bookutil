@@ -21,13 +21,7 @@ def fetch_menus(is_auth: bool):
                 "to":"/libraries",       
                 "icon":"account_balance",
                 "description": "利用する図書館の一覧を表示します。"
-            },
-            {
-                "name": "短編小説検索", 
-                "to":"/shortstories",       
-                "icon":"menu_book",
-                "description": "短編集が収録している短編小説を検索します。"
-            },
+            }
         ]
         menus += user_menus
 
