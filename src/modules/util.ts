@@ -30,7 +30,7 @@ const isDarkMode = ():boolean => {
 };
 
 const isSmartPhone = ():boolean => {
-  return window.matchMedia('(max-width: 600px)').matches;
+  return window.matchMedia("(max-device-width: 600px)").matches;
 }
 
 const formatDateToStr = (date: Date, format: string) => {
