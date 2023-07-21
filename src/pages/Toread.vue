@@ -9,6 +9,7 @@ import validationUtil from "@/modules/validationUtil";
 import openBdUtil from "@/modules/openBdUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 
+import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
@@ -624,6 +625,38 @@ const validationRules = {
 // 外部連携フラグ
 let isExternalCooperation = false;
 
+const booksSearchDialog = ref({
+  isShow: false,
+  okFunction: (book:GoogleBook) => {console.log(book)},
+  searchWord: ""
+});
+const showBooksSearchDialog = (searchWord:string) => {
+  if(!util.isExist(searchWord)){
+    emits(EMIT_NAME_ERROR, null, "エラー", "書籍名を入力してください");
+    return;
+  }
+
+  booksSearchDialog.value = {
+    isShow: true,
+    okFunction: setIsbnFromBooksSearchDialog,
+    searchWord
+  };
+};
+type GoogleBook = {
+  bookName: string,
+  isbn: string,
+  authorName: string
+};
+const setIsbnFromBooksSearchDialog = async (googleBook:GoogleBook) => {
+  bookDialog.value.form.isbn = googleBook.isbn;
+  bookDialog.value.form.bookName = googleBook.bookName;
+  bookDialog.value.form.authorName = googleBook.authorName;
+
+  if(bookDialog.value.form.isbn){
+    await getBookInfo(bookDialog.value.form.isbn);
+  }
+};
+
 onMounted(async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
@@ -638,7 +671,7 @@ onMounted(async () => {
       await getBookInfo(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
-      emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした")
+      emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした");
     }
   }
 
@@ -858,7 +891,18 @@ onMounted(async () => {
             v-model="bookDialog.form.bookName"
             :label="labels.bookName"
             :rules="validationRules.bookName"
-          ></q-input>
+          >
+            <template v-slot:append>
+              <q-btn 
+                round 
+                dense 
+                flat 
+                icon="search"
+                @click="showBooksSearchDialog(bookDialog.form.bookName)"
+              ></q-btn>
+            </template>
+          
+          </q-input>
         </div>
         <div class="col-8 q-pa-xs">
           <q-input
@@ -940,6 +984,13 @@ onMounted(async () => {
         </div>
       </q-form>
     </c-dialog>
+
+    <!-- 書籍検索ダイアログ -->
+    <c-books-search-dialog
+      v-model="booksSearchDialog.isShow"
+      :search-word="booksSearchDialog.searchWord"
+      @ok="booksSearchDialog.okFunction"
+    ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
     <c-dialog
