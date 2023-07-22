@@ -76,7 +76,27 @@ describe.each([
     expect(util.strToTag(param).length).toBe(expected);
   })
 });
-
+const testDate = new Date('1995-01-01T01:01:01');
+describe.each([
+  ["yy", testDate, "95"],
+  ["yyyy", testDate, "1995"],
+  ["M", testDate, "1"],
+  ["MM", testDate, "01"],
+  ["d", testDate, "1"],
+  ["dd", testDate, "01"],
+  ["h", testDate, "1"],
+  ["hh", testDate, "01"],
+  ["m", testDate, "1"],
+  ["mm", testDate, "01"],
+  ["s", testDate, "1"],
+  ["ss", testDate, "01"],
+  ["yyyyMMddhhmmss", testDate, "19950101010101"],
+  ["yyyy/MM/dd hh:mm:ss", testDate, "1995/01/01 01:01:01"],
+])("formatDateToStr(%p)", (format, date, expected) => {
+  test(`returns ${expected}`, () => {
+    expect(util.formatDateToStr(date, format)).toBe(expected);
+  })
+});
 
 
 import validationUtil from "./modules/validationUtil.ts";
