@@ -34,6 +34,17 @@ const routes = [
     component: async () => {
       return await import('@/pages/Libraries.vue');
     }
+  },
+
+
+  // 404
+  {
+    path: '/:catchAll(.*)',
+    name: '404',
+    props: true,
+    component: async () => {
+      return await import('@/pages/404.vue');
+    }
   }
 ];
 

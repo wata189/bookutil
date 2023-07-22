@@ -1015,7 +1015,7 @@ onMounted(async () => {
         <div>
           <q-btn
             v-for="link in links"
-            :disable="!bookDialog.form.isbn"
+            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
             round
             padding="none"
             :title="link.title"

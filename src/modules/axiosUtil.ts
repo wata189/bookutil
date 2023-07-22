@@ -1,5 +1,18 @@
 import axiosBase, { AxiosError, AxiosInstance } from "axios";
 
+// ステータスコード
+const STATUS_CODE = {
+    "OK": 200,
+
+    "BAD_REQUEST": 400,
+    "UNAUTHORISZED": 401,
+    "FORBIDDEN": 403,
+    "NOT_FOUND": 404,
+    "CONFLICT": 409,
+
+    "INTERNAL_SERVER_ERROR": 500
+}
+
 class AxiosUtil{
   axios: AxiosInstance;
 
@@ -23,6 +36,13 @@ class AxiosUtil{
       const statusText = error.code || "Server Error";
       const data:any = error.response?.data;
       const msg = data?.msg || "不明なエラーが発生しました";
+
+      // 404はNotFoundに飛ばす
+      if(status === STATUS_CODE["NOT_FOUND"]){
+        window.location.href = `404?status=${status}&statusText=${statusText}&msg=${msg}`;
+        return;
+      }
+
       // エラー内容を上のコンポーネントにemitする
       emits("show-error-dialog", status, statusText, msg);
     });
