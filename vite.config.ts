@@ -17,5 +17,9 @@ export default defineConfig({
     quasar({
       sassVariables: 'src/quasar-variables.sass'
     })
-  ]
-})
+  ],
+  test: {
+    globals: true,
+    environment: "jsdom"
+  },
+} as any)
