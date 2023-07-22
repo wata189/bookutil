@@ -96,7 +96,13 @@ const clickRow = (_evt:any, row:GoogleBook, _index:number) => {
       hide-bottom
       :rows-per-page-options="[0]"
       @row-click="clickRow"
-    />
+    >
+      <template v-slot:body-cell="props">
+        <q-td :props="props" :title="props.value">
+          {{ props.value }}
+        </q-td>
+      </template>
+    </q-table>
     <div v-else class="dialog-table">
       <!-- プレースホルダ -->
     </div>
