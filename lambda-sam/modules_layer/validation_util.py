@@ -6,7 +6,6 @@ NOT_EXISTS = ["", None]
 def is_exist(val):
     return not(val in NOT_EXISTS)
 
-# TODO:てすとかく
 def is_exist_array(val:list):
     if not is_exist(val): return True
     return len(val) > 0
@@ -32,7 +31,6 @@ def is_url(val):
 
     return not(not re.match("^https?://", val))
 
-#TODO:テストかく
 def is_valid_update_book(form):
     # バリデーション処理
     validation_result = [
@@ -83,7 +81,6 @@ def is_not_conflict_book(bookId:str, update_at:int, mysql:Mysql):
     result = util.get_toread_book(bookId, mysql)
     return result[0] and result[0]["update_at"].timestamp() == update_at
 
-# TODO:てすとかく
 def is_valid_books(body):
     # バリデーション処理
     validation_result = [

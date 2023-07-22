@@ -310,6 +310,124 @@ def test_is_valid_book_7():
     }
     assert validation_util.is_valid_book(form) == False
 
+def test_is_exist_array_1():
+    assert validation_util.is_exist_array([]) == False
+def test_is_exist_array_2():
+    assert validation_util.is_exist_array([0]) == True
+
+def test_is_valid_update_book_1():
+    form = {
+        "id": "",
+        "update_at": 1
+    }
+    assert validation_util.is_valid_update_book(form) == False
+def test_is_valid_update_book_2():
+    form = {
+        "id": "a",
+        "update_at": 1
+    }
+    assert validation_util.is_valid_update_book(form) == False
+def test_is_valid_update_book_3():
+    form = {
+        "id": "1",
+        "update_at": None
+    }
+    assert validation_util.is_valid_update_book(form) == False
+def test_is_valid_update_book_4():
+    form = {
+        "id": "",
+        "update_at": "aiueo"
+    }
+    assert validation_util.is_valid_update_book(form) == False
+def test_is_valid_update_book_5():
+    form = {
+        "id": "1",
+        "update_at": 1
+    }
+    assert validation_util.is_valid_update_book(form) == True
+
+def test_is_valid_books_1():
+    form = {
+        "books": "",
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_2():
+    form = {
+        "books": [],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_3():
+    form = {
+        "books": [{
+            "id": "",
+            "update_at": 1
+        }],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_4():
+    form = {
+        "books": [{
+            "id": "a",
+            "update_at": 1
+        }],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_5():
+    form = {
+        "books": [{
+            "id": "1",
+            "update_at": None
+        }],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_6():
+    form = {
+        "books": [{
+            "id": "1",
+            "update_at": "aiueo"
+        }],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_7():
+    form = {
+        "books": [
+            {
+                "id": "1",
+                "update_at": 1
+            },
+            {
+                "id": "a",
+                "update_at": 1
+            }
+        ],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_8():
+    form = {
+        "books": [{
+            "id": "1",
+            "update_at": 1
+        }],
+        "user": None
+    }
+    assert validation_util.is_valid_books(form) == False
+def test_is_valid_books_9():
+    form = {
+        "books": [{
+            "id": "1",
+            "update_at": 1
+        }],
+        "user": "test"
+    }
+    assert validation_util.is_valid_books(form) == True
+
 
 
 from modules_layer import models
