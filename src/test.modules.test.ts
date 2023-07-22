@@ -184,9 +184,6 @@ describe.each([
 ])("%p(%p)(%p)", (func, valName, val, expected) => {
   test(`returns ${expected}`, () => {
     expect(func(valName)(val)).toBe(expected);
-  })
+  });
 });
 
-// TODO: googleBooksUtil.ts
-
-// TODO: openBdUtil.ts
