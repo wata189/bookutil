@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "testVueModules": "jest src/test.modules.test.ts",
-    "testVueComponents": "npx vitest add test.components.test.ts",
-    "devVue": "npm run testVue && npm run vitest && vite",
+    "testVueComponents": "npx vitest run test.components.test.ts",
+    "devVue": "npm run testVueModules && npm run testVueComponents && vite",
     "-------": "",
     "testLambda": "cd lambda-sam && pytest test_lambda.py -v --cov modules_layer",
     "devLambda": "npm run testLambda && cd lambda-sam && sam build && sam local start-api --env-vars env.json --docker-network host",
