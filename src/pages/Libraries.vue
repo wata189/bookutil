@@ -40,7 +40,9 @@ const dispLibraries = computed(() => {
       isOpenLibrary = startTime <= tmpTime && tmpTime <= endTime;
     }
 
-    return {...library, isOpenLibrary, dispStartTime, dispEndTime};
+    const toreadLink = `/toread?filterCondTags=${library.city}図書館 よみたい`
+
+    return {...library, isOpenLibrary, dispStartTime, dispEndTime, toreadLink};
   });
 });
 
@@ -78,6 +80,8 @@ onMounted(async () => {
             <span v-if="library.isOpen">{{ library.dispStartTime }} - {{ library.dispEndTime }}</span>
             <span v-else>休み</span>
           </div>
+          
+          <a :href="library.toreadLink" target="_blank">よみたいリストで表示</a>
           
         </q-card>
       </div>

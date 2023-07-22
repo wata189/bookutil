@@ -606,7 +606,7 @@ const addTagsFromDialogForm = () => {
 const addWantTag = (book:Book, tag:string) => {
   // TODO: カーリル経由で図書館タグ取得
   const libraryTag = "";
-  
+
   const tags = [tag, libraryTag].join("/")
   addTag(book, tags);
 };
@@ -695,6 +695,11 @@ onMounted(async () => {
       // ISBNが取得できなかったことをアラートで表示
       emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした");
     }
+  }
+  
+  const urlParamTags = urlParams.get("filterCondTags");
+  if(urlParamTags){
+    filterCond.value.tags = urlParamTags
   }
 
   await initToread();
