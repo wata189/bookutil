@@ -800,7 +800,7 @@ onMounted(async () => {
                       title="すごくよみたい"
                       icon="hotel_class"
                       color="primary"
-                      @click="addWantTag(book, 'すごくよみたい')"
+                      @click="addWantTag(book, 'よみたい/すごくよみたい')"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
