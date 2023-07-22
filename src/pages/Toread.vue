@@ -572,7 +572,7 @@ const showAddTagDialog = () => {
     isShow: true,
     headerText: "一括タグ追加",
     okLabel: "タグ追加",
-    okFunction: addTag,
+    okFunction: addTagsFromDialogForm,
     form: {
       tags: ""
     }
@@ -582,15 +582,19 @@ const addTagValidationRules = {
   tags: [validationUtil.isExist(labels.tags)]
 };
 const addTagDialogForm:Ref<QForm | undefined> = ref();
-const addTag = () => {
+const addTagsFromDialogForm = () => {
   // フォームのバリデーション処理
   if(!addTagDialogForm.value){return;}
   addTagDialogForm.value.validate().then(async (success:boolean) => {
     if(!success){return;}
 
     // formを送る
-    const params = await createAddTagParams(addTagDialog.value.form);
-    const response = await axiosUtil.post(`/toread/tag/add`, params);
+    const books = selectedBooks.value;
+    const tags = addTagDialog.value.form.tags
+
+    const response = await addTags(books, tags);
+    // const params = await createAddTagParams(addTagDialog.value.form);
+    // const response = await axiosUtil.post(`/toread/tag/add`, params);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadRows, response.data.toreadTags);
@@ -599,9 +603,27 @@ const addTag = () => {
     }
   });
 };
+const addWantTag = (book:Book, tag:string) => {
+  // TODO: カーリル経由で図書館タグ取得
+  const libraryTag = "";
+  
+  const tags = [tag, libraryTag].join("/")
+  addTag(book, tags);
+};
+const addTag = async (book:Book, tags:string) => {
+  const response = await addTags([book], tags);
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+  }
+};
 
-const createAddTagParams = async (addTagDialogForm: AddTagForm):Promise<BooksParams> => {
-  const books = selectedBooks.value;
+const addTags = async (books:Book[], tags:string) => {
+  const params = await createAddTagParams(books, tags);
+  return await axiosUtil.post(`/toread/tag/add`, params);
+};
+
+const createAddTagParams = async (books:Book[], tags:string):Promise<BooksParams> => {
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {id:book.id, update_at:book.updateAt}
   });
@@ -612,7 +634,7 @@ const createAddTagParams = async (addTagDialogForm: AddTagForm):Promise<BooksPar
     books: simpleBooks,
     user: user.email || "No User Data",
     access_token: accessToken,
-    tags: addTagDialogForm.tags
+    tags: tags
   };
 };
 
@@ -757,6 +779,24 @@ onMounted(async () => {
                     >
                       新刊チェック
                     </q-toggle>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="!util.strToTag(book.tags).includes('よみたい')"
+                      title="よみたい"
+                      icon="star_border"
+                      color="primary"
+                      @click="addWantTag(book, 'よみたい')"
+                    ></c-round-btn>
+                    <c-round-btn
+                      v-if="!util.strToTag(book.tags).includes('すごくよみたい')"
+                      title="すごくよみたい"
+                      icon="hotel_class"
+                      color="primary"
+                      @click="addWantTag(book, 'すごくよみたい')"
+                    ></c-round-btn>
                   </div>
                   <div class="col"></div>
                   <div class="col-auto">
