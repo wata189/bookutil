@@ -49,12 +49,12 @@ class AxiosUtil{
   }
 
   async get(path:string, headerParams?:Object){
-    console.log(`axios get:${path}`);
+    console.log(`axios get`);
     return await this.axios.get(path, headerParams);
   }
 
   async post(path:string, params?:Object){
-    console.log(`axios post:${path}`);
+    console.log(`axios post`);
     return await this.axios.post(path, params);
   }
 }

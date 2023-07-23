@@ -70,7 +70,6 @@ onMounted(async () => {
 
   // トークン取得
   if(code){
-    localStorage.code = code;
     await authUtil.getToken(code);
   }
 
