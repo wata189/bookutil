@@ -85,7 +85,7 @@ const ok = () => {
 
 <style scoped>
 .confirm-dialog-card{
-  width: 300px;
+  min-width: 300px;
 }
 .confirm-dialog-content{
   white-space: pre-line;
