@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Build
-        run: npm run buil
+        run: npm run build
         env: 
           ENV: ${{ secrets.ENV }}
           VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
