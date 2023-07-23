@@ -40,7 +40,7 @@ const dispLibraries = computed(() => {
       isOpenLibrary = startTime <= tmpTime && tmpTime <= endTime;
     }
 
-    const toreadLink = `bookutil/toread?filterCondTags=${library.city}図書館 よみたい`
+    const toreadLink = `toread?filterCondTags=${library.city}図書館 よみたい`
 
     return {...library, isOpenLibrary, dispStartTime, dispEndTime, toreadLink};
   });
