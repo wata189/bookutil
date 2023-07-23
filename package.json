@@ -11,8 +11,8 @@
     "testLambda": "cd lambda-sam && pytest test_lambda.py -v --cov modules_layer",
     "devLambda": "npm run testLambda && cd lambda-sam && sam build && sam local start-api --env-vars env.json --docker-network host",
     "--------": "",
-    "buildVue": "vue-tsc && vite build",
-    "previewVue": "vite preview"
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.3",
