@@ -38,7 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Build
-        run: npm run build
+        run: npm run buil
+        env: 
+          ENV: ${{ secrets.ENV }}
+          VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+          VITE_AUTH_CRIENT_ID: ${{ secrets.VITE_AUTH_CRIENT_ID }}
+          VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
+          VITE_GOOGLE_BOOKS_UTIL: ${{ secrets.VITE_GOOGLE_BOOKS_UTIL }}
+          VITE_LAMBDA_URL: ${{ secrets.VITE_LAMBDA_URL }}
+          VITE_OPEN_BD_URL: ${{ secrets.VITE_OPEN_BD_URL }}
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
