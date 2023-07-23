@@ -53,7 +53,7 @@ const formatDateToStr = (date: Date, format: string) => {
 
 const getCurrentUrl = ():string => {
   // クエリパラメータは除外する
-  return window.location.href.substr(0, window.location.href.indexOf('?'));
+  return window.location.href.split("?")[0];
 };
 
 export default {
