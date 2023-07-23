@@ -438,16 +438,16 @@ def test_fetch_menus_2():
     assert len(models.fetch_menus(False)) == 1
 
 def test_create_cover_url_1():
-    assert models.create_cover_url("") == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url("") == "img/cover_placeholder.jpg"
 def test_create_cover_url_2():
-    assert models.create_cover_url(None) == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url(None) == "img/cover_placeholder.jpg"
 def test_create_cover_url_3():
-    assert models.create_cover_url("a") == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url("a") == "img/cover_placeholder.jpg"
 def test_create_cover_url_4():
     assert models.create_cover_url("415209205X") == "https://cover.openbd.jp/9784152092052.jpg"
 def test_create_cover_url_5():
-    assert models.create_cover_url("415209205Y") == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url("415209205Y") == "img/cover_placeholder.jpg"
 def test_create_cover_url_6():
     assert models.create_cover_url("9784152092052") == "https://cover.openbd.jp/9784152092052.jpg"
 def test_create_cover_url_7():
-    assert models.create_cover_url("978415209205X") == "/img/cover_placeholder.jpg"
+    assert models.create_cover_url("978415209205X") == "img/cover_placeholder.jpg"
