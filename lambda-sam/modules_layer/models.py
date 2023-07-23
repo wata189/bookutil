@@ -61,7 +61,7 @@ def fetch_toread(is_auth:bool, mysql:Mysql):
 # カバーのURLをISBNから取得
 def create_cover_url(isbn:str):
     # isbnない場合はプレースホルダー
-    cover_url = "/img/cover_placeholder.jpg"
+    cover_url = "img/cover_placeholder.jpg"
     if isbn and util.is_isbn(isbn):
         cover_url = f"https://cover.openbd.jp/{util.isbn_10_to_13(isbn)}.jpg"
     return cover_url
