@@ -51,6 +51,11 @@ const formatDateToStr = (date: Date, format: string) => {
   );
 };
 
+const getCurrentUrl = ():string => {
+  // クエリパラメータは除外する
+  return window.location.href.substr(0, window.location.href.indexOf('?'));
+};
+
 export default {
   openPageAsNewTab,
   isIsbn,
@@ -59,5 +64,6 @@ export default {
   strToTag,
   isDarkMode,
   isSmartPhone,
-  formatDateToStr
+  formatDateToStr,
+  getCurrentUrl
 }
