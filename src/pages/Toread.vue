@@ -21,6 +21,10 @@ const EMIT_NAME_CONFIRM = "show-confirm-dialog";
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
 
+const emitError = (statusText:string, msg:string, status?:number) => {
+  emits(EMIT_NAME_ERROR, status, statusText, msg);
+};
+
 type Book = {
   id: string,
   bookName: string,
@@ -301,7 +305,7 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.page = bookInfo.page;
   }else{
     // なかったらエラーダイアログ
-    emits(EMIT_NAME_ERROR, null, "エラー", "OpenBDからデータを取得できませんでした")
+    emitError("エラー", "OpenBDからデータを取得できませんでした");
   }
 
 };
@@ -449,7 +453,7 @@ const deleteBooks = async () => {
   });
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
-    emits(EMIT_NAME_ERROR, null, "エラー", "削除する本を選択してください")
+    emitError("エラー", "削除する本を選択してください");
     return;
   }
   // 確認ダイアログ
@@ -564,7 +568,7 @@ const showAddTagDialog = () => {
   const books = selectedBooks.value;
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
-    emits(EMIT_NAME_ERROR, null, "エラー", "タグを設定する本を選択してください")
+    emitError("エラー", "タグを設定する本を選択してください");
     return;
   }
 
@@ -610,6 +614,20 @@ const addWantTag = (book:Book, tag:string) => {
   const tags = [tag, libraryTag].join("/")
   addTag(book, tags);
 };
+const addMultiTag = async () => {
+  if(!util.isExist(addTagDialog.value.form.tags)){
+    emitError("エラー", "タグを入力してください");
+    return;
+  }
+
+  const response = await addTags(selectedBooks.value, addTagDialog.value.form.tags)
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    // ダイアログ消す
+    addTagDialog.value.isShow = false;
+  }
+};
 const addTag = async (book:Book, tags:string) => {
   const response = await addTags([book], tags);
   if(response){
@@ -654,7 +672,7 @@ const booksSearchDialog = ref({
 });
 const showBooksSearchDialog = (searchWord:string) => {
   if(!util.isExist(searchWord)){
-    emits(EMIT_NAME_ERROR, null, "エラー", "書籍名を入力してください");
+    emitError("エラー", "書籍名を入力してください");
     return;
   }
 
@@ -693,7 +711,7 @@ onMounted(async () => {
       await getBookInfo(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
-      emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした");
+      emitError("エラー", "ISBNを取得できませんでした");
     }
   }
   
@@ -1042,7 +1060,7 @@ onMounted(async () => {
       v-model="addTagDialog.isShow"
       :header-text="addTagDialog.headerText"
       :okLabel="addTagDialog.okLabel"
-      @ok="addTag"
+      @ok="addMultiTag"
     >
       <q-form ref="addTagDialogForm">
         <c-input-tag
