@@ -35,9 +35,6 @@ def fetch_toread(is_auth:bool, mysql:Mysql):
     # DBから取得
     result = mysql.select("fetch_toread")
 
-    # モック用 ログインしていない場合はプログラミングタグを持つ本のみ表示
-    if not is_auth:
-        result = list(filter(lambda row: "プログラミング" in row["tags"], result))
 
     toread_rows = [
         {
@@ -55,6 +52,9 @@ def fetch_toread(is_auth:bool, mysql:Mysql):
         } for row in result
     ]
 
+    # モック用 ログインしていない場合はプログラミングタグを持つ本のみ表示
+    if not is_auth:
+        toread_rows = list(filter(lambda row: "プログラミング" in row["tags"], toread_rows))
 
     return toread_rows
 
