@@ -22,14 +22,13 @@ def is_auth(event:any):
 
     try:
         token = ""
-        if "queryStringParameters" in event:
-            queryStringParameters = event.get("queryStringParameters")
-            if "access_token" in queryStringParameters:
-                token = event.get("access_token")
-        elif "body" in event:
-            body = json.loads(event.get("body"))
-            if "access_token" in body:
-                token = event.get("access_token")
+        queryStringParameters = event.get("queryStringParameters")
+        body = event.get("body")
+        if queryStringParameters:
+            token = queryStringParameters.get("access_token")
+        elif body:
+            json_body = json.loads(body)
+            token = json_body.get("access_token")
         
         if not token:
             return
