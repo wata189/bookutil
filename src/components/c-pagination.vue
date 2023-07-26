@@ -26,7 +26,7 @@ const value = computed({
     direction-links
     boundary-links
     flat
-    :max-pages="6"
+    :max-pages="5"
     color="secondary"
     icon-first="skip_previous"
     icon-last="skip_next"

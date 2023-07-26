@@ -871,28 +871,32 @@ onMounted(async () => {
                     <c-round-btn
                       :title="isDescTitle"  
                       :icon="isDescIcon"
+                      dense
                       @click="sortCond.isDesc = !sortCond.isDesc"
                     ></c-round-btn>
                   </template>
                 </q-select>
               </div>
-              <div class="col-auto q-pa-sm">
+              <div class="col-auto q-pa-sm row">
                 <c-round-btn
                   title="一括削除"  
                   icon="delete"
                   color="negative"
+                  dense
                   @click="deleteBooks"
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
                   icon="local_offer"
                   color="secondary"
+                  dense
                   @click="showAddTagDialog"
                 ></c-round-btn>
                 <c-round-btn
                   title="新規作成"  
                   icon="add"
                   color="primary"
+                  dense
                   @click="showNewBookDialog"
                 ></c-round-btn>
               </div>
