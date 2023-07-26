@@ -68,6 +68,17 @@ CREATE TABLE `t_toread_tag` (
   CONSTRAINT `t_toread_tag_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `t_toread_book` (`id`)
 );
 
+CREATE TABLE `m_toread_tag` (
+  `tag` varchar(100) NOT NULL COMMENT 'タグ',
+  `order_num` int NOT NULL DEFAULT '0' COMMENT '並び順',
+  `create_user` varchar(100) NOT NULL DEFAULT 'system' COMMENT '作成者',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
+  `update_user` varchar(100) NOT NULL DEFAULT 'system' COMMENT '更新者',
+  `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新日時',
+  `delete_flg` tinyint NOT NULL DEFAULT '0' COMMENT '削除フラグ',
+  PRIMARY KEY (`tag`)
+);
+
 CREATE VIEW `v_toread_tag` AS 
 SELECT `tag`
 FROM (
