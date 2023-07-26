@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "testVueModules": "jest src/test.modules.test.ts",
+    "testVueModules": "npx vitest run test.modules.test.ts",
     "testVueComponents": "npx vitest run test.components.test.ts",
     "devVue": "npm run testVueModules && npm run testVueComponents && vite",
     "-------": "",

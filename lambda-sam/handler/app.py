@@ -4,10 +4,9 @@ import util, validation_util, mysql_util, models, auth_util
 ## メニュー情報取得処理
 def handler_fetch_menus(event, context):
     # ユーザーが認証されているかを確認
-    token = event.get('queryStringParameters').get('access_token')
-    isAuth = auth_util.is_auth(token)
+    is_auth = auth_util.is_auth(event)
 
-    menus = models.fetch_menus(isAuth)
+    menus = models.fetch_menus(is_auth)
     body = {
         "menus": menus
     }
@@ -28,8 +27,7 @@ def init_toread(is_auth, mysql):
 ## toread初期化処理
 def handler_init_toread(event, context):
     # ユーザーが認証されているかを確認
-    token = event.get('queryStringParameters').get('access_token')
-    is_auth = auth_util.is_auth(token)
+    is_auth = auth_util.is_auth(event)
 
     response = mysql_util.tran(lambda mysql: init_toread(is_auth, mysql))
     return response
@@ -39,7 +37,7 @@ def handler_create_toread(event, context):
     body = json.loads(event.get("body"))
     print(body)
 
-    is_auth = auth_util.is_auth(body["access_token"])
+    is_auth = auth_util.is_auth(event)
     # ログイン済みでも外部連携でもなければログインエラー
     if not is_auth and not body["is_external_cooperation"]:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
@@ -64,7 +62,7 @@ def handler_update_toread(event, context):
     body = json.loads(event.get("body"))
     print(body)
 
-    is_auth = auth_util.is_auth(body["access_token"])
+    is_auth = auth_util.is_auth(event)
     # ログイン済みででなければログインエラー
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
@@ -99,7 +97,7 @@ def handler_delete_toread(event, context):
     body = json.loads(event.get("body"))
     print(body)
 
-    is_auth = auth_util.is_auth(body["access_token"])
+    is_auth = auth_util.is_auth(event)
     # ログイン済みででなければログインエラー
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
@@ -127,7 +125,7 @@ def handler_add_toread_tag(event, context):
     body = json.loads(event.get("body"))
     print(body)
 
-    is_auth = auth_util.is_auth(body["access_token"])
+    is_auth = auth_util.is_auth(event)
     # ログイン済みででなければログインエラー
     if not is_auth:
         return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
