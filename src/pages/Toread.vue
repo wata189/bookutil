@@ -21,6 +21,10 @@ const EMIT_NAME_CONFIRM = "show-confirm-dialog";
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
 
+const emitError = (statusText:string, msg:string, status?:number) => {
+  emits(EMIT_NAME_ERROR, status, statusText, msg);
+};
+
 type Book = {
   id: string,
   bookName: string,
@@ -172,17 +176,9 @@ const dispToreadBooks = computed({
 });
 
 // よみたい度算出
-// すごくよみたい→2ポイント　よみたい→1ポイント
+// よみたい→1ポイント
 const getWantPoint = (tagsStr:string):number => {
-  const tags = util.strToTag(tagsStr);
-
-  let wantPoint = 0;
-  if(tags.includes("すごくよみたい")){
-    wantPoint = 2;
-  }else if(tags.includes("よみたい")){
-    wantPoint = 1;
-  }
-  return wantPoint;
+  return util.strToTag(tagsStr).includes("よみたい") ? 1 : 0;
 };
 
 const toreadTagOptions:Ref<string[]> = ref([]);
@@ -301,7 +297,7 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.page = bookInfo.page;
   }else{
     // なかったらエラーダイアログ
-    emits(EMIT_NAME_ERROR, null, "エラー", "OpenBDからデータを取得できませんでした")
+    emitError("エラー", "OpenBDからデータを取得できませんでした");
   }
 
 };
@@ -449,7 +445,7 @@ const deleteBooks = async () => {
   });
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
-    emits(EMIT_NAME_ERROR, null, "エラー", "削除する本を選択してください")
+    emitError("エラー", "削除する本を選択してください");
     return;
   }
   // 確認ダイアログ
@@ -564,7 +560,7 @@ const showAddTagDialog = () => {
   const books = selectedBooks.value;
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
-    emits(EMIT_NAME_ERROR, null, "エラー", "タグを設定する本を選択してください")
+    emitError("エラー", "タグを設定する本を選択してください");
     return;
   }
 
@@ -610,6 +606,20 @@ const addWantTag = (book:Book, tag:string) => {
   const tags = [tag, libraryTag].join("/")
   addTag(book, tags);
 };
+const addMultiTag = async () => {
+  if(!util.isExist(addTagDialog.value.form.tags)){
+    emitError("エラー", "タグを入力してください");
+    return;
+  }
+
+  const response = await addTags(selectedBooks.value, addTagDialog.value.form.tags)
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    // ダイアログ消す
+    addTagDialog.value.isShow = false;
+  }
+};
 const addTag = async (book:Book, tags:string) => {
   const response = await addTags([book], tags);
   if(response){
@@ -654,7 +664,7 @@ const booksSearchDialog = ref({
 });
 const showBooksSearchDialog = (searchWord:string) => {
   if(!util.isExist(searchWord)){
-    emits(EMIT_NAME_ERROR, null, "エラー", "書籍名を入力してください");
+    emitError("エラー", "書籍名を入力してください");
     return;
   }
 
@@ -693,7 +703,7 @@ onMounted(async () => {
       await getBookInfo(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
-      emits(EMIT_NAME_ERROR, null, "エラー", "ISBNを取得できませんでした");
+      emitError("エラー", "ISBNを取得できませんでした");
     }
   }
   
@@ -795,13 +805,6 @@ onMounted(async () => {
                       color="primary"
                       @click="addWantTag(book, 'よみたい')"
                     ></c-round-btn>
-                    <c-round-btn
-                      v-if="!util.strToTag(book.tags).includes('すごくよみたい')"
-                      title="すごくよみたい"
-                      icon="hotel_class"
-                      color="primary"
-                      @click="addWantTag(book, 'よみたい/すごくよみたい')"
-                    ></c-round-btn>
                   </div>
                   <div class="col"></div>
                   <div class="col-auto">
@@ -853,28 +856,32 @@ onMounted(async () => {
                     <c-round-btn
                       :title="isDescTitle"  
                       :icon="isDescIcon"
+                      dense
                       @click="sortCond.isDesc = !sortCond.isDesc"
                     ></c-round-btn>
                   </template>
                 </q-select>
               </div>
-              <div class="col-auto q-pa-sm">
+              <div class="col-auto q-pa-sm row">
                 <c-round-btn
                   title="一括削除"  
                   icon="delete"
                   color="negative"
+                  dense
                   @click="deleteBooks"
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
                   icon="local_offer"
                   color="secondary"
+                  dense
                   @click="showAddTagDialog"
                 ></c-round-btn>
                 <c-round-btn
                   title="新規作成"  
                   icon="add"
                   color="primary"
+                  dense
                   @click="showNewBookDialog"
                 ></c-round-btn>
               </div>
@@ -1042,7 +1049,7 @@ onMounted(async () => {
       v-model="addTagDialog.isShow"
       :header-text="addTagDialog.headerText"
       :okLabel="addTagDialog.okLabel"
-      @ok="addTag"
+      @ok="addMultiTag"
     >
       <q-form ref="addTagDialogForm">
         <c-input-tag

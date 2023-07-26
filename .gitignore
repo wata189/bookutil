@@ -278,7 +278,11 @@ lambda-sam/.aws-sam/
 lambda-sam/env*.json
 lambda-sam/*/__pycache__
 
+lambda-sam/template*.yaml
+
 lambda
+
+
 
 # jest
 coverage
