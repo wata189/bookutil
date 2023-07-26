@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { Dark } from 'quasar';
-import { onMounted } from '@vue/runtime-core';
-import { useRouter } from 'vue-router';
+import { computed, ref } from "vue";
+import { Dark } from "quasar";
+import { onMounted } from "@vue/runtime-core";
+import { useRouter } from "vue-router";
 
-import CRoundBtn from '@/components/c-round-btn.vue';
+import CRoundBtn from "@/components/c-round-btn.vue";
 
-import authUtil from '@/modules/authUtil';
-import AxiosUtil from '@/modules/axiosUtil';
+import authUtil from "@/modules/authUtil";
+import AxiosUtil from "@/modules/axiosUtil";
+import util from "@/modules/util";
 
 // axiosUtilのインスタンス作成
 const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
@@ -57,7 +58,9 @@ const setMode = (isDark: boolean) => {
   localStorage.isDarkMode = isDark;
 };
 
-const iconSize = "24px";
+const iconSize = "24px";4
+
+const iconSrc = util.getIconHref();
 
 onMounted(async () => {
   setMode(isDarkMode.value);
@@ -78,7 +81,7 @@ onMounted(async () => {
     <q-toolbar>
       <q-toolbar-title class="toolbar-title">
         <div @click="router.push('/')">
-          <q-img src="img/icon.svg" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
+          <q-img :src="iconSrc" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
       </q-toolbar-title>

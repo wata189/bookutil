@@ -56,6 +56,10 @@ const getCurrentUrl = ():string => {
   return window.location.href.split("?")[0];
 };
 
+const getIconHref = ():string => {
+  return import.meta.env.DEV ? "img/icon.dev.svg" : "img/icon.svg";
+}
+
 export default {
   openPageAsNewTab,
   isIsbn,
@@ -65,5 +69,6 @@ export default {
   isDarkMode,
   isSmartPhone,
   formatDateToStr,
-  getCurrentUrl
+  getCurrentUrl,
+  getIconHref
 }

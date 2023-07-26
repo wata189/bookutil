@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import CHeader from '@/components/c-header.vue';
+import CHeader from "@/components/c-header.vue";
 import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 
-import { onMounted } from '@vue/runtime-core';
-import { ref } from '@vue/reactivity';
-import { Ref } from 'vue';
+import { onMounted } from "@vue/runtime-core";
+import { ref } from "@vue/reactivity";
+import { Ref } from "vue";
 
-import util from '@/modules/util';
-import authUtil from '@/modules/authUtil'
+import util from "@/modules/util";
+import authUtil from "@/modules/authUtil"
 
-
-const pageName = 'Bookutil';
+const isDev = import.meta.env.DEV;
+const pageName = isDev ? "Bookutil(開発)" : "Bookutil";
+const iconHref = util.getIconHref();
+const head = document.querySelector("head");
+head?.append(
+  Object.assign(document.createElement("link"), {
+    rel: "icon",
+    type: "image/svg+xml",
+    href: iconHref
+  })
+);
 
 interface Menu {
   name: string,
@@ -66,7 +75,7 @@ const setIsShowInnerLoading = (bool:boolean) => {
 onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
   const urlParams = (new URL(window.location.href)).searchParams;
-  const code = urlParams.get('code');
+  const code = urlParams.get("code");
 
   // トークン取得
   if(code){
