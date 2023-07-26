@@ -176,17 +176,9 @@ const dispToreadBooks = computed({
 });
 
 // よみたい度算出
-// すごくよみたい→2ポイント　よみたい→1ポイント
+// よみたい→1ポイント
 const getWantPoint = (tagsStr:string):number => {
-  const tags = util.strToTag(tagsStr);
-
-  let wantPoint = 0;
-  if(tags.includes("すごくよみたい")){
-    wantPoint = 2;
-  }else if(tags.includes("よみたい")){
-    wantPoint = 1;
-  }
-  return wantPoint;
+  return util.strToTag(tagsStr).includes("よみたい") ? 1 : 0;
 };
 
 const toreadTagOptions:Ref<string[]> = ref([]);
@@ -812,13 +804,6 @@ onMounted(async () => {
                       icon="star_border"
                       color="primary"
                       @click="addWantTag(book, 'よみたい')"
-                    ></c-round-btn>
-                    <c-round-btn
-                      v-if="!util.strToTag(book.tags).includes('すごくよみたい')"
-                      title="すごくよみたい"
-                      icon="hotel_class"
-                      color="primary"
-                      @click="addWantTag(book, 'よみたい/すごくよみたい')"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
