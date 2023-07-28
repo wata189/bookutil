@@ -5,7 +5,7 @@
   "description": "Amazon, カーリルからBookutilへの連携",
   "background": {
     "matches": [
-      "https://www.amazon.co.jp/dp/*",
+      "https://amazon.co.jp/dp/*",
       "https://calil.jp/book/*"
     ],
     "service_worker": "background.js"

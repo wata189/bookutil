@@ -1,6 +1,6 @@
-const IS_DEV = true; // 開発環境フラグ
+const IS_DEV = false; // 開発環境フラグ
 const MENU_TITLE = IS_DEV ? "Bookutilに登録(開発環境)" : "Bookutilに登録";
-const BOOKUTIL_ROOT_URL = IS_DEV ? "http://localhost:5173" : "" //TODO: 本番環境のURL
+const BOOKUTIL_ROOT_URL = IS_DEV ? "http://localhost:5173" : "https://bookutil.netlify.app" //本番環境のURL
 /**
  * 拡張機能インストール時の処理
  * インストール時のイベント関数で、コンテキストメニューを登録します。
@@ -40,7 +40,7 @@ const toBookutil = (pageUrl, tabId) => {
   console.log("toBookutil");
 
   // pageUrlからisbn取得
-  const isbn = pageUrl.split("/").find((path) => isIsbn(path)) || "null"
+  const isbn = pageUrl.split(/[/?]/).find((path) => isIsbn(path)) || "null"
 
   const url = `${BOOKUTIL_ROOT_URL}/toread?isbn=${isbn}`;
   chrome.tabs.create({
