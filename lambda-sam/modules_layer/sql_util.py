@@ -141,9 +141,57 @@ JOIN
 ON
     m_library.id = m_library_business_hours.library_id
 
-WHERE DAYOFWEEK(now()) - 1 = m_library_business_hours.day_of_week
+WHERE DAYOFWEEK(now()) - 1 = m_library_business_hours.day_of_week AND m_library.delete_flg = 0
 ORDER BY
     m_library.order_num
+"""
+
+fetch_check_new_book_libraries = """
+SELECT id, city, url, order_num
+FROM m_library
+WHERE new_book_check_flg = 1 AND delete_flg = 0
+ORDER BY order_num
+"""
+
+fetch_check_new_book_toread_books = """
+SELECT 
+    id
+    , book_name
+    , isbn
+    , author_name
+    , publisher_name
+    , page
+    , other_url
+    , new_book_check_flg
+    , tags
+FROM(
+    SELECT
+        id
+        , book_name
+        , isbn
+        , author_name
+        , publisher_name
+        , page
+        , other_url
+        , new_book_check_flg
+        , create_user
+        , create_at
+        , update_user
+        , update_at
+        , delete_flg
+    FROM
+        bookutil.t_toread_book
+    WHERE delete_flg = 0 AND new_book_check_flg = 1
+) book
+
+LEFT JOIN(
+    SELECT book_id, GROUP_CONCAT(tag SEPARATOR "/") as tags
+    FROM t_toread_tag
+    WHERE delete_flg = 0
+    GROUP BY book_id
+) tag
+
+ON book.id = tag.book_id
 """
 
 
@@ -159,7 +207,9 @@ SQLS = {
     "is_update_unique_isbn": is_update_unique_isbn,
     "delete_toread_book": delete_toread_book,
     "delete_toread_tag": delete_toread_tag,
-    "fetch_libraries": fetch_libraries
+    "fetch_libraries": fetch_libraries,
+    "fetch_check_new_book_libraries": fetch_check_new_book_libraries,
+    "fetch_check_new_book_toread_books": fetch_check_new_book_toread_books
 }
 
 def get_sql(sql_name):
