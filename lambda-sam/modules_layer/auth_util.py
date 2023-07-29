@@ -31,7 +31,8 @@ def is_auth(event:any):
             token = json_body.get("access_token")
         
         if not token:
-            return
+            print('no token error')
+            return False
 
 
         jwks_client = jwt.PyJWKClient(jwks_url)
@@ -54,6 +55,7 @@ def is_auth(event:any):
             print('token_use error')
             return False
         else:
+            print('auth')
             return True
     except Exception as e:
         print(e)
