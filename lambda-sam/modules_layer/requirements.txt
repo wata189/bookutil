@@ -1,3 +1,4 @@
 pyjwt
 pyjwt[crypto]
 PyMySQL
+requests
