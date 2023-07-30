@@ -59,6 +59,7 @@ const addTag = () => {
     :hint="hint"
   >
     <template v-slot:append>
+      <q-icon v-if="value" name="cancel" @click.stop.prevent="value = ''" class="cursor-pointer" />
       <q-btn round dense flat icon="local_offer">
         <q-menu fit class="q-pa-sm">
           <q-select
