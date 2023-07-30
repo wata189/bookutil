@@ -79,12 +79,14 @@ onMounted(async () => {
 <template>
   <q-header reveal elevated :class="isDarkMode ? 'bg-dark' : 'bg-white text-black'">
     <q-toolbar>
-      <q-toolbar-title class="toolbar-title">
+      <q-toolbar-title shrink class="toolbar-title">
         <div @click="router.push('/')">
           <q-img :src="iconSrc" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
       </q-toolbar-title>
+
+      <q-space></q-space>
 
       <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
       <c-round-btn
