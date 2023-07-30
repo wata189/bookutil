@@ -2,6 +2,10 @@ import util
 import re
 from mysql_util import Mysql
 import sql_util
+import calil_util
+import discord_util
+import datetime
+import os
 
 # ユーザーに応じてメニュー情報を返却する処理
 def fetch_menus(is_auth: bool):
@@ -35,9 +39,6 @@ def fetch_toread(is_auth:bool, mysql:Mysql):
     # DBから取得
     result = mysql.select("fetch_toread")
 
-    # モック用 ログインしていない場合はプログラミングタグを持つ本のみ表示
-    if not is_auth:
-        result = list(filter(lambda row: "プログラミング" in row["tags"], result))
 
     toread_rows = [
         {
@@ -55,6 +56,9 @@ def fetch_toread(is_auth:bool, mysql:Mysql):
         } for row in result
     ]
 
+    # モック用 ログインしていない場合はプログラミングタグを持つ本のみ表示
+    if not is_auth:
+        toread_rows = list(filter(lambda row: "プログラミング" in row["tags"], toread_rows))
 
     return toread_rows
 
@@ -154,7 +158,7 @@ def delete_toread_book(body, mysql:Mysql):
 
     # パラメータを元にSQL生成
     # in句のため1度replaceが必要
-    where_in_placeholder = ','.join(['%s'] * len(delete_books))
+    where_in_placeholder = ",".join(["%s"] * len(delete_books))
     sql = sql_util.get_sql("delete_toread_book").replace("@WHERE_IN_PLACEHOLDER@", where_in_placeholder)
 
     params = [delete_book["id"] for delete_book in delete_books]
@@ -167,7 +171,7 @@ def delete_toread_tag(body, mysql:Mysql):
 
     # パラメータを元にSQL生成
     # in句のため1度replaceが必要
-    where_in_placeholder = ','.join(['%s'] * len(delete_books))
+    where_in_placeholder = ",".join(["%s"] * len(delete_books))
     sql = sql_util.get_sql("delete_toread_tag").replace("@WHERE_IN_PLACEHOLDER@", where_in_placeholder)
 
     params = [delete_book["id"] for delete_book in delete_books]
@@ -197,3 +201,86 @@ def fetch_libraries(mysql:Mysql):
     } for row in result]
 
     return libraries
+
+def fetch_check_new_book_libraries(mysql:Mysql):
+    result = mysql.select("fetch_check_new_book_libraries")
+    return result
+
+def fetch_check_new_book_toread_books(mysql:Mysql):
+    result = mysql.select("fetch_check_new_book_toread_books")
+    return result
+
+def check_new_book(books, libraries, mysql:Mysql):
+    search_results = []
+
+    for book in books:
+        for library in libraries:
+            book_tags = book["tags"].split("/")
+
+            # 検索対象or検索対象より優先度の高い図書館のタグ入っていたら飛ばす
+            city_tags = [
+                tmp_library["city"] + "図書館"
+                for tmp_library in libraries
+                if tmp_library["order_num"] <= library["order_num"]
+            ]
+
+            is_searched = True in [city_tag in book_tags for city_tag in city_tags]
+            
+            if is_searched: continue
+
+
+            # カーリルでチェック
+            calil_result = calil_util.check_calil_new_book(book, library)
+
+            # カーリルの結果あったら設定処理
+            if not calil_result["is_exist"]: continue
+
+            # タグ更新
+            # 図書館未定タグと図書館タグすべてけす
+            # 「図書館」という文字列が入るタグを削除すればよい
+            update_tags = [tag for tag in book_tags if not "図書館" in tag]
+            # 今の図書館タグ追加する
+            update_tags.append(library["city"] + "図書館")
+
+            # DB更新
+            other_url = book["other_url"] if book["other_url"] else calil_result["reserve_url"]
+            update_form = {
+                "id": book["id"],
+                "book_name": book["book_name"],
+                "isbn": book["isbn"],
+                "author_name": book["author_name"],
+                "publisher_name": book["publisher_name"],
+                "page": book["page"],
+                "other_url": other_url,
+                # 最優先(order_numが0)の図書館だった場合は新刊チェックフラグ消す
+                "new_book_check_flg": 0 if library["order_num"] == 0 else 1,
+                "user": "check_new_book", # 更新ユーザーは独自のものにする
+                "tags": "/".join(update_tags)
+            }
+            update_toread(update_form, mysql)
+
+            search_results.append({
+                "book": book,
+                "library": library,
+                "reserve_url": calil_result["reserve_url"]
+            })
+            # それ以下の図書館は検索しなくてよいのでbreak
+            break
+
+    # 検索結果あったらディスコに送信
+    if len(search_results) <= 0: return
+
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    discord_util.send_discord(now.strftime("【%Y/%m/%d】新刊が見つかりました。"))
+    for search_result in search_results:
+        book = search_result["book"]
+        library = search_result["library"]
+
+        msg  = f"- {library['city']}図書館 / {book['author_name']}『{book['book_name']}』\n"
+        msg += f" - [予約URLを開く]({search_result['reserve_url']})\n"
+
+        app_url = os.getenv("CLIENT_URL")
+        msg += f" - [bookutilで開く]({app_url}/toread?filterCondWord={book['isbn']})"
+        discord_util.send_discord(msg)

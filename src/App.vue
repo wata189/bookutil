@@ -77,8 +77,9 @@ onMounted(async () => {
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get("code");
 
+  const beforeAccessToken = authUtil.getLocalStorageAccessToken();
   // トークン取得
-  if(code){
+  if(code && !beforeAccessToken){
     await authUtil.getToken(code);
   }
 
