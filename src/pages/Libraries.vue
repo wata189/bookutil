@@ -3,8 +3,11 @@
 import { computed, ref } from 'vue';
 import { onMounted, Ref } from '@vue/runtime-core';
 
+import CRoundBtn from "@/components/c-round-btn.vue";
+
 import util from "@/modules/util";
 import AxiosUtil from '@/modules/axiosUtil';
+
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
@@ -65,11 +68,14 @@ onMounted(async () => {
         <q-card class="q-pa-md">
           <div class="text-h6">
             
-            <a :href="library.url" target="_blank">
-              <q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" />{{library.city}}図書館
-            </a>
-            <a :href="library.mapUrl" target="_blank">
-            <q-icon name="place" class="q-px-sm" /></a>
+            <q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" /> {{library.city}}図書館
+            <c-round-btn
+              title="Googleマップで表示"
+              icon="place"
+              dense
+              @click="util.openPageAsNewTab(library.mapUrl)"
+              color="secondary"
+            ></c-round-btn>
             
           </div>
           <div>
@@ -81,7 +87,13 @@ onMounted(async () => {
             <span v-else>休み</span>
           </div>
           
-          <a :href="library.toreadLink" target="_blank">よみたいリストで表示</a>
+          <q-btn
+            color="secondary"
+            dense
+            @click="util.openPageAsNewTab(library.toreadLink)"
+          >
+            よみたいリストで表示
+          </q-btn>
           
         </q-card>
       </div>
