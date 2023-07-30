@@ -45,6 +45,27 @@ const getToken = async (code: string):Promise<Tokens> =>{
     return tokens;
   }
 } 
+const refreshToken = async () => {
+  let accessToken = "";
+  try{
+    // refresh_token使ってaccess_token取得し直し
+    const refreshToken = localStorage.refreshToken || "";
+    const params = {
+      "grant_type": "refresh_token",
+      "client_id": clientId,
+      "refresh_token": refreshToken
+    };
+    const response = await axios.post(URL_OAUTH2_TOKEN, params, {headers: {"Content-Type": "application/x-www-form-urlencoded"}});
+    if(response){
+      const data = response.data;
+      accessToken = data.access_token;
+    }
+  }catch(e){
+    console.log(e);
+  }finally{
+    localStorage.accessToken = accessToken
+  }
+};
 
 // アクセストークン→ユーザー情報を取得
 const getUserInfo = async (accessToken: string):Promise<User> =>{
@@ -62,26 +83,17 @@ const getUserInfo = async (accessToken: string):Promise<User> =>{
     console.log(error);
 
     try{
-      // 1回refresh_token使ってaccess_token取得し直し
-      const refreshToken = localStorage.refreshToken || "";
-      const params = {
-        "grant_type": "refresh_token",
-        "client_id": clientId,
-        "refresh_token": refreshToken
+      // 1度リフレッシュトークンを使用してアクセストークンを復活させる
+      await refreshToken();
+
+      // 取得したaccessTokenを使ってもう一度ユーザー情報取得
+      const accessToken = localStorage.accessToken;
+      const userInfoHeaders = {
+        "Authorization": `Bearer ${accessToken}`
       };
-      const response = await axios.post(URL_OAUTH2_TOKEN, params, {headers: {"Content-Type": "application/x-www-form-urlencoded"}});
-      if(response){
-        const data = response.data;
-        localStorage.accessToken = data.access_token;
-  
-        // 取得したaccessTokenを使ってもう一度ユーザー情報取得
-        const userInfoHeaders = {
-          "Authorization": `Bearer ${data.access_token}`
-        };
-        const userResponse = await axios.get(URL_OAUTH2_USERINFO, {headers: userInfoHeaders});
-        if(userResponse){
-          user.email = userResponse.data.email;
-        }
+      const userResponse = await axios.get(URL_OAUTH2_USERINFO, {headers: userInfoHeaders});
+      if(userResponse){
+        user.email = userResponse.data.email;
       }
     }catch(innerError){
       console.log(innerError);
@@ -120,6 +132,13 @@ const getLocalStorageAccessToken = async ():Promise<string> => {
       await getToken(code);
     }
     accessToken = localStorage.accessToken;
+
+    // それでもアクセストークンなかったらリフレッシュする
+    if(!accessToken){
+      await refreshToken();
+      accessToken = localStorage.accessToken;
+    }
+
   }
   return accessToken || "";
 };
