@@ -918,12 +918,14 @@ onMounted(async () => {
                 dense
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
+                @update:model-value="toTopPagenation"
               ></c-input-tag>
             </div>
             <div class="col-auto q-pa-sm">
               <q-toggle
                 v-model="filterCond.isOnlyNewBook"
                 label="新刊のみ"
+                @update:model-value="toTopPagenation"
               ></q-toggle>
             </div>
           </div>
