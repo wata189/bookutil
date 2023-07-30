@@ -12,10 +12,8 @@ def handler_check_new_book(event, context):
     toread_books = models.fetch_check_new_book_toread_books(mysql)
 
     # 図書館×本で検索
-    search_results = models.check_new_book(toread_books, libraries, mysql)
+    models.check_new_book(toread_books, libraries, mysql)
 
-    # 検索結果を送信
-    models.send_search_results(search_results)
   
   mysql_util.tran(check_new_book)
 

@@ -589,8 +589,6 @@ const addTagsFromDialogForm = () => {
     const tags = addTagDialog.value.form.tags
 
     const response = await addTags(books, tags);
-    // const params = await createAddTagParams(addTagDialog.value.form);
-    // const response = await axiosUtil.post(`/toread/tag/add`, params);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadRows, response.data.toreadTags);
@@ -710,6 +708,10 @@ onMounted(async () => {
   const urlParamTags = urlParams.get("filterCondTags");
   if(urlParamTags){
     filterCond.value.tags = urlParamTags
+  }
+  const urlParamWord = urlParams.get("filterCondWord");
+  if(urlParamWord){
+    filterCond.value.word = urlParamWord;
   }
 
   await initToread();

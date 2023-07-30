@@ -180,8 +180,8 @@ FROM(
         , update_at
         , delete_flg
     FROM
-        bookutil.t_toread_book
-    WHERE delete_flg = 0 AND new_book_check_flg = 1
+        t_toread_book
+    WHERE delete_flg = 0 AND new_book_check_flg = 1 AND isbn IS NOT NULL
 ) book
 
 LEFT JOIN(

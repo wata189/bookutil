@@ -2,3 +2,4 @@ pyjwt
 pyjwt[crypto]
 PyMySQL
 requests
+discordwebhook
