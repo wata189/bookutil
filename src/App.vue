@@ -2,12 +2,18 @@
 import CHeader from "@/components/c-header.vue";
 import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 
-import { onMounted } from "@vue/runtime-core";
+import { onBeforeMount } from "@vue/runtime-core";
 import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
 
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
+import AxiosUtil from "@/modules/axiosUtil";
+
+// axiosUtilのインスタンス作成
+const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
+const axiosUtil = new AxiosUtil(emits);
+
 
 const isDev = import.meta.env.DEV;
 const pageName = isDev ? "Bookutil(開発)" : "Bookutil";
@@ -28,9 +34,6 @@ interface Menu {
   description: string
 };
 const menus:Ref<Menu[]> = ref([]);
-const setMenus = (fetchedMenus:Menu[]) => {
-  menus.value = fetchedMenus;
-};
 
 const user = ref({email:""});
 
@@ -72,7 +75,7 @@ const setIsShowInnerLoading = (bool:boolean) => {
   isShowInnerLoading.value = bool
 }
 
-onMounted(async () => {
+onBeforeMount(async () => {
   // パラメータにcodeがあったらトークンを取得
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get("code");
@@ -90,6 +93,12 @@ onMounted(async () => {
     user.value = userInfo;
   }
 
+  // メニュー情報取得
+  const response = await axiosUtil.get(`/menus/fetch?access_token=${accessToken}`);
+  if(response){
+    menus.value = response.data.menus;
+  }
+
 });
 </script>
 
@@ -99,7 +108,6 @@ onMounted(async () => {
       :page-name="pageName"
       :menus="menus"
       :user="user"
-      @fetch-menus="setMenus"
       @show-error-dialog="showErrorDialog"
     ></c-header>
     <q-page-container>

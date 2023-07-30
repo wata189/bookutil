@@ -115,6 +115,7 @@ const filteredSortedToreadBooks = computed({
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
+      if(!filterWord){return true;}
       // 検索ワードでの検索
       const searchedText = [
         book.bookName,
@@ -162,7 +163,7 @@ const filteredSortedToreadBooks = computed({
 })
 const dispToreadBooks = computed({
   get: () => {
-    /////// ソート
+    /////// フィルター
     return filteredSortedToreadBooks.value.slice(
       // start: ページ番号 - 1 * 表示件数
       (pagination.value.number - 1) * pagination.value.dispMax,
@@ -904,7 +905,8 @@ onMounted(async () => {
             <div class="col-12 col-sm-4 q-pa-sm">
               <q-input 
                 dense 
-                v-model="filterCond.word" 
+                v-model="filterCond.word"
+                clearable
                 label="検索"
                 @update:model-value="toTopPagenation"
               ></q-input>
@@ -916,12 +918,14 @@ onMounted(async () => {
                 dense
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
+                @update:model-value="toTopPagenation"
               ></c-input-tag>
             </div>
             <div class="col-auto q-pa-sm">
               <q-toggle
                 v-model="filterCond.isOnlyNewBook"
                 label="新刊のみ"
+                @update:model-value="toTopPagenation"
               ></q-toggle>
             </div>
           </div>
@@ -943,6 +947,7 @@ onMounted(async () => {
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.bookName"
+            clearable
             :label="labels.bookName"
             :rules="validationRules.bookName"
           >
@@ -961,6 +966,7 @@ onMounted(async () => {
         <div class="col-8 q-pa-xs">
           <q-input
             v-model="bookDialog.form.isbn"
+            clearable
             :label="labels.isbn"
             :rules="validationRules.isbn"
             mask="#########X###"
@@ -979,6 +985,7 @@ onMounted(async () => {
         <div class="col-4 q-pa-xs">
           <q-input
             v-model.number="bookDialog.form.page"
+            clearable
             type="number"
             min="1"
             :label="labels.page"
@@ -987,6 +994,7 @@ onMounted(async () => {
         </div>
         <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
+            clearable
             v-model="bookDialog.form.authorName"
             :label="labels.authorName"
           ></q-input>
@@ -994,12 +1002,14 @@ onMounted(async () => {
         <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             v-model="bookDialog.form.publisherName"
+            clearable
             :label="labels.publisherName"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.otherUrl"
+            clearable
             :label="labels.otherUrl"
             :rules="validationRules.otherUrl"
           ></q-input>

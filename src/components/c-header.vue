@@ -7,12 +7,7 @@ import { useRouter } from "vue-router";
 import CRoundBtn from "@/components/c-round-btn.vue";
 
 import authUtil from "@/modules/authUtil";
-import AxiosUtil from "@/modules/axiosUtil";
 import util from "@/modules/util";
-
-// axiosUtilのインスタンス作成
-const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
-const axiosUtil = new AxiosUtil(emits);
 
 const router = useRouter();
 
@@ -64,14 +59,6 @@ const iconSrc = util.getIconHref();
 
 onMounted(async () => {
   setMode(isDarkMode.value);
-
-  // メニュー情報取得
-  const paramAccessToken = authUtil.getLocalStorageAccessToken();
-  const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
-  if(response){
-    emits("fetch-menus", response.data.menus)
-  }
-
 });
 
 </script>
@@ -79,12 +66,14 @@ onMounted(async () => {
 <template>
   <q-header reveal elevated :class="isDarkMode ? 'bg-dark' : 'bg-white text-black'">
     <q-toolbar>
-      <q-toolbar-title class="toolbar-title">
+      <q-toolbar-title shrink class="toolbar-title">
         <div @click="router.push('/')">
           <q-img :src="iconSrc" :width="iconSize" :height="iconSize" class="text-primary vertical-middle"></q-img>
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
       </q-toolbar-title>
+
+      <q-space></q-space>
 
       <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
       <c-round-btn
