@@ -72,6 +72,13 @@ onMounted(async () => {
             
             <q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" /> {{library.city}}図書館
             <c-round-btn
+              title="図書館サイトを表示"
+              icon="account_balance"
+              dense
+              @click="util.openPageAsNewTab(library.url)"
+              color="secondary"
+            ></c-round-btn>
+            <c-round-btn
               title="Googleマップで表示"
               icon="place"
               dense
