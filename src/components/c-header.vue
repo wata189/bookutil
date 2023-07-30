@@ -7,12 +7,7 @@ import { useRouter } from "vue-router";
 import CRoundBtn from "@/components/c-round-btn.vue";
 
 import authUtil from "@/modules/authUtil";
-import AxiosUtil from "@/modules/axiosUtil";
 import util from "@/modules/util";
-
-// axiosUtilのインスタンス作成
-const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
-const axiosUtil = new AxiosUtil(emits);
 
 const router = useRouter();
 
@@ -64,14 +59,6 @@ const iconSrc = util.getIconHref();
 
 onMounted(async () => {
   setMode(isDarkMode.value);
-
-  // メニュー情報取得
-  const paramAccessToken = authUtil.getLocalStorageAccessToken();
-  const response = await axiosUtil.get(`/menus/fetch?access_token=${paramAccessToken}`);
-  if(response){
-    emits("fetch-menus", response.data.menus)
-  }
-
 });
 
 </script>
