@@ -153,6 +153,11 @@ def handler_add_toread_tag(event, context):
 
 def handler_fetch_libraries(event, context):
 
+    is_auth = auth_util.is_auth(event)
+    # ログイン済みでも外部連携でもなければログインエラー
+    if not is_auth:
+        return util.create_response("UNAUTHORISZED", msg="ログインをしてください")
+    
     def fetch_toread(mysql):
         libraries = models.fetch_libraries(mysql)
         body = {

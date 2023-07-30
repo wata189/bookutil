@@ -186,7 +186,7 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getLocalStorageAccessToken();
   const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
   if(response){
     setInitInfo(response.data.toreadRows, response.data.toreadTags);
@@ -398,7 +398,7 @@ const createUpdateParams = async (bookId:string, updateAt:number, form:BookForm)
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getLocalStorageAccessToken();
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
   const params:BookParams = {
@@ -456,7 +456,7 @@ const deleteBooks = async () => {
 ${dispBooks.join("\n")}`;
 
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
-    const accessToken = authUtil.getLocalStorageAccessToken()
+    const accessToken = await authUtil.getLocalStorageAccessToken()
     const user = await authUtil.getUserInfo(accessToken);
     const params:BooksParams = {
       books: simpleBooks,
@@ -637,7 +637,7 @@ const createAddTagParams = async (books:Book[], tags:string):Promise<BooksParams
     return {id:book.id, update_at:book.updateAt}
   });
 
-  const accessToken = authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getLocalStorageAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   return {
     books: simpleBooks,

@@ -6,6 +6,7 @@ import { onMounted, Ref } from '@vue/runtime-core';
 import CRoundBtn from "@/components/c-round-btn.vue";
 
 import util from "@/modules/util";
+import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
 
 
@@ -50,7 +51,8 @@ const dispLibraries = computed(() => {
 });
 
 const fetchLibraries = async () => {
-  const response = await axiosUtil.get('/libraries/fetch');
+  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const response = await axiosUtil.get(`/libraries/fetch?access_token=${accessToken}`);
   if(response){
     libraries.value = response.data.libraries;
   }
