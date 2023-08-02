@@ -124,21 +124,9 @@ const getLocalStorageAccessToken = async ():Promise<string> => {
   let accessToken = localStorage.accessToken;
   if(!accessToken){
 
-    const urlParams = (new URL(window.location.href)).searchParams;
-    const code = urlParams.get("code");
-  
-    // トークン取得
-    if(code){
-      await getToken(code);
-    }
+    // アクセストークンなかったらリフレッシュする
+    await refreshToken();
     accessToken = localStorage.accessToken;
-
-    // それでもアクセストークンなかったらリフレッシュする
-    if(!accessToken){
-      await refreshToken();
-      accessToken = localStorage.accessToken;
-    }
-
   }
   return accessToken || "";
 };
