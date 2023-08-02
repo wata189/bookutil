@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ref } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 import { QForm} from "quasar";
 
 import authUtil from "@/modules/authUtil";
@@ -24,6 +24,11 @@ const axiosUtil = new AxiosUtil(emits);
 const emitError = (statusText:string, msg:string, status?:number) => {
   emits(EMIT_NAME_ERROR, status, statusText, msg);
 };
+
+interface Props {
+  isAppLoaded: boolean
+}
+const props = defineProps<Props>();
 
 type Book = {
   id: string,
@@ -688,7 +693,12 @@ const setIsbnFromBooksSearchDialog = async (googleBook:GoogleBook) => {
   }
 };
 
-onMounted(async () => {
+// Appコンポーネントのロードが終わった後、子コンポーネントの処理
+// 初回ロードと画面遷移の療法に対応できるようにする
+const {isAppLoaded} = toRefs(props);
+const init = async () => {
+  if(!isAppLoaded.value){return;}
+
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
@@ -717,7 +727,14 @@ onMounted(async () => {
 
   await initToread();
   
-});
+  // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
+  // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
+  unwatch();
+
+  console.log("mounted toread");
+};
+const unwatch = watch(isAppLoaded, init);
+onMounted(init);
 </script>
 
 <template>
