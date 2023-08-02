@@ -49,23 +49,29 @@ const getToken = async (code: string):Promise<Tokens> =>{
 const refreshToken = async () => {
   console.log("auth refreshToken");
   let accessToken = "";
+  let refreshToken = "";
   try{
     // refresh_token使ってaccess_token取得し直し
-    const refreshToken = localStorage.refreshToken || "";
-    const params = {
-      "grant_type": "refresh_token",
-      "client_id": clientId,
-      "refresh_token": refreshToken
-    };
-    const response = await axios.post(URL_OAUTH2_TOKEN, params, {headers: {"Content-Type": "application/x-www-form-urlencoded"}});
-    if(response){
-      const data = response.data;
-      accessToken = data.access_token;
+    const tmpRefreshToken = localStorage.refreshToken;
+
+    if(tmpRefreshToken){
+      const params = {
+        "grant_type": "refresh_token",
+        "client_id": clientId,
+        "refresh_token": tmpRefreshToken
+      };
+      const response = await axios.post(URL_OAUTH2_TOKEN, params, {headers: {"Content-Type": "application/x-www-form-urlencoded"}});
+      if(response){
+        const data = response.data;
+        accessToken = data.access_token;
+        refreshToken = data.refresh_token;
+      }
     }
   }catch(e){
     console.log(e);
   }finally{
     localStorage.accessToken = accessToken
+    localStorage.refreshToken = refreshToken;
   }
 };
 
