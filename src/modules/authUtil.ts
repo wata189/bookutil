@@ -17,6 +17,7 @@ type Tokens = {
 }
 // トークン取得処理
 const getToken = async (code: string):Promise<Tokens> =>{
+  console.log("auth getToken");
   const tokens = {
     "accessToken": "",
     "refreshToken": ""
@@ -46,6 +47,7 @@ const getToken = async (code: string):Promise<Tokens> =>{
   }
 } 
 const refreshToken = async () => {
+  console.log("auth refreshToken");
   let accessToken = "";
   try{
     // refresh_token使ってaccess_token取得し直し
@@ -69,6 +71,7 @@ const refreshToken = async () => {
 
 // アクセストークン→ユーザー情報を取得
 const getUserInfo = async (accessToken: string):Promise<User> =>{
+  console.log("auth getUserInfo");
   const user = {email: ""};
 
   try{
