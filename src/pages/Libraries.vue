@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import { computed, ref } from 'vue';
-import { onMounted, Ref } from '@vue/runtime-core';
+import { computed, ref, watch, toRefs, onMounted } from 'vue';
+import { Ref } from '@vue/runtime-core';
 
 import CRoundBtn from "@/components/c-round-btn.vue";
 
@@ -12,6 +12,11 @@ import AxiosUtil from '@/modules/axiosUtil';
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
+
+interface Props {
+  isAppLoaded: boolean
+}
+const props = defineProps<Props>();
 
 type Library = {
   id: string,
@@ -58,9 +63,24 @@ const fetchLibraries = async () => {
   }
 }
 
-onMounted(async () => {
+// Appコンポーネントのロードが終わった後、子コンポーネントの処理
+// 初回ロードと画面遷移の療法に対応できるようにする
+const {isAppLoaded} = toRefs(props);
+const init = async () => {
+  // 初回ロード→onMountedのタイミングでは処理を行わないで、watchから呼び出されたタイミングで処理実行
+  // VueRouterで遷移→
+  if(!isAppLoaded.value){return;}
+
   await fetchLibraries();
-});
+
+  // 初回ロード→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
+  // VueRouterで遷移→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
+  unwatch();
+
+  console.log("mounted libraries");
+};
+const unwatch = watch(isAppLoaded, init);
+onMounted(init);
 </script>
 
 <template>

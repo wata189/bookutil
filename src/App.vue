@@ -2,18 +2,12 @@
 import CHeader from "@/components/c-header.vue";
 import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 
-import { onBeforeMount } from "@vue/runtime-core";
+import { onMounted } from "@vue/runtime-core";
 import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
 
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
-import AxiosUtil from "@/modules/axiosUtil";
-
-// axiosUtilのインスタンス作成
-const emits = defineEmits(["show-error-dialog", "fetch-menus"]);
-const axiosUtil = new AxiosUtil(emits);
-
 
 const isDev = import.meta.env.DEV;
 const pageName = isDev ? "Bookutil(開発)" : "Bookutil";
@@ -75,7 +69,9 @@ const setIsShowInnerLoading = (bool:boolean) => {
   isShowInnerLoading.value = bool
 }
 
-onBeforeMount(async () => {
+const isAppLoaded = ref(false);
+
+onMounted(async () => {
   // パラメータにcodeがあったらトークンを取得
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get("code");
@@ -93,12 +89,21 @@ onBeforeMount(async () => {
     user.value = userInfo;
   }
 
-  // メニュー情報取得
-  const response = await axiosUtil.get(`/menus/fetch?access_token=${accessToken}`);
-  if(response){
-    menus.value = response.data.menus;
+  // メニュー情報設定
+  const menuValues = [
+    {"name": "読みたいリスト", "to": "/toread", "icon": "format_list_bulleted", "description": "読みたい本をリスト化します。"}
+  ]
+  if(user.value.email){
+    menuValues.push(
+      {"name": "図書館リスト", "to": "/libraries", "icon": "account_balance", "description": "利用する図書館の一覧を表示します。"}
+    )
   }
+  menus.value = menuValues;
 
+  // Appのロード完了フラグを立てる
+  isAppLoaded.value = true;
+
+  console.log("mounted app");
 });
 </script>
 
@@ -114,6 +119,7 @@ onBeforeMount(async () => {
       <q-page>
         <RouterView 
           :menus="menus"
+          :is-app-loaded="isAppLoaded"
           @show-error-dialog="showErrorDialog"
           @show-confirm-dialog="showConfirmDialog"
         />
