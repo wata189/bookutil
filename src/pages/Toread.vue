@@ -612,9 +612,9 @@ const addTagsFromDialogForm = () => {
 };
 const addWantTag = (book:Book, tag:string) => {
   // TODO: カーリル経由で図書館タグ取得
-  const libraryTag = "";
+  // const libraryTag = "";
 
-  addTag(book, [tag, libraryTag]);
+  addTag(book, [tag]);
 };
 const addMultiTag = async () => {
   if(!util.isExist(addTagDialog.value.form.tags)){
