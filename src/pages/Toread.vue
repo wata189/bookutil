@@ -41,7 +41,7 @@ type Book = {
   otherUrl: string | null,
   newBookCheckFlg: number,
   updateAt: number,
-  tags: string,
+  tags: string[],
   isChecked: Ref<boolean>
 };
 
@@ -90,8 +90,9 @@ const labels = {
   authorName: "著者名",
   publisherName: "出版社名",
   otherUrl: "その他URL",
+  coverUrl: "書影URL",
   tags: "タグ",
-  newBookCheckFlg: "新刊チェック"
+  newBookCheckFlg: "新刊チェック",
 };
 
 const pagination = ref({
@@ -133,9 +134,8 @@ const filteredSortedToreadBooks = computed({
       return searchedText.includes(filterWord);
     }).filter((book:Book) => {
       // タグでの検索
-      const bookTags = util.strToTag(book.tags);
       return filterTags
-            .filter(filterTag => bookTags.includes(filterTag))
+            .filter(filterTag => book.tags.includes(filterTag))
             .length === filterTags.length;
     }).filter((book:Book) => {
       // 新刊のみでのフィルター
@@ -183,8 +183,8 @@ const dispToreadBooks = computed({
 
 // よみたい度算出
 // よみたい→1ポイント
-const getWantPoint = (tagsStr:string):number => {
-  return util.strToTag(tagsStr).includes("よみたい") ? 1 : 0;
+const getWantPoint = (tags:string[]):number => {
+  return tags.includes("よみたい") ? 1 : 0;
 };
 
 const toreadTagOptions:Ref<string[]> = ref([]);
@@ -356,8 +356,9 @@ const toggleNewBookCheckFlg = async (book:Book) => {
     publisherName: book.publisherName || "",
     page: book.page,
     otherUrl: book.otherUrl || "",
+    coverUrl: book.coverUrl || "",
     newBookCheckFlg: book.newBookCheckFlg,
-    tags: book.tags
+    tags: book.tags.join("/")
   };
   const response = await updateBook(book.id, book.updateAt, form);
   if(response){
@@ -371,25 +372,27 @@ type BookForm = {
     isbn: string,
     authorName: string,
     publisherName: string,
-    page: number | null
-    otherUrl: string;
-    newBookCheckFlg: number;
-    tags: string;
+    page: number | null,
+    otherUrl: string,
+    coverUrl: string,
+    newBookCheckFlg: number,
+    tags: string,
 }
 type BookParams = {
-    id: string | null;
-    update_at: number | null;
-    user: string;
-    book_name: string;
-    isbn: string | null;
-    page: number | null;
-    author_name: string | null;
-    publisher_name: string | null;
-    other_url: string | null;
-    new_book_check_flg: number;
-    tags: string;
-    access_token: string;
-    is_external_cooperation: boolean;
+    id: string | null,
+    update_at: number | null,
+    user: string,
+    book_name: string,
+    isbn: string | null,
+    page: number | null,
+    author_name: string | null,
+    publisher_name: string | null,
+    other_url: string | null,
+    cover_url: string | null,
+    new_book_check_flg: number,
+    tags: string[],
+    access_token: string,
+    is_external_cooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
   const params = await createBookParams(form);
@@ -419,7 +422,8 @@ const createBookParams = async (form:BookForm) => {
     publisher_name: form.publisherName.trim() || null,
     other_url: form.otherUrl.trim() || null,
     new_book_check_flg: form.newBookCheckFlg,
-    tags: form.tags.trim() || "",
+    tags: form.tags.trim() ? util.strToTag(form.tags.trim()) : [],
+    cover_url: form.coverUrl.trim() || null,
 
     // アクセストークン
     access_token: accessToken,
@@ -436,7 +440,7 @@ type SimpleBook = {
 }
 type BooksParams = {
   books: SimpleBook[];
-  tags?: string;
+  tags?: string[];
   user: string;
   access_token: string;
 }
@@ -500,6 +504,7 @@ const bookDialog:Ref<BookDialog> = ref({
     publisherName: "",
     page: null,
     otherUrl: "",
+    coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
   }
@@ -516,6 +521,7 @@ const showNewBookDialog = () => {
     publisherName: "",
     page: null,
     otherUrl: "",
+    coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
   };
@@ -536,8 +542,9 @@ const showEditBookDialog = (book:Book) => {
     publisherName: book.publisherName || "",
     page: book.page,
     otherUrl: book.otherUrl || "",
+    coverUrl: book.coverUrl || "",
     newBookCheckFlg: book.newBookCheckFlg,
-    tags: book.tags
+    tags: book.tags.join("/")
   };
   bookDialog.value.isShow = true;
 
@@ -592,7 +599,7 @@ const addTagsFromDialogForm = () => {
 
     // formを送る
     const books = selectedBooks.value;
-    const tags = addTagDialog.value.form.tags
+    const tags = util.strToTag(addTagDialog.value.form.tags)
 
     const response = await addTags(books, tags);
     if(response){
@@ -607,8 +614,7 @@ const addWantTag = (book:Book, tag:string) => {
   // TODO: カーリル経由で図書館タグ取得
   const libraryTag = "";
 
-  const tags = [tag, libraryTag].join("/")
-  addTag(book, tags);
+  addTag(book, [tag, libraryTag]);
 };
 const addMultiTag = async () => {
   if(!util.isExist(addTagDialog.value.form.tags)){
@@ -616,7 +622,7 @@ const addMultiTag = async () => {
     return;
   }
 
-  const response = await addTags(selectedBooks.value, addTagDialog.value.form.tags)
+  const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
     setInitInfo(response.data.toreadRows, response.data.toreadTags);
@@ -624,7 +630,7 @@ const addMultiTag = async () => {
     addTagDialog.value.isShow = false;
   }
 };
-const addTag = async (book:Book, tags:string) => {
+const addTag = async (book:Book, tags:string[]) => {
   const response = await addTags([book], tags);
   if(response){
     // 画面情報再設定
@@ -632,12 +638,12 @@ const addTag = async (book:Book, tags:string) => {
   }
 };
 
-const addTags = async (books:Book[], tags:string) => {
+const addTags = async (books:Book[], tags:string[]) => {
   const params = await createAddTagParams(books, tags);
   return await axiosUtil.post(`/toread/tag/add`, params);
 };
 
-const createAddTagParams = async (books:Book[], tags:string):Promise<BooksParams> => {
+const createAddTagParams = async (books:Book[], tags:string[]):Promise<BooksParams> => {
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {id:book.id, update_at:book.updateAt}
   });
@@ -656,7 +662,8 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
-  otherUrl: [validationUtil.isUrl(labels.otherUrl)]
+  otherUrl: [validationUtil.isUrl(labels.otherUrl)],
+  coverUrl: [validationUtil.isUrl(labels.otherUrl)]
 };
 // 外部連携フラグ
 let isExternalCooperation = false;
@@ -776,7 +783,7 @@ onMounted(init);
                   {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
                 </div>
                 <div>
-                  <q-chip v-for="tag in util.strToTag(book.tags)" dense color="teal" text-color="white">{{ tag }}</q-chip>
+                  <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
                 </div>
                 <q-btn
                   v-for="link in links"
@@ -819,7 +826,7 @@ onMounted(init);
                 <div class="row">
                   <div class="col-auto">
                     <c-round-btn
-                      v-if="!util.strToTag(book.tags).includes('よみたい')"
+                      v-if="!book.tags.includes('よみたい')"
                       title="よみたい"
                       icon="star_border"
                       color="primary"
@@ -1029,6 +1036,14 @@ onMounted(init);
             clearable
             :label="labels.otherUrl"
             :rules="validationRules.otherUrl"
+          ></q-input>
+        </div>
+        <div class="col-12 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.coverUrl"
+            clearable
+            :label="labels.coverUrl"
+            :rules="validationRules.coverUrl"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
