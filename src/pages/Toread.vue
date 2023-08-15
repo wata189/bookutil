@@ -30,6 +30,8 @@ interface Props {
 }
 const props = defineProps<Props>();
 
+const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
+
 type Book = {
   documentId: string,
   bookName: string,
@@ -119,6 +121,31 @@ const filteredSortedToreadBooks = computed({
     const sortKey = sortCond.value.key;
     const isDesc = sortCond.value.isDesc;
 
+    // ソート用の関数をキーに合わせて
+    let sortFunc = (aBook:Book, bBook:Book) => {
+      // よみたい順でソート よみたい順の場合はisDesc無視ですべて降順
+      return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
+    };
+    if(sortKey === SORT_KEY.ID){
+      sortFunc = (aBook:Book, bBook:Book) => {
+        // ID(追加順)でソート
+        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
+      };
+    }else if(sortKey === SORT_KEY.PAGE){
+      sortFunc = (aBook:Book, bBook:Book) => {
+        // ページ数順でソート
+        if(isDesc){
+          const aPage = aBook.page || 0;
+          const bPage = bBook.page || 0;
+          return bPage - aPage;
+        }else{
+          const aPage = aBook.page || Infinity;
+          const bPage = bBook.page || Infinity;
+          return aPage - bPage;
+        }
+      };
+    }
+
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
       if(!filterWord){return true;}
@@ -140,27 +167,7 @@ const filteredSortedToreadBooks = computed({
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-        //TODO: ソート処理は中で分岐させるのではなく、コールバック関数を変える
-    }).sort((aBook:Book, bBook:Book) => {
-      if(sortKey === SORT_KEY.ID){
-        // ID(追加順)でソート
-        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
-      }else if(sortKey === SORT_KEY.PAGE){
-        // ページ数順でソート
-        if(isDesc){
-          const aPage = aBook.page || 0;
-          const bPage = bBook.page || 0;
-          return bPage - aPage;
-        }else{
-          const aPage = aBook.page || Infinity;
-          const bPage = bBook.page || Infinity;
-          return aPage - bPage;
-        }
-      }else{
-        // よみたい順でソート よみたい順の場合はisDesc無視ですべて降順
-        return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
-      }
-    });
+    }).sort(sortFunc);
 
   },
   set: (value) => {
@@ -440,7 +447,7 @@ type SimpleBook = {
   documentId: string,
   updateAt: number
 }
-type BooksParams = {
+type SimpleBooksParams = {
   books: SimpleBook[];
   tags?: string[];
   user: string;
@@ -469,7 +476,7 @@ ${dispBooks.join("\n")}`;
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
     const accessToken = await authUtil.getLocalStorageAccessToken()
     const user = await authUtil.getUserInfo(accessToken);
-    const params:BooksParams = {
+    const params:SimpleBooksParams = {
       books: simpleBooks,
       user: user.email || "No User Data",
       accessToken: accessToken
@@ -544,7 +551,7 @@ const showEditBookDialog = (book:Book) => {
     publisherName: book.publisherName || "",
     page: book.page,
     otherUrl: book.otherUrl || "",
-    coverUrl: book.coverUrl || "",
+    coverUrl: book.coverUrl === IMG_PLACEHOLDER_PATH ? "" : book.coverUrl,
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
   };
@@ -645,7 +652,7 @@ const addTags = async (books:Book[], tags:string[]) => {
   return await axiosUtil.post(`/toread/tag/add`, params);
 };
 
-const createAddTagParams = async (books:Book[], tags:string[]):Promise<BooksParams> => {
+const createAddTagParams = async (books:Book[], tags:string[]):Promise<SimpleBooksParams> => {
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
@@ -774,7 +781,7 @@ onMounted(init);
                 decoding="async"
                 class="book-img book-card-item"
                 fit="contain"
-                @error="book.coverUrl = 'img/cover_placeholder.jpg'"
+                @error="book.coverUrl = IMG_PLACEHOLDER_PATH"
               ></q-img>
               <div class="ellipsis q-px-sm book-card-item">
                   {{ book.bookName }}
