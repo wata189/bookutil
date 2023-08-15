@@ -144,14 +144,12 @@ onMounted(async () => {
       @start="setIsShowInnerLoading(true)"
       @stop="setIsShowInnerLoading(false)"
       color="transparent"
-    >
-
-    </q-ajax-bar>
+    ></q-ajax-bar>
     <q-dialog
       v-model="isShowInnerLoading"
       persistent
     >
-    <q-spinner-gears size="50px" color="secondary" />
+      <q-spinner-hourglass size="50px" color="secondary" />
     </q-dialog>
 
     
