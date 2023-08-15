@@ -31,7 +31,7 @@ interface Props {
 const props = defineProps<Props>();
 
 type Book = {
-  id: string,
+  documentId: string,
   bookName: string,
   isbn: string | null,
   coverUrl: string,
@@ -92,7 +92,7 @@ const labels = {
   otherUrl: "その他URL",
   coverUrl: "書影URL",
   tags: "タグ",
-  newBookCheckFlg: "新刊チェック",
+  newBookCheckFlg: "図書館チェック",
 };
 
 const pagination = ref({
@@ -138,12 +138,13 @@ const filteredSortedToreadBooks = computed({
             .filter(filterTag => book.tags.includes(filterTag))
             .length === filterTags.length;
     }).filter((book:Book) => {
-      // 新刊のみでのフィルター
+      // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
+        //TODO: ソート処理は中で分岐させるのではなく、コールバック関数を変える
     }).sort((aBook:Book, bBook:Book) => {
       if(sortKey === SORT_KEY.ID){
         // ID(追加順)でソート
-        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt
+        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
       }else if(sortKey === SORT_KEY.PAGE){
         // ページ数順でソート
         if(isDesc){
@@ -192,21 +193,21 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 // toread画面初期化処理
 const initToread = async () => {
   const accessToken = await authUtil.getLocalStorageAccessToken();
-  const response = await axiosUtil.get(`/toread/init?access_token=${accessToken}`);
+  const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
   if(response){
-    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
-const setInitInfo = (toreadRows:Book[], toreadTags: string[]) => {
-  toreadBooks.value = toreadRows.map((book:Book):Book => {
+const setInitInfo = (books:Book[], tags: string[]) => {
+  toreadBooks.value = books.map((book:Book):Book => {
     const retBook = {
       ...book,
       isChecked: ref(false)
     };
     return retBook;
   });
-  toreadTagOptions.value = toreadTags;
+  toreadTagOptions.value = tags;
 };
 
 
@@ -301,6 +302,7 @@ const getBookInfo = async (isbn:string) => {
     bookDialog.value.form.authorName = bookInfo.authorName;
     bookDialog.value.form.publisherName = bookInfo.publisherName;
     bookDialog.value.form.page = bookInfo.page;
+    bookDialog.value.form.coverUrl = bookInfo.coverUrl;
   }else{
     // なかったらエラーダイアログ
     emitError("エラー", "OpenBDからデータを取得できませんでした");
@@ -320,7 +322,7 @@ const createBook = () => {
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // ダイアログ消す
       bookDialog.value.isShow = false;
     }
@@ -334,10 +336,10 @@ const editBook = () => {
 
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
-    const response = await updateBook(bookDialog.value.bookId, updateAt, bookDialog.value.form);
+    const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // ダイアログ消す
       bookDialog.value.isShow = false;
     }
@@ -360,10 +362,10 @@ const toggleNewBookCheckFlg = async (book:Book) => {
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
   };
-  const response = await updateBook(book.id, book.updateAt, form);
+  const response = await updateBook(book.documentId, book.updateAt, form);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
@@ -379,30 +381,30 @@ type BookForm = {
     tags: string,
 }
 type BookParams = {
-    id: string | null,
-    update_at: number | null,
+    documentId: string | null,
+    updateAt: number | null,
     user: string,
-    book_name: string,
+    bookName: string,
     isbn: string | null,
     page: number | null,
-    author_name: string | null,
-    publisher_name: string | null,
-    other_url: string | null,
-    cover_url: string | null,
-    new_book_check_flg: number,
+    authorName: string | null,
+    publisherName: string | null,
+    otherUrl: string | null,
+    coverUrl: string | null,
+    newBookCheckFlg: number,
     tags: string[],
-    access_token: string,
-    is_external_cooperation: boolean
+    accessToken: string,
+    isExternalCooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
   const params = await createBookParams(form);
 
   return params;
 };
-const createUpdateParams = async (bookId:string, updateAt:number, form:BookForm) => {
+const createUpdateParams = async (documentId:string, updateAt:number, form:BookForm) => {
   const params = await createBookParams(form);
-  params.id = bookId;
-  params.update_at = updateAt;
+  params.documentId = documentId;
+  params.updateAt = updateAt;
   return params;
 };
 const createBookParams = async (form:BookForm) => {
@@ -410,39 +412,39 @@ const createBookParams = async (form:BookForm) => {
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
   const params:BookParams = {
-    id: null,
-    update_at: null,
+    documentId: null,
+    updateAt: null,
     user: email,
 
     // フォームのパラメータ
-    book_name: form.bookName.trim(),
+    bookName: form.bookName.trim(),
     isbn: form.isbn.trim() || null,
     page: form.page || null,
-    author_name: form.authorName.trim() || null,
-    publisher_name: form.publisherName.trim() || null,
-    other_url: form.otherUrl.trim() || null,
-    new_book_check_flg: form.newBookCheckFlg,
+    authorName: form.authorName.trim() || null,
+    publisherName: form.publisherName.trim() || null,
+    otherUrl: form.otherUrl.trim() || null,
+    newBookCheckFlg: form.newBookCheckFlg,
     tags: form.tags.trim() ? util.strToTag(form.tags.trim()) : [],
-    cover_url: form.coverUrl.trim() || null,
+    coverUrl: form.coverUrl.trim() || null,
 
     // アクセストークン
-    access_token: accessToken,
+    accessToken: accessToken,
     // 外部連携フラグ
-    is_external_cooperation: isExternalCooperation
+    isExternalCooperation: isExternalCooperation
   };
   
   return params;
 };
 
 type SimpleBook = {
-  id: string,
-  update_at: number
+  documentId: string,
+  updateAt: number
 }
 type BooksParams = {
   books: SimpleBook[];
   tags?: string[];
   user: string;
-  access_token: string;
+  accessToken: string;
 }
 const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
@@ -451,7 +453,7 @@ const selectedBooks = computed(() => {
 const deleteBooks = async () => {
   const books = selectedBooks.value;
   const simpleBooks:SimpleBook[] = books.map(book => {
-    return {id:book.id, update_at:book.updateAt}
+    return {documentId:book.documentId, updateAt:book.updateAt}
   });
   // 0件選択の場合はエラーダイアログ
   if(books.length === 0){
@@ -470,12 +472,12 @@ ${dispBooks.join("\n")}`;
     const params:BooksParams = {
       books: simpleBooks,
       user: user.email || "No User Data",
-      access_token: accessToken
+      accessToken: accessToken
     };
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
   });
 
@@ -483,7 +485,7 @@ ${dispBooks.join("\n")}`;
 
 type BookDialog = {
   isShow: boolean,
-  bookId: string,
+  documentId: string,
   updateAt: number | null,
   headerText: string,
   okLabel: string,
@@ -492,7 +494,7 @@ type BookDialog = {
 }
 const bookDialog:Ref<BookDialog> = ref({
   isShow: false,
-  bookId: "",
+  documentId: "",
   updateAt: null,
   headerText: "",
   okLabel: "",
@@ -510,7 +512,7 @@ const bookDialog:Ref<BookDialog> = ref({
   }
 });
 const showNewBookDialog = () => {
-  bookDialog.value.bookId = "";
+  bookDialog.value.documentId = "";
   bookDialog.value.headerText = "新規作成";
   bookDialog.value.okLabel = "新規作成";
   bookDialog.value.okFunction = createBook;
@@ -530,7 +532,7 @@ const showNewBookDialog = () => {
 
 // 編集ダイアログ表示
 const showEditBookDialog = (book:Book) => {
-  bookDialog.value.bookId = book.id;
+  bookDialog.value.documentId = book.documentId;
   bookDialog.value.headerText = "編集";
   bookDialog.value.okLabel = "更新";
   bookDialog.value.okFunction = editBook;
@@ -604,7 +606,7 @@ const addTagsFromDialogForm = () => {
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadRows, response.data.toreadTags);
+      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // ダイアログ消す
       addTagDialog.value.isShow = false;
     }
@@ -625,7 +627,7 @@ const addMultiTag = async () => {
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     // ダイアログ消す
     addTagDialog.value.isShow = false;
   }
@@ -634,7 +636,7 @@ const addTag = async (book:Book, tags:string[]) => {
   const response = await addTags([book], tags);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadRows, response.data.toreadTags);
+    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
@@ -645,7 +647,7 @@ const addTags = async (books:Book[], tags:string[]) => {
 
 const createAddTagParams = async (books:Book[], tags:string[]):Promise<BooksParams> => {
   const simpleBooks:SimpleBook[] = books.map(book => {
-    return {id:book.id, update_at:book.updateAt}
+    return {documentId:book.documentId, updateAt:book.updateAt}
   });
 
   const accessToken = await authUtil.getLocalStorageAccessToken()
@@ -653,7 +655,7 @@ const createAddTagParams = async (books:Book[], tags:string[]):Promise<BooksPara
   return {
     books: simpleBooks,
     user: user.email || "No User Data",
-    access_token: accessToken,
+    accessToken: accessToken,
     tags: tags
   };
 };
@@ -769,8 +771,10 @@ onMounted(init);
               </q-checkbox>
               <q-img
                 :src="book.coverUrl"
+                decoding="async"
                 class="book-img book-card-item"
                 fit="contain"
+                @error="book.coverUrl = 'img/cover_placeholder.jpg'"
               ></q-img>
               <div class="ellipsis q-px-sm book-card-item">
                   {{ book.bookName }}
@@ -819,7 +823,7 @@ onMounted(init);
                       color="teal"
                       @update:model-value="toggleNewBookCheckFlg(book)"
                     >
-                      新刊チェック
+                      図書館チェック
                     </q-toggle>
                   </div>
                 </div>
@@ -1120,7 +1124,7 @@ onMounted(init);
 }
 
 .book-img{
-  max-height: 150px;
+  height: 150px;
 }
 
 .book-info div{

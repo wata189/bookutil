@@ -9,7 +9,8 @@ type OpenBdBook = {
   isbn: string,
   authorName: string,
   publisherName: string,
-  page: number
+  page: number,
+  coverUrl: string
 }
 const getBookInfo = async (isbn:string):Promise<OpenBdBook | null> => {
   let book: OpenBdBook | null = null;
@@ -35,13 +36,16 @@ const getBookInfo = async (isbn:string):Promise<OpenBdBook | null> => {
       const author = descriptiveDetail.Contributor.find((contributor:any) => contributor.ContributorRole[0] === "A01");
       const authorName = author.PersonName.content;
       const publisherName = onix.PublishingDetail.Imprint.ImprintName;
-      const page = Number(descriptiveDetail.Extent[0].ExtentValue)
+      const page = Number(descriptiveDetail.Extent[0].ExtentValue);
+
+      const summary = response.data[0].summary;
       book = {
         isbn,
         bookName,
         authorName,
         publisherName,
-        page
+        page,
+        coverUrl: summary.cover
       };
     }
 
