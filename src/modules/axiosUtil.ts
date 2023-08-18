@@ -33,7 +33,7 @@ class AxiosUtil{
     }, (error:AxiosError) => {
       console.log(error);
       const status = error.response?.status || null;
-      const statusText = error.code || "Server Error";
+      const statusText = error.response?.statusText || "Server Error";
       const data:any = error.response?.data;
       const msg = data?.msg || "不明なエラーが発生しました";
 
