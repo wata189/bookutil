@@ -100,7 +100,7 @@ const labels = {
 const pagination = ref({
   number: 1,
 
-  dispMax: 50
+  dispMax: 99
 });
 const paginationMax = computed(() => {
   return Math.ceil(filteredSortedToreadBooks.value.length / pagination.value.dispMax)
