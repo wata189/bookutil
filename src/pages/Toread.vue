@@ -297,8 +297,7 @@ const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
 };
 
 const getBookInfo = async (isbn:string) => {
-  const trimedIsbn = isbn.trim()
-  if(!trimedIsbn){return;}
+  const trimedIsbn = util.trimString(isbn) || "";
   if(!util.isIsbn(trimedIsbn)){return;}
 
   const bookInfo = await openBdUtil.getBookInfo(trimedIsbn);
@@ -425,14 +424,14 @@ const createBookParams = async (form:BookForm) => {
 
     // フォームのパラメータ
     bookName: form.bookName.trim(),
-    isbn: form.isbn.trim() || null,
+    isbn: util.trimString(form.isbn),
     page: form.page || null,
-    authorName: form.authorName.trim() || null,
-    publisherName: form.publisherName.trim() || null,
-    otherUrl: form.otherUrl.trim() || null,
+    authorName: util.trimString(form.authorName),
+    publisherName: util.trimString(form.publisherName),
+    otherUrl: util.trimString(form.otherUrl),
     newBookCheckFlg: form.newBookCheckFlg,
-    tags: form.tags.trim() ? util.strToTag(form.tags.trim()) : [],
-    coverUrl: form.coverUrl.trim() || null,
+    tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
+    coverUrl: util.trimString(form.coverUrl),
 
     // アクセストークン
     accessToken: accessToken,
