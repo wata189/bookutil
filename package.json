@@ -8,14 +8,8 @@
     "testVueComponents": "npx vitest run test.components.test.ts",
     "devVue": "npm run testVueModules && npm run testVueComponents && vite",
     "-------": "",
-    "testLambda": "cd lambda-sam && pytest test_lambda.py -v --cov modules_layer",
-    "devLambda": "npm run testLambda && cd lambda-sam && sam build && sam local start-api --env-vars env.dev.json --docker-network host",
-    "prodLambda": "npm run testLambda && cd lambda-sam && sam build && sam local start-api --env-vars env.prod.json --docker-network host",
-    "checkNewBook": "npm run testLambda && cd lambda-sam && sam build && sam local invoke CheckNewBook --env-vars env.dev.json",
-    "--------": "",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview",
-    "deployLambda": "npm run testLambda && cd lambda-sam && sam build && sam deploy"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.3",
