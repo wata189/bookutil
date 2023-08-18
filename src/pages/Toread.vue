@@ -777,7 +777,7 @@ onMounted(init);
               >
               </q-checkbox>
               <q-img
-                :src="book.coverUrl"
+                :src="book.coverUrl || IMG_PLACEHOLDER_PATH"
                 decoding="async"
                 class="book-img book-card-item"
                 fit="contain"
