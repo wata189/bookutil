@@ -23,7 +23,8 @@ interface User {
 interface Props {
   pageName: string,
   menus: Array<Menu>,
-  user: User
+  user: User,
+  isLoading: boolean
 };
 const props = defineProps<Props>();
 
@@ -53,7 +54,7 @@ const setMode = (isDark: boolean) => {
   localStorage.isDarkMode = isDark;
 };
 
-const iconSize = "24px";4
+const iconSize = "24px";
 
 const iconSrc = util.getIconHref();
 
@@ -72,6 +73,7 @@ onMounted(async () => {
           <span class="vertical-middle q-mx-sm">{{ props.pageName }}</span>
         </div>
       </q-toolbar-title>
+      <q-spinner-ios v-if="isLoading" size="36px" />
 
       <q-space></q-space>
 

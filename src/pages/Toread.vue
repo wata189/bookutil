@@ -323,14 +323,14 @@ const createBook = () => {
   bookDialogForm.value.validate().then(async (success:boolean) => {
     if(!success){return;}
 
+    // ダイアログ消す
+    bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      bookDialog.value.isShow = false;
     }
   });
 };
@@ -342,12 +342,12 @@ const editBook = () => {
 
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
+    // ダイアログ消す
+    bookDialog.value.isShow = false;
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      bookDialog.value.isShow = false;
     }
   });
 };
@@ -609,12 +609,12 @@ const addTagsFromDialogForm = () => {
     const books = selectedBooks.value;
     const tags = util.strToTag(addTagDialog.value.form.tags)
 
+    // ダイアログ消す
+    addTagDialog.value.isShow = false;
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      addTagDialog.value.isShow = false;
     }
   });
 };
@@ -630,12 +630,12 @@ const addMultiTag = async () => {
     return;
   }
 
+  // ダイアログ消す
+  addTagDialog.value.isShow = false;
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
     setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-    // ダイアログ消す
-    addTagDialog.value.isShow = false;
   }
 };
 const addTag = async (book:Book, tags:string[]) => {

@@ -66,11 +66,13 @@ const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, ne
   };
 }; 
 
-const isShowInnerLoading = ref(false);
-const setIsShowInnerLoading = (bool:boolean) => {
-  isShowInnerLoading.value = bool
-}
-
+const isLoading:Ref<boolean> = ref(false);
+const showLoading = () => {
+  isLoading.value = true;
+};
+const hideLoading = () => {
+  isLoading.value = false;
+};
 const isAppLoaded = ref(false);
 
 onMounted(async () => {
@@ -124,6 +126,7 @@ onMounted(async () => {
       :page-name="pageName"
       :menus="menus"
       :user="user"
+      :is-loading="isLoading"
       @show-error-dialog="showErrorDialog"
     ></c-header>
     <q-page-container>
@@ -152,16 +155,10 @@ onMounted(async () => {
     <!-- ajax-barのhijak-filter機能でAPI叩いたのを検知して、ローディングを表示させる -->
     <q-ajax-bar
       :hijak-filter="util.isUrl"
-      @start="setIsShowInnerLoading(true)"
-      @stop="setIsShowInnerLoading(false)"
+      @start="showLoading"
+      @stop="hideLoading"
       color="transparent"
     ></q-ajax-bar>
-    <q-dialog
-      v-model="isShowInnerLoading"
-      persistent
-    >
-      <q-spinner-hourglass size="50px" color="secondary" />
-    </q-dialog>
 
     
   </q-layout>
