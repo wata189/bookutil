@@ -100,7 +100,7 @@ const labels = {
 const pagination = ref({
   number: 1,
 
-  dispMax: 50
+  dispMax: 99
 });
 const paginationMax = computed(() => {
   return Math.ceil(filteredSortedToreadBooks.value.length / pagination.value.dispMax)
@@ -297,8 +297,7 @@ const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
 };
 
 const getBookInfo = async (isbn:string) => {
-  const trimedIsbn = isbn.trim()
-  if(!trimedIsbn){return;}
+  const trimedIsbn = util.trimString(isbn) || "";
   if(!util.isIsbn(trimedIsbn)){return;}
 
   const bookInfo = await openBdUtil.getBookInfo(trimedIsbn);
@@ -324,14 +323,14 @@ const createBook = () => {
   bookDialogForm.value.validate().then(async (success:boolean) => {
     if(!success){return;}
 
+    // ダイアログ消す
+    bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      bookDialog.value.isShow = false;
     }
   });
 };
@@ -343,12 +342,12 @@ const editBook = () => {
 
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
+    // ダイアログ消す
+    bookDialog.value.isShow = false;
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      bookDialog.value.isShow = false;
     }
   });
 };
@@ -425,14 +424,14 @@ const createBookParams = async (form:BookForm) => {
 
     // フォームのパラメータ
     bookName: form.bookName.trim(),
-    isbn: form.isbn.trim() || null,
+    isbn: util.trimString(form.isbn),
     page: form.page || null,
-    authorName: form.authorName.trim() || null,
-    publisherName: form.publisherName.trim() || null,
-    otherUrl: form.otherUrl.trim() || null,
+    authorName: util.trimString(form.authorName),
+    publisherName: util.trimString(form.publisherName),
+    otherUrl: util.trimString(form.otherUrl),
     newBookCheckFlg: form.newBookCheckFlg,
-    tags: form.tags.trim() ? util.strToTag(form.tags.trim()) : [],
-    coverUrl: form.coverUrl.trim() || null,
+    tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
+    coverUrl: util.trimString(form.coverUrl),
 
     // アクセストークン
     accessToken: accessToken,
@@ -610,12 +609,12 @@ const addTagsFromDialogForm = () => {
     const books = selectedBooks.value;
     const tags = util.strToTag(addTagDialog.value.form.tags)
 
+    // ダイアログ消す
+    addTagDialog.value.isShow = false;
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-      // ダイアログ消す
-      addTagDialog.value.isShow = false;
     }
   });
 };
@@ -631,12 +630,12 @@ const addMultiTag = async () => {
     return;
   }
 
+  // ダイアログ消す
+  addTagDialog.value.isShow = false;
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
     setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-    // ダイアログ消す
-    addTagDialog.value.isShow = false;
   }
 };
 const addTag = async (book:Book, tags:string[]) => {

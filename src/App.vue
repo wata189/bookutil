@@ -5,6 +5,8 @@ import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 import { onMounted } from "@vue/runtime-core";
 import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
+import { useQuasar } from "quasar";
+const $q = useQuasar();
 
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
@@ -64,11 +66,13 @@ const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, ne
   };
 }; 
 
-const isShowInnerLoading = ref(false);
-const setIsShowInnerLoading = (bool:boolean) => {
-  isShowInnerLoading.value = bool
-}
-
+const isLoading:Ref<boolean> = ref(false);
+const showLoading = () => {
+  isLoading.value = true;
+};
+const hideLoading = () => {
+  isLoading.value = false;
+};
 const isAppLoaded = ref(false);
 
 onMounted(async () => {
@@ -97,6 +101,15 @@ onMounted(async () => {
     menuValues.push(
       {"name": "図書館リスト", "to": "/libraries", "icon": "account_balance", "description": "利用する図書館の一覧を表示します。"}
     )
+  }else{
+    // 未ログイン時は未ログインであることを通知する
+    $q.notify({
+      message: `ログインしていません。ログインしていない場合、一部の機能が制限されます。`,
+      color: "negative",
+      actions: [
+        {icon:"close", color: "white", round: true, handler: () => {}}
+      ]
+    });
   }
   menus.value = menuValues;
 
@@ -113,6 +126,7 @@ onMounted(async () => {
       :page-name="pageName"
       :menus="menus"
       :user="user"
+      :is-loading="isLoading"
       @show-error-dialog="showErrorDialog"
     ></c-header>
     <q-page-container>
@@ -141,16 +155,10 @@ onMounted(async () => {
     <!-- ajax-barのhijak-filter機能でAPI叩いたのを検知して、ローディングを表示させる -->
     <q-ajax-bar
       :hijak-filter="util.isUrl"
-      @start="setIsShowInnerLoading(true)"
-      @stop="setIsShowInnerLoading(false)"
+      @start="showLoading"
+      @stop="hideLoading"
       color="transparent"
     ></q-ajax-bar>
-    <q-dialog
-      v-model="isShowInnerLoading"
-      persistent
-    >
-      <q-spinner-hourglass size="50px" color="secondary" />
-    </q-dialog>
 
     
   </q-layout>

@@ -58,6 +58,10 @@ const getCurrentUrl = ():string => {
 
 const getIconHref = ():string => {
   return import.meta.env.DEV ? "img/icon.dev.svg" : "img/icon.svg";
+};
+
+const trimString = (val:string|null):string|null => {
+  return val ? val.trim() : null;
 }
 
 export default {
@@ -70,5 +74,6 @@ export default {
   isSmartPhone,
   formatDateToStr,
   getCurrentUrl,
-  getIconHref
+  getIconHref,
+  trimString
 }
