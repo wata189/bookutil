@@ -5,6 +5,8 @@ import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 import { onMounted } from "@vue/runtime-core";
 import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
+import { useQuasar } from "quasar";
+const $q = useQuasar();
 
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
@@ -97,6 +99,15 @@ onMounted(async () => {
     menuValues.push(
       {"name": "図書館リスト", "to": "/libraries", "icon": "account_balance", "description": "利用する図書館の一覧を表示します。"}
     )
+  }else{
+    // 未ログイン時は未ログインであることを通知する
+    $q.notify({
+      message: `ログインしていません。ログインしていない場合、一部の機能が制限されます。`,
+      color: "negative",
+      actions: [
+        {icon:"close", color: "white", round: true, handler: () => {}}
+      ]
+    });
   }
   menus.value = menuValues;
 
