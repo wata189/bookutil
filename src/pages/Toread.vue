@@ -1004,7 +1004,7 @@ onMounted(init);
           
           </q-input>
         </div>
-        <div class="col-8 q-pa-xs">
+        <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.isbn"
             clearable
@@ -1023,6 +1023,36 @@ onMounted(init);
             </template>
           </q-input>
         </div>
+        
+        <div class="col-12">
+          <q-btn
+            v-for="link in links"
+            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
+            round
+            padding="none"
+            :title="link.title"
+            class="q-mx-xs"
+            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
+          >
+            <q-avatar size="32.58px">
+              <q-img :src="link.imgUrl"></q-img>
+            </q-avatar>
+          </q-btn>
+        </div>
+        <div class="col-12 col-sm-4 q-pa-xs">
+          <q-input
+            clearable
+            v-model="bookDialog.form.authorName"
+            :label="labels.authorName"
+          ></q-input>
+        </div>
+        <div class="col-8 col-sm-4 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.publisherName"
+            clearable
+            :label="labels.publisherName"
+          ></q-input>
+        </div>
         <div class="col-4 q-pa-xs">
           <q-input
             v-model.number="bookDialog.form.page"
@@ -1031,20 +1061,6 @@ onMounted(init);
             min="1"
             :label="labels.page"
             :rules="validationRules.page"
-          ></q-input>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            clearable
-            v-model="bookDialog.form.authorName"
-            :label="labels.authorName"
-          ></q-input>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.publisherName"
-            clearable
-            :label="labels.publisherName"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
@@ -1080,21 +1096,6 @@ onMounted(init);
           ></q-toggle>
         </div>
         <q-space />
-        <div>
-          <q-btn
-            v-for="link in links"
-            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
-            round
-            padding="none"
-            :title="link.title"
-            class="q-mx-xs"
-            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
-          >
-            <q-avatar size="32.58px">
-              <q-img :src="link.imgUrl"></q-img>
-            </q-avatar>
-          </q-btn>
-        </div>
       </q-form>
     </c-dialog>
 
