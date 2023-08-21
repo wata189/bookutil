@@ -456,8 +456,7 @@ const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
 })
 
-const deleteBooks = async () => {
-  const books = selectedBooks.value;
+const deleteBooks = async (books:Book[]) => {
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
@@ -836,6 +835,14 @@ onMounted(init);
                 <div class="row">
                   <div class="col-auto">
                     <c-round-btn
+                      title="削除"
+                      icon="delete"
+                      color="negative"
+                      @click="deleteBooks([book])"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col-auto">
+                    <c-round-btn
                       v-if="!book.tags.includes('よみたい')"
                       title="よみたい"
                       icon="star_border"
@@ -905,7 +912,7 @@ onMounted(init);
                   icon="delete"
                   color="negative"
                   dense
-                  @click="deleteBooks"
+                  @click="deleteBooks(selectedBooks)"
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
