@@ -5,9 +5,12 @@ const axios = axiosBase.create({
 });
 
 type GoogleBook = {
-  bookName: string,
-  isbn: string,
-  authorName: string
+  bookName: string | undefined,
+  isbn: string | undefined,
+  authorName: string,
+  page: number | undefined,
+  coverUrl: string | undefined,
+  description: string | undefined
 };
 type GoogleBookItem = {
   volumeInfo: {
@@ -17,8 +20,26 @@ type GoogleBookItem = {
       type: string,
       identifier: string
     }]
+    pageCount: number | undefined,
+    description: string | undefined,
+    imageLinks: {
+      smallThumbnail: string | undefined
+      thumbnail: string | undefined
+    }
   }
 }
+
+const getBook = async (isbn:string):Promise<GoogleBook | null> => {
+  let book:GoogleBook | null = null;
+
+  const googleBooks = await searchBooks(`isbn:${isbn}`);
+  const googleBook = googleBooks.find(b => b.isbn === isbn);
+  if(googleBook){
+    book = googleBook;
+  }
+
+  return book;
+};
 
 const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
   let books:GoogleBook[] = [];
@@ -38,12 +59,17 @@ const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
           }).map(identifier => identifier.identifier);
         }
 
-        const authorName = volumeInfo.authors ? volumeInfo.authors.join(",") : "";
+        const authorName = volumeInfo.authors && volumeInfo.authors.length > 0 ? volumeInfo.authors.join(",") : undefined;
+        // 書影は小サムネ＞大サムネ＞空の順で設定する
+        const coverUrl = volumeInfo.imageLinks ? (volumeInfo.imageLinks.smallThumbnail || volumeInfo.imageLinks.thumbnail) : undefined;
         
         return {
-          isbn: isbns.length > 0 ? isbns[0] : "",
+          isbn: isbns.length > 0 ? isbns[0] : undefined,
           bookName: volumeInfo.title,
-          authorName
+          authorName,
+          page: volumeInfo.pageCount,
+          description: volumeInfo.description,
+          coverUrl
         };
       });
     }
@@ -56,5 +82,6 @@ const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
 };
 
 export default {
-  searchBooks
+  searchBooks,
+  getBook
 }

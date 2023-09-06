@@ -6,7 +6,6 @@ import { QForm} from "quasar";
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
-import openBdUtil from "@/modules/openBdUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
@@ -14,6 +13,7 @@ import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
+import googleBooksUtil from '@/modules/googleBooksUtil';
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -296,22 +296,17 @@ const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
   util.openPageAsNewTab(searchUrl);
 };
 
-const getBookInfo = async (isbn:string) => {
+const getBook = async (isbn:string) => {
   const trimedIsbn = util.trimString(isbn) || "";
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const bookInfo = await openBdUtil.getBookInfo(trimedIsbn);
-  // bookInfoがあったらフォームに設定
-  if(bookInfo){
-    bookDialog.value.form.isbn = bookInfo.isbn;
-    bookDialog.value.form.bookName = bookInfo.bookName;
-    bookDialog.value.form.authorName = bookInfo.authorName;
-    bookDialog.value.form.publisherName = bookInfo.publisherName;
-    bookDialog.value.form.page = bookInfo.page;
-    bookDialog.value.form.coverUrl = bookInfo.coverUrl;
+  const book = await googleBooksUtil.getBook(trimedIsbn);
+  // 本があったらフォームに設定
+  if(book){
+    setBookFromBooksSearchDialog(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "OpenBDからデータを取得できませんでした");
+    emitError("エラー", "GoogleBooksからデータを取得できませんでした");
   }
 
 };
@@ -688,23 +683,38 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setIsbnFromBooksSearchDialog,
+    okFunction: setBookFromBooksSearchDialog,
     searchWord
   };
 };
 type GoogleBook = {
-  bookName: string,
-  isbn: string,
-  authorName: string
+  bookName: string | undefined,
+  isbn: string | undefined,
+  authorName: string,
+  page: number | undefined,
+  coverUrl: string | undefined,
+  description: string | undefined
 };
-const setIsbnFromBooksSearchDialog = async (googleBook:GoogleBook) => {
-  bookDialog.value.form.isbn = googleBook.isbn;
-  bookDialog.value.form.bookName = googleBook.bookName;
-  bookDialog.value.form.authorName = googleBook.authorName;
-
-  if(bookDialog.value.form.isbn){
-    await getBookInfo(bookDialog.value.form.isbn);
+const setBookFromBooksSearchDialog = (googleBook:GoogleBook) => {
+  if(googleBook.isbn){
+    bookDialog.value.form.isbn = googleBook.isbn;
   }
+  if(googleBook.bookName){
+    bookDialog.value.form.bookName = googleBook.bookName;
+  }
+  if(googleBook.authorName){
+    bookDialog.value.form.authorName = googleBook.authorName;
+  }
+  if(googleBook.page){
+    bookDialog.value.form.page = googleBook.page;
+  }
+  if(googleBook.coverUrl){
+    bookDialog.value.form.coverUrl = googleBook.coverUrl;
+  }
+  // TODO: descriptionをメモに設定
+  // if(googleBook.description){
+  //   bookDialog.value.form.memo = googleBook.description;
+  // }
 };
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
@@ -723,7 +733,7 @@ const init = async () => {
       showNewBookDialog();
 
       bookDialog.value.form.isbn = urlParamIsbn;
-      await getBookInfo(urlParamIsbn);
+      await getBook(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
       emitError("エラー", "ISBNを取得できませんでした");
@@ -1018,7 +1028,7 @@ onMounted(init);
                 dense 
                 flat 
                 icon="search"
-                @click="getBookInfo(bookDialog.form.isbn)"
+                @click="getBook(bookDialog.form.isbn)"
               ></q-btn>
             </template>
           </q-input>
