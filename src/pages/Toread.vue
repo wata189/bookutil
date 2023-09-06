@@ -44,7 +44,8 @@ type Book = {
   newBookCheckFlg: number,
   updateAt: number,
   tags: string[],
-  isChecked: Ref<boolean>
+  isChecked: Ref<boolean>,
+  dispCoverUrl: string
 };
 
 const toreadBooks: Ref<Book[]> = ref([]);
@@ -176,7 +177,7 @@ const filteredSortedToreadBooks = computed({
 })
 const dispToreadBooks = computed({
   get: () => {
-    /////// フィルター
+    /////// ページ件数で絞り込み
     return filteredSortedToreadBooks.value.slice(
       // start: ページ番号 - 1 * 表示件数
       (pagination.value.number - 1) * pagination.value.dispMax,
@@ -208,8 +209,15 @@ const initToread = async () => {
 
 const setInitInfo = (books:Book[], tags: string[]) => {
   toreadBooks.value = books.map((book:Book):Book => {
+    let dispCoverUrl = IMG_PLACEHOLDER_PATH;
+    if(book.coverUrl){
+      dispCoverUrl = book.coverUrl;
+    }else if(book.isbn){
+      dispCoverUrl = util.getOpenBdCoverUrl(book.isbn);
+    }
     const retBook = {
       ...book,
+      dispCoverUrl,
       isChecked: ref(false)
     };
     return retBook;
@@ -544,7 +552,7 @@ const showEditBookDialog = (book:Book) => {
     publisherName: book.publisherName || "",
     page: book.page,
     otherUrl: book.otherUrl || "",
-    coverUrl: book.coverUrl === IMG_PLACEHOLDER_PATH ? "" : book.coverUrl,
+    coverUrl: book.coverUrl,
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
   };
@@ -785,11 +793,11 @@ onMounted(init);
               >
               </q-checkbox>
               <q-img
-                :src="book.coverUrl || IMG_PLACEHOLDER_PATH"
+                :src="book.dispCoverUrl"
                 decoding="async"
                 class="book-img book-card-item"
                 fit="contain"
-                @error="book.coverUrl = IMG_PLACEHOLDER_PATH"
+                @error="book.dispCoverUrl = IMG_PLACEHOLDER_PATH"
               ></q-img>
               <div class="ellipsis q-px-sm book-card-item">
                   {{ book.bookName }}
