@@ -40,12 +40,12 @@ type Book = {
   authorName: string | null,
   publisherName: string | null,
   page: number | null,
-  otherUrl: string | null,
   newBookCheckFlg: number,
   updateAt: number,
   tags: string[],
   isChecked: Ref<boolean>,
-  dispCoverUrl: string
+  dispCoverUrl: string,
+  memo: string | null
 };
 
 const toreadBooks: Ref<Book[]> = ref([]);
@@ -92,7 +92,7 @@ const labels = {
   page: "ページ数",
   authorName: "著者名",
   publisherName: "出版社名",
-  otherUrl: "その他URL",
+  memo: "メモ",
   coverUrl: "書影URL",
   tags: "タグ",
   newBookCheckFlg: "図書館チェック",
@@ -366,7 +366,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
     page: book.page,
-    otherUrl: book.otherUrl || "",
+    memo: book.memo || "",
     coverUrl: book.coverUrl || "",
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
@@ -384,7 +384,7 @@ type BookForm = {
     authorName: string,
     publisherName: string,
     page: number | null,
-    otherUrl: string,
+    memo: string,
     coverUrl: string,
     newBookCheckFlg: number,
     tags: string,
@@ -398,7 +398,7 @@ type BookParams = {
     page: number | null,
     authorName: string | null,
     publisherName: string | null,
-    otherUrl: string | null,
+    memo: string | null,
     coverUrl: string | null,
     newBookCheckFlg: number,
     tags: string[],
@@ -431,7 +431,7 @@ const createBookParams = async (form:BookForm) => {
     page: form.page || null,
     authorName: util.trimString(form.authorName),
     publisherName: util.trimString(form.publisherName),
-    otherUrl: util.trimString(form.otherUrl),
+    memo: util.trimString(form.memo),
     newBookCheckFlg: form.newBookCheckFlg,
     tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
     coverUrl: util.trimString(form.coverUrl),
@@ -513,7 +513,7 @@ const bookDialog:Ref<BookDialog> = ref({
     authorName: "",
     publisherName: "",
     page: null,
-    otherUrl: "",
+    memo: "",
     coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
@@ -530,7 +530,7 @@ const showNewBookDialog = () => {
     authorName: "",
     publisherName: "",
     page: null,
-    otherUrl: "",
+    memo: "",
     coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
@@ -551,7 +551,7 @@ const showEditBookDialog = (book:Book) => {
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
     page: book.page,
-    otherUrl: book.otherUrl || "",
+    memo: book.memo || "",
     coverUrl: book.coverUrl,
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
@@ -672,8 +672,7 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
-  otherUrl: [validationUtil.isUrl(labels.otherUrl)],
-  coverUrl: [validationUtil.isUrl(labels.otherUrl)]
+  coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
 // 外部連携フラグ
 let isExternalCooperation = false;
@@ -719,10 +718,9 @@ const setBookFromBooksSearchDialog = (googleBook:GoogleBook) => {
   if(googleBook.coverUrl){
     bookDialog.value.form.coverUrl = googleBook.coverUrl;
   }
-  // TODO: descriptionをメモに設定
-  // if(googleBook.description){
-  //   bookDialog.value.form.memo = googleBook.description;
-  // }
+  if(googleBook.description){
+    bookDialog.value.form.memo = googleBook.description;
+  }
 };
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
@@ -807,7 +805,7 @@ onMounted(init);
                   {{ book.bookName }}
                 </div>
                 <div>
-                  {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
+                  {{ book.authorName }}
                 </div>
                 <div>
                   <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
@@ -825,7 +823,7 @@ onMounted(init);
                   </q-avatar>
                 </q-btn>
                 <q-btn
-                  v-if="book.otherUrl"
+                  v-if="book.memo && util.isUrl(book.memo)"
                   size="19px"
                   round
                   padding="none"
@@ -834,7 +832,7 @@ onMounted(init);
                   color="white"
                   text-color="black"
                   title="外部リンク"
-                  @click="util.openPageAsNewTab(book.otherUrl)"
+                  @click="util.openPageAsNewTab(book.memo)"
                 >
                 </q-btn>
                 <div class="row">
@@ -1083,14 +1081,6 @@ onMounted(init);
         </div>
         <div class="col-12 q-pa-xs">
           <q-input
-            v-model="bookDialog.form.otherUrl"
-            clearable
-            :label="labels.otherUrl"
-            :rules="validationRules.otherUrl"
-          ></q-input>
-        </div>
-        <div class="col-12 q-pa-xs">
-          <q-input
             v-model="bookDialog.form.coverUrl"
             clearable
             :label="labels.coverUrl"
@@ -1114,6 +1104,13 @@ onMounted(init);
           ></q-toggle>
         </div>
         <q-space />
+        <div class="col-12 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.memo"
+            :label="labels.memo"
+            autogrow
+          ></q-input>
+        </div>
       </q-form>
     </c-dialog>
 
