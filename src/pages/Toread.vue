@@ -116,8 +116,10 @@ const toTopPagenation = () => {
 const filteredSortedToreadBooks = computed({
   get: () => {
     // 条件キャッシュ
-    const filterWord = filterCond.value.word;
-    const filterTags = util.strToTag(filterCond.value.tags);
+    const filterWords = util.strToTag(filterCond.value.word);
+    const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
+    // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
+    const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
     const sortKey = sortCond.value.key;
     const isDesc = sortCond.value.isDesc;
@@ -149,22 +151,23 @@ const filteredSortedToreadBooks = computed({
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
-      if(!filterWord){return true;}
-      // 検索ワードでの検索
+      if(filterWords.length === 0){return true;}
+      // 通常のワード検索
       const searchedText = [
         book.bookName,
         book.isbn,
         book.authorName,
         book.publisherName,
-        book.tags
+        book.tags,
+        book.memo
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
       .replace(/[ 　,]/g, ""); // 空白など削除
-      return searchedText.includes(filterWord);
-    }).filter((book:Book) => {
-      // タグでの検索
-      return filterTags
-            .filter(filterTag => book.tags.includes(filterTag))
-            .length === filterTags.length;
+
+      // すべてのキーワードがひっかかったらtrue
+      const hasPlusFilterWords = plusFilterWords.filter(word => searchedText.includes(word)).length === plusFilterWords.length;
+      // マイナス検索　マイナス検索1件でも引っかかったらダメ
+      const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
+      return hasPlusFilterWords && !hasMinusFilterWords;
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
@@ -959,19 +962,10 @@ onMounted(init);
 
           <q-separator inset></q-separator>
           <div class="row">
-            <div class="col-12 col-sm-4 q-pa-sm">
-              <q-input 
-                dense 
-                v-model="filterCond.word"
-                clearable
-                label="検索"
-                @update:model-value="toTopPagenation"
-              ></q-input>
-            </div>
             <div class="col q-pa-sm">
               <c-input-tag
-                v-model="filterCond.tags"
-                label="タグ"
+                v-model="filterCond.word"
+                label="検索"
                 dense
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
