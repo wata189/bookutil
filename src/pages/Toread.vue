@@ -52,7 +52,6 @@ const toreadBooks: Ref<Book[]> = ref([]);
 
 const filterCond = ref({
   word: "",
-  tags: "",
   isOnlyNewBook: false
 });
 const isShowFilterCond = ref(!util.isSmartPhone());
@@ -749,10 +748,6 @@ const init = async () => {
     }
   }
   
-  const urlParamTags = urlParams.get("filterCondTags");
-  if(urlParamTags){
-    filterCond.value.tags = urlParamTags
-  }
   const urlParamWord = urlParams.get("filterCondWord");
   if(urlParamWord){
     filterCond.value.word = urlParamWord;
