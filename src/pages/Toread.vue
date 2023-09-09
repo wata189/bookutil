@@ -742,6 +742,15 @@ const init = async () => {
 
       bookDialog.value.form.isbn = urlParamIsbn;
       await getBook(urlParamIsbn);
+
+      const urlParamBookName = urlParams.get("bookName");
+      const urlParamAuthorName = urlParams.get("authorName");
+      const urlParamPublisherName = urlParams.get("publisherName");
+      const urlParamNewBookCheckFlg = urlParams.get("newBookCheckFlg");
+      if(urlParamBookName) bookDialog.value.form.bookName = urlParamBookName;
+      if(urlParamAuthorName) bookDialog.value.form.authorName = urlParamAuthorName;
+      if(urlParamPublisherName) bookDialog.value.form.publisherName = urlParamPublisherName;
+      if(urlParamNewBookCheckFlg) bookDialog.value.form.newBookCheckFlg = Number(urlParamNewBookCheckFlg);
     }else{
       // ISBNが取得できなかったことをアラートで表示
       emitError("エラー", "ISBNを取得できませんでした");
