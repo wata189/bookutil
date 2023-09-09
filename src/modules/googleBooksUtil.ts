@@ -1,5 +1,7 @@
 import axiosBase from "axios";
 
+const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+
 const axios = axiosBase.create({
   baseURL: import.meta.env.VITE_GOOGLE_BOOKS_UTIL
 });
@@ -44,7 +46,7 @@ const getBook = async (isbn:string):Promise<GoogleBook | null> => {
 const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
   let books:GoogleBook[] = [];
   try{
-    const path = `/volumes?q=${searchWord}`;
+    const path = `/volumes?q=${searchWord}&key=${GOOGLE_BOOKS_API_KEY}`;
     console.log(`getBook:${path}`);
 
     const response = await axios.get(path);
