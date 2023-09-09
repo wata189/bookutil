@@ -808,79 +808,90 @@ onMounted(init);
                   {{ book.bookName }}
               </div>
               <q-menu fit class="q-pa-md book-info">
-                <div class="text-bold">
-                  {{ book.bookName }}
-                </div>
-                <div>
-                  {{ book.authorName }}
-                </div>
-                <div>
-                  <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
-                </div>
-                <q-btn
-                  v-for="link in links"
-                  round
-                  padding="none"
-                  :title="link.title"
-                  class="q-mx-xs"
-                  @click="openExternalPage(book.isbn, book.bookName, link)"
-                >
-                  <q-avatar size="32.58px">
-                    <q-img :src="link.imgUrl"></q-img>
-                  </q-avatar>
-                </q-btn>
-                <q-btn
-                  v-if="book.memo && util.isUrl(book.memo)"
-                  size="19px"
-                  round
-                  padding="none"
-                  class="q-mx-xs"
-                  icon="link"
-                  color="white"
-                  text-color="black"
-                  title="外部リンク"
-                  @click="util.openPageAsNewTab(book.memo)"
-                >
-                </q-btn>
-                <div class="row">
-                  <div class="col-auto">
-                    <q-toggle
-                      v-model="book.newBookCheckFlg"
-                      :true-value="1"
-                      :false-value="0"
-                      color="teal"
-                      @update:model-value="toggleNewBookCheckFlg(book)"
-                    >
-                      図書館チェック
-                    </q-toggle>
+                <div class="book-info-inner">
+                  <div class="text-bold">
+                    {{ book.bookName }}<template v-if="book.authorName"> / {{ book.authorName }}</template>
                   </div>
-                </div>
-                <div class="row">
-                  <div class="col-auto">
-                    <c-round-btn
-                      title="削除"
-                      icon="delete"
-                      color="negative"
-                      @click="deleteBooks([book])"
-                    ></c-round-btn>
+                  <q-expansion-item
+                    v-if="book.memo"
+                    default-opened
+                    dense
+                  >
+                    <template v-slot:header="{expanded}">
+                      <q-item-section class="ellipsis">
+                        メモ：<template v-if="!expanded">{{ book.memo }}</template>
+                      </q-item-section>
+                    </template>
+                    {{ book.memo }}
+                  </q-expansion-item>
+                  <div>
+                    <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
                   </div>
-                  <div class="col-auto">
-                    <c-round-btn
-                      v-if="!book.tags.includes('よみたい')"
-                      title="よみたい"
-                      icon="star_border"
-                      color="primary"
-                      @click="addWantTag(book, 'よみたい')"
-                    ></c-round-btn>
+                  <q-btn
+                    v-for="link in links"
+                    round
+                    padding="none"
+                    :title="link.title"
+                    class="q-mx-xs"
+                    @click="openExternalPage(book.isbn, book.bookName, link)"
+                  >
+                    <q-avatar size="32.58px">
+                      <q-img :src="link.imgUrl"></q-img>
+                    </q-avatar>
+                  </q-btn>
+                  <q-btn
+                    v-if="book.memo && util.isUrl(book.memo)"
+                    size="19px"
+                    round
+                    padding="none"
+                    class="q-mx-xs"
+                    icon="link"
+                    color="white"
+                    text-color="black"
+                    title="外部リンク"
+                    @click="util.openPageAsNewTab(book.memo)"
+                  >
+                  </q-btn>
+                  <div class="row">
+                    <div class="col-auto">
+                      <q-toggle
+                        v-model="book.newBookCheckFlg"
+                        :true-value="1"
+                        :false-value="0"
+                        color="teal"
+                        @update:model-value="toggleNewBookCheckFlg(book)"
+                      >
+                        図書館チェック
+                      </q-toggle>
+                    </div>
                   </div>
-                  <div class="col"></div>
-                  <div class="col-auto">
-                    <c-round-btn
-                      title="編集"
-                      icon="edit"
-                      color="primary"
-                      @click="showEditBookDialog(book)"
-                    ></c-round-btn>
+                  <div class="row">
+                    <div class="col-auto">
+                      <c-round-btn
+                        title="削除"
+                        icon="delete"
+                        color="negative"
+                        @click="deleteBooks([book])"
+                      ></c-round-btn>
+                    </div>
+                    <div class="col-auto">
+                      <c-round-btn
+                        v-if="!book.tags.includes('よみたい')"
+                        title="よみたい"
+                        icon="star_border"
+                        color="primary"
+                        @click="addWantTag(book, 'よみたい')"
+                      ></c-round-btn>
+                    </div>
+                    <div class="col"></div>
+                    <div class="col-auto">
+                      <c-round-btn
+                        title="編集"
+                        icon="edit"
+                        color="primary"
+                        @click="showEditBookDialog(book)"
+                      ></c-round-btn>
+                    </div>
                   </div>
                 </div>
               </q-menu>
@@ -1154,8 +1165,9 @@ onMounted(init);
   height: 150px;
 }
 
-.book-info div{
+.book-info-inner{
   font-family: "BIZ UDPGothic";
+  max-width: 250px;
 }
 
 .select-sort-key{
