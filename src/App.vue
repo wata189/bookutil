@@ -12,7 +12,7 @@ import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
 
 const isDev = import.meta.env.DEV;
-const pageName = isDev ? "Bookutil(開発)" : "Bookutil";
+const pageName = isDev ? "(開発)" : "";
 const iconHref = util.getIconHref();
 const head = document.querySelector("head");
 head?.append(

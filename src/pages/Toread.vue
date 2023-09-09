@@ -6,7 +6,6 @@ import { QForm} from "quasar";
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
-import openBdUtil from "@/modules/openBdUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
@@ -14,6 +13,7 @@ import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
+import googleBooksUtil from '@/modules/googleBooksUtil';
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -40,11 +40,12 @@ type Book = {
   authorName: string | null,
   publisherName: string | null,
   page: number | null,
-  otherUrl: string | null,
   newBookCheckFlg: number,
   updateAt: number,
   tags: string[],
-  isChecked: Ref<boolean>
+  isChecked: Ref<boolean>,
+  dispCoverUrl: string,
+  memo: string | null
 };
 
 const toreadBooks: Ref<Book[]> = ref([]);
@@ -91,7 +92,7 @@ const labels = {
   page: "ページ数",
   authorName: "著者名",
   publisherName: "出版社名",
-  otherUrl: "その他URL",
+  memo: "メモ",
   coverUrl: "書影URL",
   tags: "タグ",
   newBookCheckFlg: "図書館チェック",
@@ -115,8 +116,10 @@ const toTopPagenation = () => {
 const filteredSortedToreadBooks = computed({
   get: () => {
     // 条件キャッシュ
-    const filterWord = filterCond.value.word;
-    const filterTags = util.strToTag(filterCond.value.tags);
+    const filterWords = util.strToTag(filterCond.value.word);
+    const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
+    // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
+    const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
     const sortKey = sortCond.value.key;
     const isDesc = sortCond.value.isDesc;
@@ -148,22 +151,23 @@ const filteredSortedToreadBooks = computed({
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
-      if(!filterWord){return true;}
-      // 検索ワードでの検索
+      if(filterWords.length === 0){return true;}
+      // 通常のワード検索
       const searchedText = [
         book.bookName,
         book.isbn,
         book.authorName,
         book.publisherName,
-        book.tags
+        book.tags,
+        book.memo
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
       .replace(/[ 　,]/g, ""); // 空白など削除
-      return searchedText.includes(filterWord);
-    }).filter((book:Book) => {
-      // タグでの検索
-      return filterTags
-            .filter(filterTag => book.tags.includes(filterTag))
-            .length === filterTags.length;
+
+      // すべてのキーワードがひっかかったらtrue
+      const hasPlusFilterWords = plusFilterWords.filter(word => searchedText.includes(word)).length === plusFilterWords.length;
+      // マイナス検索　マイナス検索1件でも引っかかったらダメ
+      const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
+      return hasPlusFilterWords && !hasMinusFilterWords;
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
@@ -176,7 +180,7 @@ const filteredSortedToreadBooks = computed({
 })
 const dispToreadBooks = computed({
   get: () => {
-    /////// フィルター
+    /////// ページ件数で絞り込み
     return filteredSortedToreadBooks.value.slice(
       // start: ページ番号 - 1 * 表示件数
       (pagination.value.number - 1) * pagination.value.dispMax,
@@ -208,8 +212,15 @@ const initToread = async () => {
 
 const setInitInfo = (books:Book[], tags: string[]) => {
   toreadBooks.value = books.map((book:Book):Book => {
+    let dispCoverUrl = IMG_PLACEHOLDER_PATH;
+    if(book.coverUrl){
+      dispCoverUrl = book.coverUrl;
+    }else if(book.isbn){
+      dispCoverUrl = util.getOpenBdCoverUrl(book.isbn);
+    }
     const retBook = {
       ...book,
+      dispCoverUrl,
       isChecked: ref(false)
     };
     return retBook;
@@ -296,22 +307,17 @@ const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
   util.openPageAsNewTab(searchUrl);
 };
 
-const getBookInfo = async (isbn:string) => {
+const getBook = async (isbn:string) => {
   const trimedIsbn = util.trimString(isbn) || "";
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const bookInfo = await openBdUtil.getBookInfo(trimedIsbn);
-  // bookInfoがあったらフォームに設定
-  if(bookInfo){
-    bookDialog.value.form.isbn = bookInfo.isbn;
-    bookDialog.value.form.bookName = bookInfo.bookName;
-    bookDialog.value.form.authorName = bookInfo.authorName;
-    bookDialog.value.form.publisherName = bookInfo.publisherName;
-    bookDialog.value.form.page = bookInfo.page;
-    bookDialog.value.form.coverUrl = bookInfo.coverUrl;
+  const book = await googleBooksUtil.getBook(trimedIsbn);
+  // 本があったらフォームに設定
+  if(book){
+    setBookFromBooksSearchDialog(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "OpenBDからデータを取得できませんでした");
+    emitError("エラー", "GoogleBooksからデータを取得できませんでした");
   }
 
 };
@@ -363,7 +369,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
     page: book.page,
-    otherUrl: book.otherUrl || "",
+    memo: book.memo || "",
     coverUrl: book.coverUrl || "",
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
@@ -381,7 +387,7 @@ type BookForm = {
     authorName: string,
     publisherName: string,
     page: number | null,
-    otherUrl: string,
+    memo: string,
     coverUrl: string,
     newBookCheckFlg: number,
     tags: string,
@@ -395,7 +401,7 @@ type BookParams = {
     page: number | null,
     authorName: string | null,
     publisherName: string | null,
-    otherUrl: string | null,
+    memo: string | null,
     coverUrl: string | null,
     newBookCheckFlg: number,
     tags: string[],
@@ -428,7 +434,7 @@ const createBookParams = async (form:BookForm) => {
     page: form.page || null,
     authorName: util.trimString(form.authorName),
     publisherName: util.trimString(form.publisherName),
-    otherUrl: util.trimString(form.otherUrl),
+    memo: util.trimString(form.memo),
     newBookCheckFlg: form.newBookCheckFlg,
     tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
     coverUrl: util.trimString(form.coverUrl),
@@ -456,8 +462,7 @@ const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
 })
 
-const deleteBooks = async () => {
-  const books = selectedBooks.value;
+const deleteBooks = async (books:Book[]) => {
   const simpleBooks:SimpleBook[] = books.map(book => {
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
@@ -511,7 +516,7 @@ const bookDialog:Ref<BookDialog> = ref({
     authorName: "",
     publisherName: "",
     page: null,
-    otherUrl: "",
+    memo: "",
     coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
@@ -528,7 +533,7 @@ const showNewBookDialog = () => {
     authorName: "",
     publisherName: "",
     page: null,
-    otherUrl: "",
+    memo: "",
     coverUrl: "",
     newBookCheckFlg: 0,
     tags: ""
@@ -549,8 +554,8 @@ const showEditBookDialog = (book:Book) => {
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
     page: book.page,
-    otherUrl: book.otherUrl || "",
-    coverUrl: book.coverUrl === IMG_PLACEHOLDER_PATH ? "" : book.coverUrl,
+    memo: book.memo || "",
+    coverUrl: book.coverUrl,
     newBookCheckFlg: book.newBookCheckFlg,
     tags: book.tags.join("/")
   };
@@ -670,8 +675,7 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
-  otherUrl: [validationUtil.isUrl(labels.otherUrl)],
-  coverUrl: [validationUtil.isUrl(labels.otherUrl)]
+  coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
 // 外部連携フラグ
 let isExternalCooperation = false;
@@ -689,22 +693,36 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setIsbnFromBooksSearchDialog,
+    okFunction: setBookFromBooksSearchDialog,
     searchWord
   };
 };
 type GoogleBook = {
-  bookName: string,
-  isbn: string,
-  authorName: string
+  bookName: string | undefined,
+  isbn: string | undefined,
+  authorName: string,
+  page: number | undefined,
+  coverUrl: string | undefined,
+  description: string | undefined
 };
-const setIsbnFromBooksSearchDialog = async (googleBook:GoogleBook) => {
-  bookDialog.value.form.isbn = googleBook.isbn;
-  bookDialog.value.form.bookName = googleBook.bookName;
-  bookDialog.value.form.authorName = googleBook.authorName;
-
-  if(bookDialog.value.form.isbn){
-    await getBookInfo(bookDialog.value.form.isbn);
+const setBookFromBooksSearchDialog = (googleBook:GoogleBook) => {
+  if(googleBook.isbn){
+    bookDialog.value.form.isbn = googleBook.isbn;
+  }
+  if(googleBook.bookName){
+    bookDialog.value.form.bookName = googleBook.bookName;
+  }
+  if(googleBook.authorName){
+    bookDialog.value.form.authorName = googleBook.authorName;
+  }
+  if(googleBook.page){
+    bookDialog.value.form.page = googleBook.page;
+  }
+  if(googleBook.coverUrl){
+    bookDialog.value.form.coverUrl = googleBook.coverUrl;
+  }
+  if(googleBook.description){
+    bookDialog.value.form.memo = googleBook.description;
   }
 };
 
@@ -724,7 +742,7 @@ const init = async () => {
       showNewBookDialog();
 
       bookDialog.value.form.isbn = urlParamIsbn;
-      await getBookInfo(urlParamIsbn);
+      await getBook(urlParamIsbn);
     }else{
       // ISBNが取得できなかったことをアラートで表示
       emitError("エラー", "ISBNを取得できませんでした");
@@ -776,11 +794,11 @@ onMounted(init);
               >
               </q-checkbox>
               <q-img
-                :src="book.coverUrl || IMG_PLACEHOLDER_PATH"
+                :src="book.dispCoverUrl"
                 decoding="async"
                 class="book-img book-card-item"
                 fit="contain"
-                @error="book.coverUrl = IMG_PLACEHOLDER_PATH"
+                @error="book.dispCoverUrl = IMG_PLACEHOLDER_PATH"
               ></q-img>
               <div class="ellipsis q-px-sm book-card-item">
                   {{ book.bookName }}
@@ -790,7 +808,7 @@ onMounted(init);
                   {{ book.bookName }}
                 </div>
                 <div>
-                  {{ book.authorName }} <span v-if="book.authorName && book.publisherName">/</span> {{ book.publisherName }}
+                  {{ book.authorName }}
                 </div>
                 <div>
                   <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
@@ -808,7 +826,7 @@ onMounted(init);
                   </q-avatar>
                 </q-btn>
                 <q-btn
-                  v-if="book.otherUrl"
+                  v-if="book.memo && util.isUrl(book.memo)"
                   size="19px"
                   round
                   padding="none"
@@ -817,7 +835,7 @@ onMounted(init);
                   color="white"
                   text-color="black"
                   title="外部リンク"
-                  @click="util.openPageAsNewTab(book.otherUrl)"
+                  @click="util.openPageAsNewTab(book.memo)"
                 >
                 </q-btn>
                 <div class="row">
@@ -834,6 +852,14 @@ onMounted(init);
                   </div>
                 </div>
                 <div class="row">
+                  <div class="col-auto">
+                    <c-round-btn
+                      title="削除"
+                      icon="delete"
+                      color="negative"
+                      @click="deleteBooks([book])"
+                    ></c-round-btn>
+                  </div>
                   <div class="col-auto">
                     <c-round-btn
                       v-if="!book.tags.includes('よみたい')"
@@ -905,7 +931,7 @@ onMounted(init);
                   icon="delete"
                   color="negative"
                   dense
-                  @click="deleteBooks"
+                  @click="deleteBooks(selectedBooks)"
                 ></c-round-btn>
                 <c-round-btn
                   title="一括タグ"  
@@ -936,19 +962,10 @@ onMounted(init);
 
           <q-separator inset></q-separator>
           <div class="row">
-            <div class="col-12 col-sm-4 q-pa-sm">
-              <q-input 
-                dense 
-                v-model="filterCond.word"
-                clearable
-                label="検索"
-                @update:model-value="toTopPagenation"
-              ></q-input>
-            </div>
             <div class="col q-pa-sm">
               <c-input-tag
-                v-model="filterCond.tags"
-                label="タグ"
+                v-model="filterCond.word"
+                label="検索"
                 dense
                 hint=",/スペースで区切られます"
                 :options="toreadTagOptions"
@@ -997,7 +1014,7 @@ onMounted(init);
           
           </q-input>
         </div>
-        <div class="col-8 q-pa-xs">
+        <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.isbn"
             clearable
@@ -1011,10 +1028,40 @@ onMounted(init);
                 dense 
                 flat 
                 icon="search"
-                @click="getBookInfo(bookDialog.form.isbn)"
+                @click="getBook(bookDialog.form.isbn)"
               ></q-btn>
             </template>
           </q-input>
+        </div>
+        
+        <div class="col-12">
+          <q-btn
+            v-for="link in links"
+            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
+            round
+            padding="none"
+            :title="link.title"
+            class="q-mx-xs"
+            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
+          >
+            <q-avatar size="32.58px">
+              <q-img :src="link.imgUrl"></q-img>
+            </q-avatar>
+          </q-btn>
+        </div>
+        <div class="col-12 col-sm-4 q-pa-xs">
+          <q-input
+            clearable
+            v-model="bookDialog.form.authorName"
+            :label="labels.authorName"
+          ></q-input>
+        </div>
+        <div class="col-8 col-sm-4 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.publisherName"
+            clearable
+            :label="labels.publisherName"
+          ></q-input>
         </div>
         <div class="col-4 q-pa-xs">
           <q-input
@@ -1024,28 +1071,6 @@ onMounted(init);
             min="1"
             :label="labels.page"
             :rules="validationRules.page"
-          ></q-input>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            clearable
-            v-model="bookDialog.form.authorName"
-            :label="labels.authorName"
-          ></q-input>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.publisherName"
-            clearable
-            :label="labels.publisherName"
-          ></q-input>
-        </div>
-        <div class="col-12 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.otherUrl"
-            clearable
-            :label="labels.otherUrl"
-            :rules="validationRules.otherUrl"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
@@ -1073,20 +1098,12 @@ onMounted(init);
           ></q-toggle>
         </div>
         <q-space />
-        <div>
-          <q-btn
-            v-for="link in links"
-            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
-            round
-            padding="none"
-            :title="link.title"
-            class="q-mx-xs"
-            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
-          >
-            <q-avatar size="32.58px">
-              <q-img :src="link.imgUrl"></q-img>
-            </q-avatar>
-          </q-btn>
+        <div class="col-12 q-pa-xs">
+          <q-input
+            v-model="bookDialog.form.memo"
+            :label="labels.memo"
+            autogrow
+          ></q-input>
         </div>
       </q-form>
     </c-dialog>

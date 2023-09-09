@@ -1,6 +1,9 @@
 
 import { Dark } from 'quasar';
 
+const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
+const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
+
 const openPageAsNewTab = (url:string) => {
   window.open(url, "_blank");
 };
@@ -62,6 +65,33 @@ const getIconHref = ():string => {
 
 const trimString = (val:string|null):string|null => {
   return val ? val.trim() : null;
+};
+
+const isbn10To13 = (isbn10:string):string => {
+  const isbn12 = "978" + isbn10.slice(0,-1);
+  // チェックディジット計算
+  const sum = isbn12.split("").map((num:string, index:number) => {
+    //ウェイトは1→3→1→3の順
+    const coefficient = index % 2 === 0 ? 1 : 3;
+    return Number(num) * coefficient;
+  }).reduce((a:number, b:number) => a+b); //sum
+
+  //10で割ったあまり出す
+  const remainder = sum % 10;
+  //あまりが0の場合は0、それ以外は10-あまり
+  const checkDigit = remainder === 0 ? 0 : 10 - remainder;
+  return isbn12 + checkDigit;
+};
+
+const getOpenBdCoverUrl = (isbn:string):string => {
+  if(!isIsbn(isbn))return IMG_PLACEHOLDER_PATH;
+
+  let isbn13 = isbn;
+  if(isbn.length !== 13){
+    isbn13 = isbn10To13(isbn);
+  }
+  
+  return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
 }
 
 export default {
@@ -75,5 +105,7 @@ export default {
   formatDateToStr,
   getCurrentUrl,
   getIconHref,
-  trimString
+  trimString,
+  getOpenBdCoverUrl,
+  isbn10To13
 }

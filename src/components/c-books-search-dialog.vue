@@ -21,9 +21,12 @@ const value = computed({
 });
 
 type GoogleBook = {
-  bookName: string,
-  isbn: string,
-  authorName: string
+  bookName: string | undefined,
+  isbn: string | undefined,
+  authorName: string,
+  page: number | undefined,
+  coverUrl: string | undefined,
+  description: string | undefined
 };
 const tableRows:Ref<GoogleBook[]> = ref([]);
 
