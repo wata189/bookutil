@@ -1,4 +1,5 @@
 import axiosBase from "axios";
+import util from "@/modules/util";
 
 const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 
@@ -34,10 +35,26 @@ type GoogleBookItem = {
 const getBook = async (isbn:string):Promise<GoogleBook | null> => {
   let book:GoogleBook | null = null;
 
-  const googleBooks = await searchBooks(`isbn:${isbn}`);
-  const googleBook = googleBooks.find(b => b.isbn === isbn);
+  let isbn10 = "";
+  let isbn13 = "";
+  if(isbn.length === 10){
+    isbn13 = util.isbn10To13(isbn);
+    isbn10 = isbn;
+  }else if(isbn.length === 13){
+    isbn13 = isbn;
+    isbn10 = util.isbn13To10(isbn);
+  }
+
+  const googleBooks = await searchBooks(`isbn:${isbn10}`);
+  const googleBook = googleBooks.find(b => (b.isbn === isbn10 || b.isbn === isbn13));
   if(googleBook){
     book = googleBook;
+  }else{
+    const secondGoogleBooks = await searchBooks(`isbn:${isbn13}`);
+    const secondGoogleBook = secondGoogleBooks.find(b => (b.isbn === isbn10 || b.isbn === isbn13));
+    if(secondGoogleBook){
+      book = secondGoogleBook;
+    }
   }
 
   return book;

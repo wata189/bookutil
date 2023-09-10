@@ -49,7 +49,7 @@ const dispLibraries = computed(() => {
       isOpenLibrary = startTime <= tmpTime && tmpTime <= endTime;
     }
 
-    const toreadLink = `toread?filterCondTags=${library.city}図書館 よみたい`
+    const toreadLink = `toread?filterCondWord=${library.city}図書館 よみたい`
 
     return {...library, isOpenLibrary, dispStartTime, dispEndTime, toreadLink};
   });
