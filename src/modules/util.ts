@@ -92,7 +92,16 @@ const getOpenBdCoverUrl = (isbn:string):string => {
   }
   
   return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
-}
+};
+
+const isbn13To10 = (isbn13:string):string => {
+  const sum = isbn13.split('').slice(3, 12).reduce((acc, c, i) => {
+      return acc + Number(c[0]) * (10 - i);
+  }, 0);
+  const checkDigit = 11 - sum % 11;
+  const isbn10 = isbn13.substring(3, 12) + checkDigit.toString();
+  return isbn10;
+};
 
 export default {
   openPageAsNewTab,
@@ -107,5 +116,6 @@ export default {
   getIconHref,
   trimString,
   getOpenBdCoverUrl,
-  isbn10To13
+  isbn10To13,
+  isbn13To10
 }
