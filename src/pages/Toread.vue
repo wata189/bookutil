@@ -298,7 +298,8 @@ const links:Link[] = [
 const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
   let searchUrl = "";
   if(isbn && link.searchUrl.isbn){
-    searchUrl = link.searchUrl.isbn.replace(SEARCH_PLACEHOLDER, isbn);
+    const isbn10 = isbn.length === 10 ? isbn : util.isbn13To10(isbn);
+    searchUrl = link.searchUrl.isbn.replace(SEARCH_PLACEHOLDER, isbn10);
   }else{
     searchUrl = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, bookName);
   }
