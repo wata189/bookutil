@@ -1116,7 +1116,8 @@ onMounted(init);
           <q-input
             v-model="bookDialog.form.memo"
             :label="labels.memo"
-            autogrow
+            type="textarea"
+            rows="3"
           ></q-input>
         </div>
       </q-form>
