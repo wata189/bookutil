@@ -39,7 +39,7 @@ const value = computed({
 
       <q-separator></q-separator>
 
-      <q-card-section :class="noPadding ? 'q-pa-none' : ''">
+      <q-card-section class="dialog-content scroll" :class="noPadding ? 'q-pa-none' : ''">
         <slot></slot>
       </q-card-section>
 
@@ -53,3 +53,9 @@ const value = computed({
     </q-card>
   </q-dialog>
 </template>
+
+<style scoped>
+.dialog-content{
+  max-height: 75vh
+}
+</style>
