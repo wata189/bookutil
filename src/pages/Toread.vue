@@ -814,12 +814,11 @@ onMounted(init);
                   </div>
                   <q-expansion-item
                     v-if="book.memo"
-                    default-opened
                     dense
                   >
                     <template v-slot:header="{expanded}">
                       <q-item-section class="ellipsis">
-                        メモ：<template v-if="!expanded">{{ book.memo }}</template>
+                        <template v-if="!expanded">{{ book.memo }}</template>
                       </q-item-section>
                     </template>
                     {{ book.memo }}
