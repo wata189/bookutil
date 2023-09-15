@@ -7,13 +7,15 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
+import googleBooksUtil from '@/modules/googleBooksUtil';
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
-import googleBooksUtil from '@/modules/googleBooksUtil';
+import CBookCard from '@/components/c-book-card.vue';
+import CLinkBtns from "@/components/c-link-btns.vue";
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -225,85 +227,6 @@ const setInitInfo = (books:Book[], tags: string[]) => {
     return retBook;
   });
   toreadTagOptions.value = tags;
-};
-
-
-const SEARCH_PLACEHOLDER = "@PLACEHOLDER@";
-type Link = {
-  title: string,
-  imgUrl: string,
-  searchUrl: {
-    isbn: string,
-    bookName: string
-  }
-};
-const links:Link[] = [
-  {
-    title: "カーリル",
-    imgUrl: "img/calil.jpg",
-    searchUrl: {
-      isbn: "https://calil.jp/book/" + SEARCH_PLACEHOLDER,
-      bookName: "https://calil.jp/search?q=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "ブクログ",
-    imgUrl: "img/booklog.jpg",
-    searchUrl: {
-      isbn: "https://booklog.jp/item/1/" + SEARCH_PLACEHOLDER,
-      bookName: "https://booklog.jp/search?keyword=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "ブックウォーカー",
-    imgUrl: "img/bookwalker.png",
-    searchUrl: {
-      isbn: "",
-      bookName: "https://bookwalker.jp/search/?qcat=&word=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "honto",
-    imgUrl: "img/honto.jpg",
-    searchUrl: {
-      isbn: "https://honto.jp/netstore/search.html?k=" + SEARCH_PLACEHOLDER,
-      bookName: "https://honto.jp/netstore/search.html?k=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "Amazon",
-    imgUrl: "img/amazon.png",
-    searchUrl: {
-      isbn: "https://www.amazon.co.jp/dp/" + SEARCH_PLACEHOLDER,
-      bookName: "https://www.amazon.co.jp/s?k=" + SEARCH_PLACEHOLDER +"&i=stripbooks"
-    }
-  },
-  {
-    title: "国会図書館",
-    imgUrl: "img/ndl.png",
-    searchUrl: {
-      isbn: "https://ndlonline.ndl.go.jp/#!/search?isbn=" + SEARCH_PLACEHOLDER,
-      bookName: "https://ndlonline.ndl.go.jp/#!/search?title=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "国立国会図書館サーチ",
-    imgUrl: "img/ndl_search.png",
-    searchUrl: {
-      isbn: "https://iss.ndl.go.jp/books?ar=4e1f&mediatypes%5B%5D=1&mediatypes%5B%5D=4&repository_nos%5B%5D=R100000002&repository_nos%5B%5D=R100000039&repository_nos%5B%5D=R100000040&rft.isbn=" + SEARCH_PLACEHOLDER + "&search_mode=advanced",
-      bookName: "https://iss.ndl.go.jp/books?ar=4e1f&mediatypes%5B%5D=1&mediatypes%5B%5D=4&repository_nos%5B%5D=R100000002&repository_nos%5B%5D=R100000039&repository_nos%5B%5D=R100000040&rft.title=" + SEARCH_PLACEHOLDER + "&search_mode=advanced"
-    }
-  }
-];
-const openExternalPage = (isbn:string | null, bookName:string, link:Link) => {
-  let searchUrl = "";
-  if(isbn && link.searchUrl.isbn){
-    searchUrl = link.searchUrl.isbn.replace(SEARCH_PLACEHOLDER, isbn);
-  }else{
-    searchUrl = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, bookName);
-  }
-
-  util.openPageAsNewTab(searchUrl);
 };
 
 const getBook = async (isbn:string) => {
@@ -791,111 +714,58 @@ onMounted(init);
         </div>
         <div class="row justify-center q-pa-md">
           <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-my-sm">
-            <q-card class="q-pb-sm q-mx-sm" :flat="!util.isDarkMode()" :class="util.isDarkMode() ? 'bg-dark' : 'bg-transparent' " :title="book.bookName">
-              <q-checkbox
-                v-model="book.isChecked"
-                dense
-              >
-              </q-checkbox>
-              <q-img
-                :src="book.dispCoverUrl"
-                decoding="async"
-                class="book-img book-card-item"
-                fit="contain"
-                @error="book.dispCoverUrl = IMG_PLACEHOLDER_PATH"
-              ></q-img>
-              <div class="ellipsis q-px-sm book-card-item">
-                  {{ book.bookName }}
-              </div>
-              <q-menu fit class="q-pa-md book-info">
-                <div class="book-info-inner">
-                  <div class="text-bold">
-                    {{ book.bookName }}<template v-if="book.authorName"> / {{ book.authorName }}</template>
-                  </div>
-                  <q-expansion-item
-                    v-if="book.memo"
-                    default-opened
-                    dense
-                  >
-                    <template v-slot:header="{expanded}">
-                      <q-item-section class="ellipsis">
-                        メモ：<template v-if="!expanded">{{ book.memo }}</template>
-                      </q-item-section>
-                    </template>
-                    {{ book.memo }}
-                  </q-expansion-item>
-                  <div>
-                    <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
-                  </div>
-                  <q-btn
-                    v-for="link in links"
-                    round
-                    padding="none"
-                    :title="link.title"
-                    class="q-mx-xs"
-                    @click="openExternalPage(book.isbn, book.bookName, link)"
-                  >
-                    <q-avatar size="32.58px">
-                      <q-img :src="link.imgUrl"></q-img>
-                    </q-avatar>
-                  </q-btn>
-                  <q-btn
-                    v-if="book.memo && util.isUrl(book.memo)"
-                    size="19px"
-                    round
-                    padding="none"
-                    class="q-mx-xs"
-                    icon="link"
-                    color="white"
-                    text-color="black"
-                    title="外部リンク"
-                    @click="util.openPageAsNewTab(book.memo)"
-                  >
-                  </q-btn>
-                  <div class="row">
-                    <div class="col-auto">
-                      <q-toggle
-                        v-model="book.newBookCheckFlg"
-                        :true-value="1"
-                        :false-value="0"
-                        color="teal"
-                        @update:model-value="toggleNewBookCheckFlg(book)"
-                      >
-                        図書館チェック
-                      </q-toggle>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-auto">
-                      <c-round-btn
-                        title="削除"
-                        icon="delete"
-                        color="negative"
-                        @click="deleteBooks([book])"
-                      ></c-round-btn>
-                    </div>
-                    <div class="col-auto">
-                      <c-round-btn
-                        v-if="!book.tags.includes('よみたい')"
-                        title="よみたい"
-                        icon="star_border"
-                        color="primary"
-                        @click="addWantTag(book, 'よみたい')"
-                      ></c-round-btn>
-                    </div>
-                    <div class="col"></div>
-                    <div class="col-auto">
-                      <c-round-btn
-                        title="編集"
-                        icon="edit"
-                        color="primary"
-                        @click="showEditBookDialog(book)"
-                      ></c-round-btn>
-                    </div>
+            <c-book-card :book="book">
+              <template v-slot:header>
+                <q-checkbox
+                  v-model="book.isChecked"
+                  dense
+                >
+                </q-checkbox>
+              </template>
+              <template v-slot:menu-footer>
+                <div class="row">
+                  <div class="col-auto">
+                    <q-toggle
+                      v-model="book.newBookCheckFlg"
+                      :true-value="1"
+                      :false-value="0"
+                      color="teal"
+                      @update:model-value="toggleNewBookCheckFlg(book)"
+                    >
+                      図書館チェック
+                    </q-toggle>
                   </div>
                 </div>
-              </q-menu>
-            </q-card>
+                <div class="row">
+                  <div class="col-auto">
+                    <c-round-btn
+                      title="削除"
+                      icon="delete"
+                      color="negative"
+                      @click="deleteBooks([book])"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="!book.tags.includes('よみたい')"
+                      title="よみたい"
+                      icon="star_border"
+                      color="primary"
+                      @click="addWantTag(book, 'よみたい')"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col"></div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      title="編集"
+                      icon="edit"
+                      color="primary"
+                      @click="showEditBookDialog(book)"
+                    ></c-round-btn>
+                  </div>
+                </div>
+              </template>
+            </c-book-card>
           </div>
         </div>
         <div class="row lt-md">
@@ -1050,19 +920,11 @@ onMounted(init);
         </div>
         
         <div class="col-12">
-          <q-btn
-            v-for="link in links"
-            :disable="!bookDialog.form.isbn && !bookDialog.form.bookName"
-            round
-            padding="none"
-            :title="link.title"
-            class="q-mx-xs"
-            @click="openExternalPage(bookDialog.form.isbn, bookDialog.form.bookName, link)"
-          >
-            <q-avatar size="32.58px">
-              <q-img :src="link.imgUrl"></q-img>
-            </q-avatar>
-          </q-btn>
+          <c-link-btns
+            :bookName="bookDialog.form.bookName || ''"
+            :isbn="bookDialog.form.isbn"
+            :other-link="null"
+          ></c-link-btns>
         </div>
         <div class="col-12 col-sm-4 q-pa-xs">
           <q-input
@@ -1117,7 +979,8 @@ onMounted(init);
           <q-input
             v-model="bookDialog.form.memo"
             :label="labels.memo"
-            autogrow
+            type="textarea"
+            rows="3"
           ></q-input>
         </div>
       </q-form>
@@ -1128,6 +991,7 @@ onMounted(init);
       v-model="booksSearchDialog.isShow"
       :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
+      @error="emitError('エラー', 'GoogleBooksからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
@@ -1155,19 +1019,6 @@ onMounted(init);
 .book-cover-wrapper{
   max-width: 140px;
   min-width: 140px;
-}
-
-.book-card-item{
-  cursor: pointer;
-}
-
-.book-img{
-  height: 150px;
-}
-
-.book-info-inner{
-  font-family: "BIZ UDPGothic";
-  max-width: 250px;
 }
 
 .select-sort-key{

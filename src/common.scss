@@ -5,3 +5,18 @@
 [v-cloak] {
   display: none;
 }
+
+::-webkit-scrollbar {
+  width: 16px;
+  height: 20px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: $grey-5;
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb {
+  background: $grey-9;
+  border-radius: 100px;
+  width: 130px;
+}
