@@ -7,7 +7,6 @@ const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
 interface Book {
   bookName: string,
   isbn: string | null,
-  coverUrl: string,
   authorName: string | null,
   tags: string[],
   dispCoverUrl: string,

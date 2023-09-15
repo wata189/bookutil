@@ -991,6 +991,7 @@ onMounted(init);
       v-model="booksSearchDialog.isShow"
       :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
+      @error="emitError('エラー', 'GoogleBooksからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
