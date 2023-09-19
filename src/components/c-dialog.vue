@@ -56,6 +56,6 @@ const value = computed({
 
 <style scoped>
 .dialog-content{
-  max-height: 75vh
+  max-height: 70vh
 }
 </style>
