@@ -56,7 +56,7 @@ const filterCond = ref({
   word: "",
   isOnlyNewBook: false
 });
-const isShowFilterCond = ref(!util.isSmartPhone());
+const isShowFilterCond = ref(true);
 
 const SORT_KEY = {
   ID: "更新日",
