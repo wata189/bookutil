@@ -701,7 +701,7 @@ onMounted(init);
   <q-layout view="hHh lpr fFf">
     <q-page-container>
       <q-page>
-        <div class="row lt-md">
+        <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -710,6 +710,7 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
+          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
@@ -768,7 +769,7 @@ onMounted(init);
             </c-book-card>
           </div>
         </div>
-        <div class="row lt-md">
+        <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -777,6 +778,7 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
+          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
       </q-page>
@@ -789,7 +791,7 @@ onMounted(init);
       >
         <template v-slot:header>
           <q-item-section>
-            <div class="row">
+            <div class="row items-center">
               <div class="col-auto q-pa-sm">
                 <q-select 
                   label="ソート"
@@ -840,6 +842,7 @@ onMounted(init);
                 :max="paginationMax"
                 class="gt-sm"
               ></c-pagination>
+              <div class="col-aut q-pa-sm text-secondary gt-sm">{{ filteredSortedToreadBooks.length }}冊</div>
             </div>
           </q-item-section>
         </template>
