@@ -962,28 +962,18 @@ onMounted(init);
             :other-link="null"
           ></c-link-btns>
         </div>
-        <div class="col-12 col-sm-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             clearable
             v-model="bookDialog.form.authorName"
             :label="labels.authorName"
           ></q-input>
         </div>
-        <div class="col-8 col-sm-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             v-model="bookDialog.form.publisherName"
             clearable
             :label="labels.publisherName"
-          ></q-input>
-        </div>
-        <div class="col-4 q-pa-xs">
-          <q-input
-            v-model.number="bookDialog.form.page"
-            clearable
-            type="number"
-            min="1"
-            :label="labels.page"
-            :rules="validationRules.page"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
