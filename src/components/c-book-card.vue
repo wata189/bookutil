@@ -37,6 +37,7 @@ const props = defineProps<Props>();
       <div class="text-bold">
         {{ book.bookName }}<template v-if="book.authorName"> / {{ book.authorName }}</template>
       </div>
+      <div v-if="book.isbn">{{ book.isbn }}</div>
       <q-expansion-item
         v-if="book.memo"
         dense
