@@ -37,6 +37,7 @@ const props = defineProps<Props>();
       <div class="text-bold">
         {{ book.bookName }}<template v-if="book.authorName"> / {{ book.authorName }}</template>
       </div>
+      <div v-if="book.isbn">{{ book.isbn }}</div>
       <q-expansion-item
         v-if="book.memo"
         dense
@@ -46,7 +47,8 @@ const props = defineProps<Props>();
             <template v-if="!expanded">{{ book.memo }}</template>
           </q-item-section>
         </template>
-        {{ book.memo }}
+        <div class="book-card-memo">{{ book.memo }}</div>
+        
       </q-expansion-item>
       <div>
         <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
@@ -67,6 +69,10 @@ const props = defineProps<Props>();
 
 .book-card-item{
   cursor: pointer;
+}
+
+.book-card-memo{
+  white-space: pre-line;
 }
 
 .book-img{

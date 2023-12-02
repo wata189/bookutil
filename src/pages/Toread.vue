@@ -56,7 +56,7 @@ const filterCond = ref({
   word: "",
   isOnlyNewBook: false
 });
-const isShowFilterCond = ref(!util.isSmartPhone());
+const isShowFilterCond = ref(true);
 
 const SORT_KEY = {
   ID: "更新日",
@@ -259,8 +259,20 @@ const createBook = () => {
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+
+      // タグ履歴更新
+      if(bookDialog.value.form.tags){
+        addTagsHistories(bookDialog.value.form.tags);
+      }
     }
   });
+};
+const addTagsHistories = (tags:string) => {
+  tagsHistories.push(tags);
+  if(tagsHistories.length > 10){
+    tagsHistories.shift();
+  }
+  localStorage.tagsHistories = tagsHistories;
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -276,6 +288,10 @@ const editBook = () => {
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      // タグ履歴更新
+      if(bookDialog.value.form.tags){
+        addTagsHistories(bookDialog.value.form.tags);
+      }
     }
   });
 };
@@ -483,6 +499,23 @@ const showEditBookDialog = (book:Book) => {
   };
   bookDialog.value.isShow = true;
 
+};
+
+// ローカルストレージのタグ履歴取得
+const tagsHistories:string[] = [];
+if(localStorage.tagsHistories && localStorage.tagsHistories.length > 0){
+  for(const tagsHistory of localStorage.tagsHistories){
+    tagsHistories.push(tagsHistory.toString());
+  }
+}
+const setLatestTagsFromTagsHistories = () => {
+  const latestTags = tagsHistories.pop();
+  if(latestTags){
+    // 最新タグ設定
+    bookDialog.value.form.tags = latestTags;
+    //localStorage更新
+    localStorage.tagsHistories = tagsHistories;
+  }
 };
 
 type AddTagForm = {
@@ -701,7 +734,7 @@ onMounted(init);
   <q-layout view="hHh lpr fFf">
     <q-page-container>
       <q-page>
-        <div class="row lt-md">
+        <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -710,6 +743,7 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
+          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
@@ -768,7 +802,7 @@ onMounted(init);
             </c-book-card>
           </div>
         </div>
-        <div class="row lt-md">
+        <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -777,6 +811,7 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
+          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
       </q-page>
@@ -789,7 +824,7 @@ onMounted(init);
       >
         <template v-slot:header>
           <q-item-section>
-            <div class="row">
+            <div class="row items-center">
               <div class="col-auto q-pa-sm">
                 <q-select 
                   label="ソート"
@@ -840,6 +875,7 @@ onMounted(init);
                 :max="paginationMax"
                 class="gt-sm"
               ></c-pagination>
+              <div class="col-aut q-pa-sm text-secondary gt-sm">{{ filteredSortedToreadBooks.length }}冊</div>
             </div>
           </q-item-section>
         </template>
@@ -926,28 +962,18 @@ onMounted(init);
             :other-link="null"
           ></c-link-btns>
         </div>
-        <div class="col-12 col-sm-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             clearable
             v-model="bookDialog.form.authorName"
             :label="labels.authorName"
           ></q-input>
         </div>
-        <div class="col-8 col-sm-4 q-pa-xs">
+        <div class="col-12 col-sm-6 q-pa-xs">
           <q-input
             v-model="bookDialog.form.publisherName"
             clearable
             :label="labels.publisherName"
-          ></q-input>
-        </div>
-        <div class="col-4 q-pa-xs">
-          <q-input
-            v-model.number="bookDialog.form.page"
-            clearable
-            type="number"
-            min="1"
-            :label="labels.page"
-            :rules="validationRules.page"
           ></q-input>
         </div>
         <div class="col-12 q-pa-xs">
@@ -966,7 +992,7 @@ onMounted(init);
             :options="toreadTagOptions"
           ></c-input-tag>
         </div>
-        <div>
+        <div class="col-auto q-pa-xs">
           <q-toggle
             v-model="bookDialog.form.newBookCheckFlg"
             :true-value="1"
@@ -975,6 +1001,10 @@ onMounted(init);
           ></q-toggle>
         </div>
         <q-space />
+        <div class="col-auto q-pa-xs">
+          <q-btn :disable="tagsHistories.length <= 0" @click="setLatestTagsFromTagsHistories" flat label="タグ履歴" color="secondary" />
+        </div>
+        
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.memo"

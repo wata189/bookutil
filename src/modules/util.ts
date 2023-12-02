@@ -98,8 +98,16 @@ const isbn13To10 = (isbn13:string):string => {
   const sum = isbn13.split('').slice(3, 12).reduce((acc, c, i) => {
       return acc + Number(c[0]) * (10 - i);
   }, 0);
-  const checkDigit = 11 - sum % 11;
-  const isbn10 = isbn13.substring(3, 12) + checkDigit.toString();
+  let checkDigit = (11 - sum % 11).toString();
+  if(checkDigit === "10"){
+    checkDigit = "X";
+  }
+  if(checkDigit === "11"){
+    checkDigit = "0";
+  }
+
+  
+  const isbn10 = isbn13.substring(3, 12) + checkDigit;
   return isbn10;
 };
 
