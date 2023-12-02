@@ -32,21 +32,13 @@ type Library = {
   url: string,
   mapUrl: string,
   businessHours: BusinessHours[],
-  selectedWeekNum: number
+  spUrl?: string,
+  calendarUrl?: string,
+  barcodeUrl?: string
 }
 const libraries:Ref<Library[]> = ref([]);
 
 const weekNum = (new Date()).getDay();
-const selectedWeekNum = ref(weekNum);
-const weekOptions = [
-  {label: "日", value: 0},
-  {label: "月", value: 1},
-  {label: "火", value: 2},
-  {label: "水", value: 3},
-  {label: "木", value: 4},
-  {label: "金", value: 5},
-  {label: "土", value: 6},
-];
 
 const dispLibraries = computed(() => {
 
@@ -92,7 +84,15 @@ const fetchLibraries = async () => {
   if(response){
     libraries.value = response.data.libraries;
   }
-}
+};
+
+const openLibraryPage = (library:Library) => {
+  let url = library.url;
+  if(util.isSmartPhone() && library.spUrl){
+    url = library.spUrl;
+  }
+  util.openPageAsNewTab(url);
+};
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
@@ -124,12 +124,28 @@ onMounted(init);
             <q-card class="q-pa-md">
               <div class="text-h6">
                 
-                <q-icon :name="library.isOpenLibrary ? 'layers' : 'layers_clear'" /> {{library.city}}図書館
+                {{library.city}}図書館
+                
+              </div>
+              <div>
+                {{ library.name }}
+                <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
+              </div>
+              <div class="row">
+
                 <c-round-btn
                   title="図書館サイトを表示"
                   icon="account_balance"
                   dense
-                  @click="util.openPageAsNewTab(library.url)"
+                  @click="openLibraryPage(library)"
+                  color="secondary"
+                ></c-round-btn>
+                <c-round-btn
+                  v-if="library.calendarUrl"
+                  title="カレンダーを表示"
+                  icon="today"
+                  dense
+                  @click="util.openPageAsNewTab(library.calendarUrl)"
                   color="secondary"
                 ></c-round-btn>
                 <c-round-btn
@@ -139,42 +155,29 @@ onMounted(init);
                   @click="util.openPageAsNewTab(library.mapUrl)"
                   color="secondary"
                 ></c-round-btn>
-                
+                <c-round-btn
+                  v-if="library.barcodeUrl"
+                  title="バーコードを表示"
+                  icon="qr_code_2"
+                  dense
+                  @click="util.openPageAsNewTab(library.barcodeUrl)"
+                  color="secondary"
+                ></c-round-btn>
+                <q-space></q-space>
+                <q-btn
+                  color="secondary"
+                  dense
+                  @click="util.openPageAsNewTab(library.toreadLink)"
+                >
+                  よみたいリスト
+                </q-btn>
               </div>
-              <div>
-                {{ library.name }}
-                <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
-              </div>
-              <div>
-                <span v-if="library.dispBusinessHours[selectedWeekNum].isOpen">
-                  {{ library.dispBusinessHours[selectedWeekNum].dispStartTime }} - {{ library.dispBusinessHours[selectedWeekNum].dispEndTime }}
-                </span>
-                <span v-else>休み</span>
-              </div>
-              <q-btn
-                color="secondary"
-                dense
-                @click="util.openPageAsNewTab(library.toreadLink)"
-              >
-                よみたいリストで表示
-              </q-btn>
               
             </q-card>
           </div>
         </div>
       </div>
     </q-page-container>
-    <q-footer elevated :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
-      <div class="row">
-        <q-space></q-space>
-        <q-btn-toggle
-          v-model="selectedWeekNum"
-          toggle-color="secondary"
-          :options="weekOptions"
-        ></q-btn-toggle>
-        <q-space></q-space>
-      </div>
-    </q-footer>
   </q-layout>
 
   
