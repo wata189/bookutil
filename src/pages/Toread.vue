@@ -259,8 +259,20 @@ const createBook = () => {
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+
+      // タグ履歴更新
+      if(bookDialog.value.form.tags){
+        addTagsHistories(bookDialog.value.form.tags);
+      }
     }
   });
+};
+const addTagsHistories = (tags:string) => {
+  tagsHistories.push(tags);
+  if(tagsHistories.length > 10){
+    tagsHistories.shift();
+  }
+  localStorage.tagsHistories = tagsHistories;
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -276,6 +288,10 @@ const editBook = () => {
     if(response){
       // 画面情報再設定
       setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      // タグ履歴更新
+      if(bookDialog.value.form.tags){
+        addTagsHistories(bookDialog.value.form.tags);
+      }
     }
   });
 };
@@ -483,6 +499,23 @@ const showEditBookDialog = (book:Book) => {
   };
   bookDialog.value.isShow = true;
 
+};
+
+// ローカルストレージのタグ履歴取得
+const tagsHistories:string[] = [];
+if(localStorage.tagsHistories && localStorage.tagsHistories.length > 0){
+  for(const tagsHistory of localStorage.tagsHistories){
+    tagsHistories.push(tagsHistory.toString());
+  }
+}
+const setLatestTagsFromTagsHistories = () => {
+  const latestTags = tagsHistories.pop();
+  if(latestTags){
+    // 最新タグ設定
+    bookDialog.value.form.tags = latestTags;
+    //localStorage更新
+    localStorage.tagsHistories = tagsHistories;
+  }
 };
 
 type AddTagForm = {
@@ -969,7 +1002,7 @@ onMounted(init);
             :options="toreadTagOptions"
           ></c-input-tag>
         </div>
-        <div>
+        <div class="col-auto q-pa-xs">
           <q-toggle
             v-model="bookDialog.form.newBookCheckFlg"
             :true-value="1"
@@ -978,6 +1011,10 @@ onMounted(init);
           ></q-toggle>
         </div>
         <q-space />
+        <div class="col-auto q-pa-xs">
+          <q-btn :disable="tagsHistories.length <= 0" @click="setLatestTagsFromTagsHistories" flat label="タグ履歴" color="secondary" />
+        </div>
+        
         <div class="col-12 q-pa-xs">
           <q-input
             v-model="bookDialog.form.memo"
