@@ -49,7 +49,6 @@ const getToken = async (code: string):Promise<Tokens> =>{
 const refreshToken = async () => {
   console.log("auth refreshToken");
   let accessToken = "";
-  let refreshToken = "";
   try{
     // refresh_token使ってaccess_token取得し直し
     const tmpRefreshToken = localStorage.refreshToken;
@@ -64,14 +63,12 @@ const refreshToken = async () => {
       if(response){
         const data = response.data;
         accessToken = data.access_token;
-        refreshToken = data.refresh_token;
       }
     }
   }catch(e){
     console.log(e);
   }finally{
     localStorage.accessToken = accessToken
-    localStorage.refreshToken = refreshToken;
   }
 };
 
@@ -130,13 +127,9 @@ const logout = () => {
 };
 
 const getLocalStorageAccessToken = async ():Promise<string> => {
-  let accessToken = localStorage.accessToken;
-  if(!accessToken){
-
-    // アクセストークンなかったらリフレッシュする
-    await refreshToken();
-    accessToken = localStorage.accessToken;
-  }
+  // アクセストークン取得するときには必ずリフレッシュする
+  await refreshToken();
+  const accessToken = localStorage.accessToken;
   return accessToken || "";
 };
 
