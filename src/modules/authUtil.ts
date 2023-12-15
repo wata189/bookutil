@@ -130,13 +130,9 @@ const logout = () => {
 };
 
 const getLocalStorageAccessToken = async ():Promise<string> => {
-  let accessToken = localStorage.accessToken;
-  if(!accessToken){
-
-    // アクセストークンなかったらリフレッシュする
-    await refreshToken();
-    accessToken = localStorage.accessToken;
-  }
+  // アクセストークン取得するときには必ずリフレッシュする
+  await refreshToken();
+  const accessToken = localStorage.accessToken;
   return accessToken || "";
 };
 
