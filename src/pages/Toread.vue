@@ -578,11 +578,20 @@ const addTagsFromDialogForm = () => {
     }
   });
 };
-const addWantTag = (book:Book, tag:string) => {
-  // TODO: カーリル経由で図書館タグ取得
-  // const libraryTag = "";
-
-  addTag(book, [tag]);
+const addWantTag = async (book:Book) => {
+  const simpleBook:SimpleBook = {documentId:book.documentId, updateAt:book.updateAt};
+  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const user = await authUtil.getUserInfo(accessToken);
+  const params = {
+    book: simpleBook,
+    user: user.email || "No User Data",
+    accessToken: accessToken,
+  };
+  const response = await axiosUtil.post(`/toread/tag/want/add`, params);
+  if(response){
+    // 画面情報再設定
+    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+  }
 };
 const addMultiTag = async () => {
   if(!util.isExist(addTagDialog.value.form.tags)){
@@ -598,14 +607,6 @@ const addMultiTag = async () => {
     setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
-const addTag = async (book:Book, tags:string[]) => {
-  const response = await addTags([book], tags);
-  if(response){
-    // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
-  }
-};
-
 const addTags = async (books:Book[], tags:string[]) => {
   const params = await createAddTagParams(books, tags);
   return await axiosUtil.post(`/toread/tag/add`, params);
@@ -781,11 +782,10 @@ onMounted(init);
                   </div>
                   <div class="col-auto">
                     <c-round-btn
-                      v-if="!book.tags.includes('よみたい')"
                       title="よみたい"
                       icon="star_border"
                       color="primary"
-                      @click="addWantTag(book, 'よみたい')"
+                      @click="addWantTag(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
