@@ -122,33 +122,12 @@ const filteredSortedToreadBooks = computed({
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
-    const sortKey = sortCond.value.key;
     const isDesc = sortCond.value.isDesc;
 
-    // ソート用の関数をキーに合わせて
-    let sortFunc = (aBook:Book, bBook:Book) => {
-      // よみたい順でソート よみたい順の場合はisDesc無視ですべて降順
-      return getWantPoint(bBook.tags) - getWantPoint(aBook.tags);
+    // ソートは追加順のみ
+    const sortFunc = (aBook:Book, bBook:Book) => {
+      return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
     };
-    if(sortKey === SORT_KEY.ID){
-      sortFunc = (aBook:Book, bBook:Book) => {
-        // ID(追加順)でソート
-        return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
-      };
-    }else if(sortKey === SORT_KEY.PAGE){
-      sortFunc = (aBook:Book, bBook:Book) => {
-        // ページ数順でソート
-        if(isDesc){
-          const aPage = aBook.page || 0;
-          const bPage = bBook.page || 0;
-          return bPage - aPage;
-        }else{
-          const aPage = aBook.page || Infinity;
-          const bPage = bBook.page || Infinity;
-          return aPage - bPage;
-        }
-      };
-    }
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
@@ -193,12 +172,6 @@ const dispToreadBooks = computed({
     toreadBooks.value = value
   }
 });
-
-// よみたい度算出
-// よみたい→1ポイント
-const getWantPoint = (tags:string[]):number => {
-  return tags.includes("よみたい") ? 1 : 0;
-};
 
 const toreadTagOptions:Ref<string[]> = ref([]);
 
@@ -518,6 +491,32 @@ const setLatestTagsFromTagsHistories = () => {
   }
 };
 
+// よみたいタグ取得→セット
+const setWantTag = async () => {
+  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const user = await authUtil.getUserInfo(accessToken);
+  const params = {
+    isbn: bookDialog.value.form.isbn,
+    user: user.email || "No User Data",
+    accessToken: accessToken,
+  };
+  const response = await axiosUtil.post(`/toread/tag/want/get`, params);
+  if(response){
+    const libraryTag:string | null = response.data.libraryTag;
+    if(libraryTag){
+      const tags = util.strToTag(bookDialog.value.form.tags);
+      // 図書館タグあったら事前に排除
+      const filteredTags = tags.filter(tag => !tag.includes("図書館"));
+      filteredTags.push(libraryTag);
+      // よみたいタグなかったら追加
+      if(!filteredTags.includes("よみたい")){
+        filteredTags.push("よみたい");
+      }
+      bookDialog.value.form.tags = filteredTags.join("/");
+    }
+  }
+};
+
 type AddTagForm = {
   tags: string
 }
@@ -782,6 +781,7 @@ onMounted(init);
                   </div>
                   <div class="col-auto">
                     <c-round-btn
+                      v-if="book.isbn"
                       title="よみたい"
                       icon="star_border"
                       color="primary"
@@ -915,104 +915,128 @@ onMounted(init);
       :okLabel="bookDialog.okLabel"
       @ok="bookDialog.okFunction"
     >
-      <q-form ref="bookDialogForm" class="row">
-        <div class="col-12 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.bookName"
-            clearable
-            :label="labels.bookName"
-            :rules="validationRules.bookName"
-          >
-            <template v-slot:append>
-              <q-btn 
-                round 
-                dense 
-                flat 
-                icon="search"
-                @click="showBooksSearchDialog(bookDialog.form.bookName)"
-              ></q-btn>
-            </template>
+      <q-form ref="bookDialogForm">
+        <div class="row">
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.bookName"
+              clearable
+              :label="labels.bookName"
+              :rules="validationRules.bookName"
+            >
+              <template v-slot:append>
+                <q-btn 
+                  round 
+                  dense 
+                  flat 
+                  icon="search"
+                  @click="showBooksSearchDialog(bookDialog.form.bookName)"
+                ></q-btn>
+              </template>
+            
+            </q-input>
+          </div>
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.isbn"
+              clearable
+              :label="labels.isbn"
+              :rules="validationRules.isbn"
+              mask="#########X###"
+            >
+              <template v-slot:append>
+                <q-btn 
+                  round 
+                  dense 
+                  flat 
+                  icon="search"
+                  @click="getBook(bookDialog.form.isbn)"
+                ></q-btn>
+              </template>
+            </q-input>
+          </div>
           
-          </q-input>
+          <div class="col-12">
+            <c-link-btns
+              :bookName="bookDialog.form.bookName || ''"
+              :isbn="bookDialog.form.isbn"
+              :other-link="null"
+            ></c-link-btns>
+          </div>
+          <div class="col-12 col-sm-6 q-pa-xs">
+            <q-input
+              clearable
+              v-model="bookDialog.form.authorName"
+              :label="labels.authorName"
+            ></q-input>
+          </div>
+          <div class="col-12 col-sm-6 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.publisherName"
+              clearable
+              :label="labels.publisherName"
+            ></q-input>
+          </div>
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.coverUrl"
+              clearable
+              :label="labels.coverUrl"
+              :rules="validationRules.coverUrl"
+            ></q-input>
+          </div>
+          <div class="col-12 q-pa-xs">
+            <c-input-tag
+              v-model="bookDialog.form.tags"
+              :label="labels.tags"
+              hint=",/スペースで区切られます"
+              :options="toreadTagOptions"
+            ></c-input-tag>
+          </div>
         </div>
-        <div class="col-12 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.isbn"
-            clearable
-            :label="labels.isbn"
-            :rules="validationRules.isbn"
-            mask="#########X###"
-          >
-            <template v-slot:append>
-              <q-btn 
-                round 
-                dense 
-                flat 
-                icon="search"
-                @click="getBook(bookDialog.form.isbn)"
-              ></q-btn>
-            </template>
-          </q-input>
+
+        <div class="row reverse">
+          <div class="col-auto q-pa-xs">
+            <q-btn 
+              :disable="tagsHistories.length <= 0" 
+              @click="setLatestTagsFromTagsHistories" 
+              flat 
+              label="タグ履歴" 
+              color="secondary" 
+            />
+          </div>
+          <div class="col-auto q-pa-xs">
+            <q-btn 
+              size="md"
+              :disable="!(util.isExist(bookDialog.form.isbn) && util.isIsbn(bookDialog.form.isbn))" 
+              @click="setWantTag" 
+              flat 
+              label="よみたい" 
+              color="secondary"
+            />
+          </div>
+          <q-space></q-space>
+          <div class="col-12 col-sm-auto q-pa-xs">
+            <q-toggle
+              v-model="bookDialog.form.newBookCheckFlg"
+              size="md"
+              :true-value="1"
+              :false-value="0"
+              :label="labels.newBookCheckFlg"
+            ></q-toggle>
+          </div>
+          
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.memo"
+              :label="labels.memo"
+              type="textarea"
+              rows="3"
+            ></q-input>
+          </div>
         </div>
         
-        <div class="col-12">
-          <c-link-btns
-            :bookName="bookDialog.form.bookName || ''"
-            :isbn="bookDialog.form.isbn"
-            :other-link="null"
-          ></c-link-btns>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            clearable
-            v-model="bookDialog.form.authorName"
-            :label="labels.authorName"
-          ></q-input>
-        </div>
-        <div class="col-12 col-sm-6 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.publisherName"
-            clearable
-            :label="labels.publisherName"
-          ></q-input>
-        </div>
-        <div class="col-12 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.coverUrl"
-            clearable
-            :label="labels.coverUrl"
-            :rules="validationRules.coverUrl"
-          ></q-input>
-        </div>
-        <div class="col-12 q-pa-xs">
-          <c-input-tag
-            v-model="bookDialog.form.tags"
-            :label="labels.tags"
-            hint=",/スペースで区切られます"
-            :options="toreadTagOptions"
-          ></c-input-tag>
-        </div>
-        <div class="col-auto q-pa-xs">
-          <q-toggle
-            v-model="bookDialog.form.newBookCheckFlg"
-            :true-value="1"
-            :false-value="0"
-            :label="labels.newBookCheckFlg"
-          ></q-toggle>
-        </div>
-        <q-space />
-        <div class="col-auto q-pa-xs">
-          <q-btn :disable="tagsHistories.length <= 0" @click="setLatestTagsFromTagsHistories" flat label="タグ履歴" color="secondary" />
-        </div>
         
-        <div class="col-12 q-pa-xs">
-          <q-input
-            v-model="bookDialog.form.memo"
-            :label="labels.memo"
-            type="textarea"
-            rows="3"
-          ></q-input>
-        </div>
       </q-form>
     </c-dialog>
 
