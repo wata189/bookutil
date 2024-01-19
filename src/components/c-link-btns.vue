@@ -63,16 +63,8 @@ const links:Link[] = [
     title: "国会図書館",
     imgUrl: "img/ndl.png",
     searchUrl: {
-      isbn: "https://ndlonline.ndl.go.jp/#!/search?isbn=" + SEARCH_PLACEHOLDER,
-      bookName: "https://ndlonline.ndl.go.jp/#!/search?title=" + SEARCH_PLACEHOLDER
-    }
-  },
-  {
-    title: "国立国会図書館サーチ",
-    imgUrl: "img/ndl_search.png",
-    searchUrl: {
-      isbn: "https://iss.ndl.go.jp/books?ar=4e1f&mediatypes%5B%5D=1&mediatypes%5B%5D=4&repository_nos%5B%5D=R100000002&repository_nos%5B%5D=R100000039&repository_nos%5B%5D=R100000040&rft.isbn=" + SEARCH_PLACEHOLDER + "&search_mode=advanced",
-      bookName: "https://iss.ndl.go.jp/books?ar=4e1f&mediatypes%5B%5D=1&mediatypes%5B%5D=4&repository_nos%5B%5D=R100000002&repository_nos%5B%5D=R100000039&repository_nos%5B%5D=R100000040&rft.title=" + SEARCH_PLACEHOLDER + "&search_mode=advanced"
+      isbn: "https://ndlsearch.ndl.go.jp/search?cs=bib&display=panel&from=0&size=20&f-ht=ndl&f-mt=dtbook&f-mt=magazine&f-mt=dissertation&f-mt=dbook&f-mt=ddoc&f-isbn=" + SEARCH_PLACEHOLDER,
+      bookName: "https://ndlsearch.ndl.go.jp/search?cs=bib&display=panel&from=0&size=20&keyword=" + SEARCH_PLACEHOLDER + "&f-ht=ndl&f-mt=dtbook&f-mt=magazine&f-mt=dissertation&f-mt=dbook&f-mt=ddoc"
     }
   }
 ];
