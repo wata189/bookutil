@@ -57,36 +57,7 @@ const filterCond = ref({
   word: "",
   isOnlyNewBook: false
 });
-const isShowFilterCond = ref(true);
-
-const SORT_KEY = {
-  ID: "更新日",
-  PAGE: "ページ数",
-  WANT: "よみたい度"
-};
-const sortKeyOptions = Object.values(SORT_KEY)
-const sortCond = ref({
-  isDesc: true,
-  key: SORT_KEY.ID
-});
-const isDescIcon = computed(() => {
-  return sortCond.value.isDesc ? "keyboard_double_arrow_down" : "keyboard_double_arrow_up"
-});
-const isDescTitle = computed(() => {
-  return sortCond.value.isDesc ? "昇順にする" : "降順にする"
-});
-// ソートキー変更時の降順昇順変更
-// 追加日→Desc、ページ数→Asc、よみたい順→desc
-const onChangeSortCondKey = (value:string) => {
-  if(value === SORT_KEY.ID){
-    sortCond.value.isDesc = true;
-  }else if(value === SORT_KEY.PAGE){
-    sortCond.value.isDesc = false;
-  }else{
-    sortCond.value.isDesc = true
-  }
-};
-
+const isShowFilterCond = ref(false);
 
 const labels = {
   bookName: "書籍名",
@@ -123,12 +94,6 @@ const filteredSortedToreadBooks = computed({
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
-    const isDesc = sortCond.value.isDesc;
-
-    // ソートは追加順のみ
-    const sortFunc = (aBook:Book, bBook:Book) => {
-      return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
-    };
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
@@ -152,7 +117,7 @@ const filteredSortedToreadBooks = computed({
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-    }).sort(sortFunc);
+    }).sort((aBook, bBook) => bBook.updateAt - aBook.updateAt);
 
   },
   set: (value) => {
@@ -855,7 +820,7 @@ onMounted(init);
             </c-book-card>
           </div>
         </div>
-        <div class="row lt-md items-center">
+        <div class="row items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -869,93 +834,70 @@ onMounted(init);
         </div>
       </q-page>
     </q-page-container>
-    <q-footer elevated :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
-      <q-expansion-item
-        expand-icon-toggle
-        expand-separator
-        v-model="isShowFilterCond"
-      >
-        <template v-slot:header>
-          <q-item-section>
-            <div class="row items-center">
+    <q-footer class="bg-transparent">
+      <div class="row justify-end items-end">
+        <Transition>
+          <div v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
+            <div class="row filter-cond bg-blue-grey-6" :class="util.isDarkMode() ? '' : 'text-black'">
+              <div class="col q-pa-sm">
+                <c-input-tag
+                  v-model="filterCond.word"
+                  label="検索"
+                  dense
+                  hint=",/スペースで区切られます"
+                  :options="toreadTagOptions"
+                  @update:model-value="toTopPagenation"
+                ></c-input-tag>
+              </div>
               <div class="col-auto q-pa-sm">
-                <q-select 
-                  label="ソート"
-                  v-model="sortCond.key" 
-                  dense 
-                  :options="sortKeyOptions"
-                  class="select-sort-key"
-                  @update:model-value="onChangeSortCondKey"
-                >
-                  <template v-slot:before>
-
-                    <c-round-btn
-                      :title="isDescTitle"  
-                      :icon="isDescIcon"
-                      dense
-                      @click="sortCond.isDesc = !sortCond.isDesc"
-                    ></c-round-btn>
-                  </template>
-                </q-select>
+                <q-toggle
+                  v-model="filterCond.isOnlyNewBook"
+                  label="新刊のみ"
+                  @update:model-value="toTopPagenation"
+                ></q-toggle>
               </div>
-              <div class="col-auto q-pa-sm row">
-                <c-round-btn
-                  title="一括削除"  
-                  icon="delete"
-                  color="negative"
-                  dense
-                  @click="deleteBooks(selectedBooks)"
-                ></c-round-btn>
-                <c-round-btn
-                  title="一括タグ"  
-                  icon="local_offer"
-                  color="secondary"
-                  dense
-                  @click="showAddTagDialog"
-                ></c-round-btn>
-                <c-round-btn
-                  title="新規作成"  
-                  icon="add"
-                  color="primary"
-                  dense
-                  @click="showNewBookDialog"
-                ></c-round-btn>
-              </div>
-              <q-space></q-space>
-              <c-pagination
-                v-if="isShowPagination"
-                v-model="pagination.number"
-                :max="paginationMax"
-                class="gt-sm"
-              ></c-pagination>
-              <div class="col-aut q-pa-sm text-secondary gt-sm">{{ filteredSortedToreadBooks.length }}冊</div>
-            </div>
-          </q-item-section>
-        </template>
-        <q-card>
-
-          <q-separator inset></q-separator>
-          <div class="row">
-            <div class="col q-pa-sm">
-              <c-input-tag
-                v-model="filterCond.word"
-                label="検索"
-                dense
-                hint=",/スペースで区切られます"
-                :options="toreadTagOptions"
-                @update:model-value="toTopPagenation"
-              ></c-input-tag>
-            </div>
-            <div class="col-auto q-pa-sm">
-              <q-toggle
-                v-model="filterCond.isOnlyNewBook"
-                label="新刊のみ"
-                @update:model-value="toTopPagenation"
-              ></q-toggle>
             </div>
           </div>
-        </q-card>
-      </q-expansion-item>
+        </Transition>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="検索"  
+            icon="search"
+            color="secondary"
+            :flat="false"
+            @click="isShowFilterCond =!isShowFilterCond"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            :disabled="selectedBooks.length === 0"
+            title="一括削除"  
+            icon="delete"
+            color="negative"
+            :flat="false"
+            @click="deleteBooks(selectedBooks)"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            :disabled="selectedBooks.length === 0"
+            title="一括タグ"  
+            icon="local_offer"
+            color="secondary"
+            :flat="false"
+            @click="showAddTagDialog"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="新規作成"  
+            icon="add"
+            color="primary"
+            :flat="false"
+            @click="showNewBookDialog"
+          ></c-round-btn>
+        </div>
+      </div>
     </q-footer>
 
 
@@ -1138,6 +1080,10 @@ onMounted(init);
   min-width: 140px;
 }
 
+.filter-cond{
+  border-radius: 15px;
+}
+
 .select-sort-key{
   width: 148px;
 }
@@ -1178,5 +1124,15 @@ onMounted(init);
       #744d30 0.4%,
       #744d30 0.5%
     );
+}
+/* トランジションの設定 */
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }
 </style>
