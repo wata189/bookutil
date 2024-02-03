@@ -1,5 +1,6 @@
 
 import { Dark } from 'quasar';
+import * as xml from "xml-js";
 
 const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
@@ -111,6 +112,55 @@ const isbn13To10 = (isbn13:string):string => {
   return isbn10;
 };
 
+const xml2json = (jsonStr:string):any => {
+  
+  const dataStr:string = xml.xml2json(jsonStr, {compact: true});
+  return JSON.parse(dataStr);
+};
+
+const fullNum2HalfMap:Record<string, string> = {
+  "０": "0",
+  "１": "1",
+  "２": "2",
+  "３": "3",
+  "４": "4",
+  "５": "5",
+  "６": "6",
+  "７": "7",
+  "８": "8",
+  "９": "9",
+  "Ａ": "A",
+  "Ｂ": "B",
+  "Ｃ": "C",
+  "Ｄ": "D",
+  "Ｅ": "E",
+  "Ｆ": "F",
+  "Ｇ": "G",
+  "Ｈ": "H",
+  "Ｉ": "I",
+  "Ｊ": "J",
+  "Ｋ": "K",
+  "Ｌ": "L",
+  "Ｍ": "M",
+  "Ｎ": "N",
+  "Ｏ": "O",
+  "Ｐ": "P",
+  "Ｑ": "Q",
+  "Ｒ": "R",
+  "Ｓ": "S",
+  "Ｔ": "T",
+  "Ｕ": "U",
+  "Ｖ": "V",
+  "Ｗ": "W",
+  "Ｘ": "X",
+  "Ｙ": "Y",
+  "Ｚ": "Z",
+  "　": " "
+};
+const fullStr2Half = (numStr:string):string => {
+  return numStr.replace(/[０-９]/g, (char) => fullNum2HalfMap[char] || char);
+};
+
 export default {
   openPageAsNewTab,
   isIsbn,
@@ -125,5 +175,7 @@ export default {
   trimString,
   getOpenBdCoverUrl,
   isbn10To13,
-  isbn13To10
+  isbn13To10,
+  xml2json,
+  fullStr2Half
 }

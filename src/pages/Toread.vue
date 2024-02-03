@@ -8,6 +8,7 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 import googleBooksUtil from '@/modules/googleBooksUtil';
+import ndlSearchUtil from '@/modules/ndlSearchUtil';
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
@@ -519,14 +520,14 @@ const setWantTag = async () => {
 
 type AddTagForm = {
   tags: string
-}
+};
 type AddTagDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
   okFunction: Function,
   form: AddTagForm
-}
+};
 const addTagDialog:Ref<AddTagDialog> = ref({
   isShow: false,
   headerText: "",
@@ -632,6 +633,49 @@ const validationRules = {
   page: [validationUtil.isNumber(labels.page)],
   coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
+
+const searchShortStorys = async (book:Book) => {
+  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
+
+  const shortStorys = await ndlSearchUtil.searchShortStorys(book.isbn);
+
+  if(shortStorys.length === 0){
+    emitError("エラー", "書籍内容がありません");
+    return;
+  }
+
+  // shortStorysをコピー
+  const copyText = shortStorys.map(shortStory => `${shortStory.author || ""}「${shortStory.title}」`).join("\n");
+  navigator.clipboard.writeText(copyText);
+  // ブクログへのリンクを表示するダイアログ表示
+  msgDialog.value = {
+    isShow: true,
+    headerText: "書籍内容をコピーしました",
+    okLabel: "ブクログを表示",
+    okFunction: () => {
+      const url = "https://booklog.jp/item/1/" + book.isbn;
+      util.openPageAsNewTab(url);
+    },
+    content: copyText
+  }
+};
+
+
+type MsgDialog = {
+  isShow: boolean,
+  headerText: string,
+  okLabel: string,
+  okFunction: Function,
+  content: string
+};
+const msgDialog:Ref<MsgDialog> = ref({
+  isShow: false,
+  headerText: "",
+  okLabel: "",
+  okFunction: () => {},
+  content: ""
+});
+
 // 外部連携フラグ
 let isExternalCooperation = false;
 
@@ -786,6 +830,15 @@ onMounted(init);
                       icon="star_border"
                       color="primary"
                       @click="addWantTag(book)"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="book.isbn"
+                      title="書籍内容検索"
+                      icon="menu_book"
+                      color="primary"
+                      @click="searchShortStorys(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
@@ -1065,6 +1118,16 @@ onMounted(init);
           class="set-tag-dialog-form-tags"
         ></c-input-tag>
       </q-form>
+    </c-dialog>
+    
+    <!-- 汎用ダイアログ -->
+    <c-dialog
+      v-model="msgDialog.isShow"
+      :header-text="msgDialog.headerText"
+      :okLabel="msgDialog.okLabel"
+      @ok="msgDialog.okFunction"
+    >
+      {{ msgDialog.content }}
     </c-dialog>
   </q-layout>
 </template>
