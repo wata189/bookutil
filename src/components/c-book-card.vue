@@ -79,6 +79,12 @@ const props = defineProps<Props>();
   height: 120px;
 }
 
+@media (min-width: 600px){
+  .book-img{
+    height: 150px;
+  }
+}
+
 .book-info-inner{
   font-family: "BIZ UDPGothic";
   max-width: 250px;

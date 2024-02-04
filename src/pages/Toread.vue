@@ -1080,6 +1080,13 @@ onMounted(init);
   min-width: 120px;
 }
 
+@media (min-width: 600px){
+  .book-cover-wrapper{
+    max-width: 150px;
+    min-width: 150px;
+  }
+}
+
 .filter-cond{
   border-radius: 15px;
 }
