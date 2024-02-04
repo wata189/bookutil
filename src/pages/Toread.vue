@@ -838,7 +838,7 @@ onMounted(init);
       <div class="row justify-end items-end">
         <Transition>
           <div v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
-            <div class="row filter-cond bg-blue-grey-6" :class="util.isDarkMode() ? '' : 'text-black'">
+            <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
                   v-model="filterCond.word"
@@ -1076,16 +1076,12 @@ onMounted(init);
 
 <style scoped>
 .book-cover-wrapper{
-  max-width: 140px;
-  min-width: 140px;
+  max-width: 120px;
+  min-width: 120px;
 }
 
 .filter-cond{
   border-radius: 15px;
-}
-
-.select-sort-key{
-  width: 148px;
 }
 
 .set-tag-dialog-form-tags{

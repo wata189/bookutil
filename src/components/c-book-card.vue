@@ -76,7 +76,7 @@ const props = defineProps<Props>();
 }
 
 .book-img{
-  height: 150px;
+  height: 120px;
 }
 
 .book-info-inner{
