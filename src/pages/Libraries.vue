@@ -8,6 +8,8 @@ import CRoundBtn from "@/components/c-round-btn.vue";
 import util from "@/modules/util";
 import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
 
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
@@ -83,6 +85,10 @@ const fetchLibraries = async () => {
   const response = await axiosUtil.get(`/libraries/fetch?accessToken=${accessToken}`);
   if(response){
     libraries.value = response.data.libraries;
+
+    // キャッシュ保存
+    const limitHours = 24 * 30; // キャッシュ期限は1月くらい
+    await cacheUtil.set("libraries", response.data.libraries, limitHours);
   }
 };
 
@@ -102,7 +108,14 @@ const init = async () => {
   // VueRouterで遷移→
   if(!isAppLoaded.value){return;}
 
-  await fetchLibraries();
+  // キャッシュからリスト取得してみる
+  const cachedLibraries: Library[] | null = await cacheUtil.get("libraries");
+  if(cachedLibraries){
+    libraries.value = cachedLibraries;
+  }else{
+    // キャッシュから取得できなかったらサーバーから取得
+    await fetchLibraries();
+  }
 
   // 初回ロード→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
