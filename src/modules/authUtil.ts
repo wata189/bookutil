@@ -1,5 +1,10 @@
 import axios from "axios";
 import util from "@/modules/util";
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
+const CACHE_KEY = {
+
+};
 
 // 認証関係の定数
 const authUrl = import.meta.env.VITE_AUTH_URL;
@@ -39,6 +44,8 @@ const getToken = async (code: string):Promise<Tokens> =>{
     }
   }catch(error){
     console.log(error);
+    // ログインできなかった場合はキャッシュリセット
+    await cacheUtil.clear();
   }finally{
     // トークンをローカルストレージに設定
     localStorage.accessToken = tokens.accessToken;
@@ -67,6 +74,8 @@ const refreshToken = async () => {
     }
   }catch(e){
     console.log(e);
+    // リフレッシュできなかった場合はキャッシュリセット
+    await cacheUtil.clear();
   }finally{
     localStorage.accessToken = accessToken
   }
@@ -103,6 +112,8 @@ const getUserInfo = async (accessToken: string):Promise<User> =>{
       }
     }catch(innerError){
       console.log(innerError);
+      // リフレッシュできなかった場合はキャッシュリセット
+      await cacheUtil.clear();
     }
   }finally{
     return user;
@@ -115,7 +126,9 @@ const login = () => {
   window.location.href = url;
 };
 // ログアウト
-const logout = () => {
+const logout = async () => {
+  // キャッシュ初期化
+  await cacheUtil.clear();
   // アクセストークン初期化
   localStorage.accessToken = "";
   localStorage.refreshToken = "";
