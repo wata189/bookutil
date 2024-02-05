@@ -9,6 +9,12 @@ import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 import googleBooksUtil from '@/modules/googleBooksUtil';
 import ndlSearchUtil from '@/modules/ndlSearchUtil';
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
+const CACHE_KEY = {
+  BOOKS: "cache-toreadBooks",
+  TAGS: "cache-toreadTags"
+};
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
@@ -146,11 +152,16 @@ const initToread = async () => {
   const accessToken = await authUtil.getLocalStorageAccessToken();
   const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
   if(response){
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
-const setInitInfo = (books:Book[], tags: string[]) => {
+const setInitInfo = async (books:Book[], tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
+
   toreadBooks.value = books.map((book:Book):Book => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
     if(book.coverUrl){
@@ -197,7 +208,7 @@ const createBook = () => {
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -226,7 +237,7 @@ const editBook = () => {
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
         addTagsHistories(bookDialog.value.form.tags);
@@ -254,7 +265,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   const response = await updateBook(book.documentId, book.updateAt, form);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
@@ -365,7 +376,7 @@ ${dispBooks.join("\n")}`;
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
   });
 
@@ -539,7 +550,7 @@ const addTagsFromDialogForm = () => {
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
   });
 };
@@ -555,7 +566,7 @@ const addWantTag = async (book:Book) => {
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 const addMultiTag = async () => {
@@ -569,7 +580,7 @@ const addMultiTag = async () => {
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 const addTags = async (books:Book[], tags:string[]) => {
@@ -727,7 +738,14 @@ const init = async () => {
     filterCond.value.word = urlParamWord;
   }
 
-  await initToread();
+  // キャッシュからリスト取得してみる
+  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
+  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedToreadBooks && cachedToreadTags) {
+    await setInitInfo(cachedToreadBooks, cachedToreadTags);
+  }else{
+    await initToread();
+  }
   
   // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch

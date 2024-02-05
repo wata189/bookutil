@@ -10,6 +10,7 @@ import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
+const CACHE_KEY = "cache-libraries"
 
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
@@ -88,7 +89,7 @@ const fetchLibraries = async () => {
 
     // キャッシュ保存
     const limitHours = 24 * 30; // キャッシュ期限は1月くらい
-    await cacheUtil.set("libraries", response.data.libraries, limitHours);
+    await cacheUtil.set(CACHE_KEY, response.data.libraries, limitHours);
   }
 };
 
@@ -109,7 +110,7 @@ const init = async () => {
   if(!isAppLoaded.value){return;}
 
   // キャッシュからリスト取得してみる
-  const cachedLibraries: Library[] | null = await cacheUtil.get("libraries");
+  const cachedLibraries: Library[] | null = await cacheUtil.get(CACHE_KEY);
   if(cachedLibraries){
     libraries.value = cachedLibraries;
   }else{
