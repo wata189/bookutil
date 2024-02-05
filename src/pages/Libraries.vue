@@ -82,7 +82,7 @@ const dispLibraries = computed(() => {
 });
 
 const fetchLibraries = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const response = await axiosUtil.get(`/libraries/fetch?accessToken=${accessToken}`);
   if(response){
     libraries.value = response.data.libraries;

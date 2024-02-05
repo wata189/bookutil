@@ -13,7 +13,8 @@ import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
   BOOKS: "cache-toreadBooks",
-  TAGS: "cache-toreadTags"
+  TAGS: "cache-toreadTags",
+  TAGS_HISTORIES: "cache-tagsHistories"
 };
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
@@ -149,7 +150,7 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
   if(response){
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
@@ -212,17 +213,17 @@ const createBook = () => {
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
-        addTagsHistories(bookDialog.value.form.tags);
+        await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
 };
-const addTagsHistories = (tags:string) => {
-  tagsHistories.push(tags);
-  if(tagsHistories.length > 10){
-    tagsHistories.shift();
+const addTagsHistories = async (tags:string) => {
+  tagsHistories.value.push(tags);
+  if(tagsHistories.value.length > 10){
+    tagsHistories.value.shift();
   }
-  localStorage.tagsHistories = tagsHistories;
+  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -240,7 +241,7 @@ const editBook = () => {
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
-        addTagsHistories(bookDialog.value.form.tags);
+        await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
@@ -308,7 +309,7 @@ const createUpdateParams = async (documentId:string, updateAt:number, form:BookF
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
   const params:BookParams = {
@@ -366,7 +367,7 @@ const deleteBooks = async (books:Book[]) => {
 ${dispBooks.join("\n")}`;
 
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
-    const accessToken = await authUtil.getLocalStorageAccessToken()
+    const accessToken = await authUtil.getCacheAccessToken()
     const user = await authUtil.getUserInfo(accessToken);
     const params:SimpleBooksParams = {
       books: simpleBooks,
@@ -452,25 +453,20 @@ const showEditBookDialog = (book:Book) => {
 };
 
 // ローカルストレージのタグ履歴取得
-const tagsHistories:string[] = [];
-if(localStorage.tagsHistories && localStorage.tagsHistories.length > 0){
-  for(const tagsHistory of localStorage.tagsHistories){
-    tagsHistories.push(tagsHistory.toString());
-  }
-}
-const setLatestTagsFromTagsHistories = () => {
-  const latestTags = tagsHistories.pop();
+const tagsHistories:Ref<string[]> = ref([]);
+const setLatestTagsFromTagsHistories = async () => {
+  const latestTags = tagsHistories.value.pop();
   if(latestTags){
     // 最新タグ設定
     bookDialog.value.form.tags = latestTags;
-    //localStorage更新
-    localStorage.tagsHistories = tagsHistories;
+    // キャッシュ更新
+    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
   }
 };
 
 // よみたいタグ取得→セット
 const setWantTag = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   const params = {
     isbn: bookDialog.value.form.isbn,
@@ -556,7 +552,7 @@ const addTagsFromDialogForm = () => {
 };
 const addWantTag = async (book:Book) => {
   const simpleBook:SimpleBook = {documentId:book.documentId, updateAt:book.updateAt};
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   const params = {
     book: simpleBook,
@@ -593,7 +589,7 @@ const createAddTagParams = async (books:Book[], tags:string[]):Promise<SimpleBoo
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
 
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   return {
     books: simpleBooks,
@@ -747,6 +743,12 @@ const init = async () => {
     await initToread();
   }
   
+  // タグ履歴キャッシュ
+  const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
+  if(cachedTagsHistories){
+    tagsHistories.value = cachedTagsHistories;
+  }
+    
   // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
   unwatch();

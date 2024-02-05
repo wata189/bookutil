@@ -80,14 +80,14 @@ onMounted(async () => {
   const urlParams = (new URL(window.location.href)).searchParams;
   const code = urlParams.get("code");
 
-  const beforeAccessToken = await authUtil.getLocalStorageAccessToken();
+  const beforeAccessToken = await authUtil.getCacheAccessToken();
   // トークン取得
   if(code && !beforeAccessToken){
     await authUtil.getToken(code);
   }
 
   // ユーザー情報取得
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   if(accessToken){
     const userInfo = await authUtil.getUserInfo(accessToken);
     user.value = userInfo;

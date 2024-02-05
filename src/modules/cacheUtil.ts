@@ -4,6 +4,11 @@ const dataBaseVer = 1;
 const dataBaseName = "Cache";
 const dataBaseTableName = "cacheTable";
 
+const PERMANENT_CACHE_KEY = [
+  "cache-accessToken",
+  "cache-refreshToken"
+];
+
 interface Cache{
   key:string;
   limit: number | undefined;
@@ -58,9 +63,23 @@ class CacheUtil {
     return await this.cacheTable.delete(key);
   }
 
-  //キャッシュをリセットする処理
+  //キャッシュを完全にリセットする処理
   async clear(){
     return await this.cacheTable.clear();
+  }
+
+  // キャッシュを一部を除いてリセットする処理
+  // 一部→トークン情報など
+  async refresh(){
+    const allCaches: Cache[] = await this.cacheTable.toArray();
+    const deleteCaches:Cache[] = allCaches.filter((cache:Cache) => {
+      return !PERMANENT_CACHE_KEY.includes(cache.key);
+    });
+    const promises:Promise<void>[] = [];
+    for (const cache of deleteCaches){
+      promises.push(this.delete(cache.key));
+    }
+    return Promise.all(promises);
   }
 
 }

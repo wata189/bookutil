@@ -3,7 +3,8 @@ import util from "@/modules/util";
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
-
+  ACCESS_TOKEN: "cache-accessToken",
+  REFRESH_TOKEN: "cache-refreshToken"
 };
 
 // 認証関係の定数
@@ -47,9 +48,9 @@ const getToken = async (code: string):Promise<Tokens> =>{
     // ログインできなかった場合はキャッシュリセット
     await cacheUtil.clear();
   }finally{
-    // トークンをローカルストレージに設定
-    localStorage.accessToken = tokens.accessToken;
-    localStorage.refreshToken = tokens.refreshToken;
+    // トークンをキャッシュに設定
+    await cacheUtil.set(CACHE_KEY.ACCESS_TOKEN, tokens.accessToken, 1);
+    await cacheUtil.set(CACHE_KEY.REFRESH_TOKEN, tokens.refreshToken, 24);
     return tokens;
   }
 } 
@@ -58,7 +59,7 @@ const refreshToken = async () => {
   let accessToken = "";
   try{
     // refresh_token使ってaccess_token取得し直し
-    const tmpRefreshToken = localStorage.refreshToken;
+    const tmpRefreshToken = await cacheUtil.get(CACHE_KEY.REFRESH_TOKEN);
 
     if(tmpRefreshToken){
       const params = {
@@ -77,7 +78,7 @@ const refreshToken = async () => {
     // リフレッシュできなかった場合はキャッシュリセット
     await cacheUtil.clear();
   }finally{
-    localStorage.accessToken = accessToken
+    await cacheUtil.set(CACHE_KEY.ACCESS_TOKEN, accessToken, 1);
   }
 };
 
@@ -102,7 +103,7 @@ const getUserInfo = async (accessToken: string):Promise<User> =>{
       await refreshToken();
 
       // 取得したaccessTokenを使ってもう一度ユーザー情報取得
-      const accessToken = localStorage.accessToken;
+      const accessToken = await cacheUtil.get(CACHE_KEY.ACCESS_TOKEN);
       const userInfoHeaders = {
         "Authorization": `Bearer ${accessToken}`
       };
@@ -129,9 +130,6 @@ const login = () => {
 const logout = async () => {
   // キャッシュ初期化
   await cacheUtil.clear();
-  // アクセストークン初期化
-  localStorage.accessToken = "";
-  localStorage.refreshToken = "";
 
   const currentUrl = util.getCurrentUrl();
 
@@ -139,10 +137,10 @@ const logout = async () => {
   window.location.href = url;
 };
 
-const getLocalStorageAccessToken = async ():Promise<string> => {
+const getCacheAccessToken = async ():Promise<string> => {
   // アクセストークン取得するときには必ずリフレッシュする
   await refreshToken();
-  const accessToken = localStorage.accessToken;
+  const accessToken = await cacheUtil.get(CACHE_KEY.ACCESS_TOKEN);
   return accessToken || "";
 };
 
@@ -151,5 +149,5 @@ export default {
   getUserInfo,
   login,
   logout,
-  getLocalStorageAccessToken
+  getCacheAccessToken
 }
