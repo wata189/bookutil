@@ -8,6 +8,8 @@ import CRoundBtn from "@/components/c-round-btn.vue";
 
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
 
 const router = useRouter();
 
@@ -54,6 +56,12 @@ const setMode = (isDark: boolean) => {
   localStorage.isDarkMode = isDark;
 };
 
+// キャッシュをクリアして画面更新
+const clearCache = async () => {
+  await cacheUtil.clear();
+  window.location.reload();
+};
+
 const iconSize = "24px";
 
 const iconSrc = util.getIconHref();
@@ -89,6 +97,11 @@ onMounted(async () => {
         :title="themeChangeTitle"
         :icon="themeChangeIcon"
         @click="toggleMode"
+      ></c-round-btn>
+      <c-round-btn
+        title="キャッシュをクリアする"
+        icon="cached"
+        @click="clearCache"
       ></c-round-btn>
       <c-round-btn
         title="ユーザー情報"

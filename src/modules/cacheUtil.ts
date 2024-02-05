@@ -58,7 +58,10 @@ class CacheUtil {
     return await this.cacheTable.delete(key);
   }
 
-  //TODO:キャッシュをリセットする処理
+  //キャッシュをリセットする処理
+  async clear(){
+    return await this.cacheTable.clear();
+  }
 
 }
 
