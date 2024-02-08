@@ -6,7 +6,8 @@ const dataBaseTableName = "cacheTable";
 
 const PERMANENT_CACHE_KEY = [
   "cache-accessToken",
-  "cache-refreshToken"
+  "cache-refreshToken",
+  "cache-isDarkMode"
 ];
 
 interface Cache{
@@ -69,7 +70,7 @@ class CacheUtil {
   }
 
   // キャッシュを一部を除いてリセットする処理
-  // 一部→トークン情報など
+  // トークン情報は消さないので、ログイン状態は崩さずにキャッシュだけ消したいときに使う
   async refresh(){
     const allCaches: Cache[] = await this.cacheTable.toArray();
     const deleteCaches:Cache[] = allCaches.filter((cache:Cache) => {

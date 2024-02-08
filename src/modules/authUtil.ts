@@ -121,7 +121,9 @@ const getUserInfo = async (accessToken: string):Promise<User> =>{
   }
 };
 // ログイン
-const login = () => {
+const login = async () => {
+  // キャッシュリフレッシュ
+  await cacheUtil.refresh();
   const currentUrl = util.getCurrentUrl();
   const url = `${authUrl}/oauth2/authorize?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${currentUrl}&identity_provider=Google`;
   window.location.href = url;
