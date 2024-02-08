@@ -181,7 +181,7 @@ const setInitInfo = async (books:Book[], tags: string[]) => {
 };
 
 const getBook = async (isbn:string) => {
-  const trimedIsbn = util.trimString(isbn) || "";
+  const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
   const book = await googleBooksUtil.getBook(trimedIsbn);
@@ -319,14 +319,14 @@ const createBookParams = async (form:BookForm) => {
 
     // フォームのパラメータ
     bookName: form.bookName.trim(),
-    isbn: util.trimString(form.isbn),
+    isbn: form.isbn ? form.isbn.trim() : null,
     page: form.page || null,
-    authorName: util.trimString(form.authorName),
-    publisherName: util.trimString(form.publisherName),
-    memo: util.trimString(form.memo),
+    authorName: form.authorName ? form.authorName.trim() : null,
+    publisherName: form.publisherName ? form.publisherName : null,
+    memo: form.memo ? form.memo.trim() : null,
     newBookCheckFlg: form.newBookCheckFlg,
-    tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
-    coverUrl: util.trimString(form.coverUrl),
+    tags: form.tags ? util.strToTag(form.tags.trim()) : [],
+    coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
     // アクセストークン
     accessToken: accessToken,
@@ -974,6 +974,7 @@ onMounted(init);
           <div class="col-12">
             <c-link-btns
               :bookName="bookDialog.form.bookName || ''"
+              :author-name="bookDialog.form.authorName"
               :isbn="bookDialog.form.isbn"
               :other-link="null"
             ></c-link-btns>

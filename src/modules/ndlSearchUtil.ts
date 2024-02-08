@@ -78,7 +78,7 @@ const searchShortStorys = async (isbn:string):Promise<ShortStory[]> => {
 
             return {
               // トリム、全角数字→半角数字の整形
-              author: author ? util.trimString(util.fullStr2Half(author)) : null, 
+              author: author ? util.fullStr2Half(author).trim() : null, 
               title
             };
           });

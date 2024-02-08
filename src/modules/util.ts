@@ -64,10 +64,6 @@ const getIconHref = ():string => {
   return import.meta.env.DEV ? "img/icon.dev.svg" : "img/icon.svg";
 };
 
-const trimString = (val:string|null):string|null => {
-  return val ? val.trim() : null;
-};
-
 const isbn10To13 = (isbn10:string):string => {
   const isbn12 = "978" + isbn10.slice(0,-1);
   // チェックディジット計算
@@ -172,7 +168,6 @@ export default {
   formatDateToStr,
   getCurrentUrl,
   getIconHref,
-  trimString,
   getOpenBdCoverUrl,
   isbn10To13,
   isbn13To10,
