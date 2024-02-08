@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import util from "@/modules/util";
-import CLinkBtns from "@/components/c-link-btns.vue";
+import CBookLinks from "@/components/c-book-links.vue";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
 interface Book {
@@ -53,11 +53,12 @@ const props = defineProps<Props>();
       <div>
         <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
       </div>
-      <c-link-btns
+      <c-book-links
         :bookName="book.bookName"
         :isbn="book.isbn"
+        :author-name="book.authorName"
         :other-link="book.memo"
-      ></c-link-btns>
+      ></c-book-links>
       <slot name="menu-footer"></slot>
     </div>
   </q-menu>

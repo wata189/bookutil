@@ -23,7 +23,7 @@ import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 import CBookCard from '@/components/c-book-card.vue';
-import CLinkBtns from "@/components/c-link-btns.vue";
+import CBookLinks from "@/components/c-book-links.vue";
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -972,12 +972,12 @@ onMounted(init);
           </div>
           
           <div class="col-12">
-            <c-link-btns
+            <c-book-links
               :bookName="bookDialog.form.bookName || ''"
               :author-name="bookDialog.form.authorName"
               :isbn="bookDialog.form.isbn"
               :other-link="null"
-            ></c-link-btns>
+            ></c-book-links>
           </div>
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input

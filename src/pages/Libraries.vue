@@ -3,7 +3,7 @@
 import { computed, ref, watch, toRefs, onMounted } from 'vue';
 import { Ref } from '@vue/runtime-core';
 
-import CRoundBtn from "@/components/c-round-btn.vue";
+import CRoundLink from "@/components/c-round-link.vue";
 
 import util from "@/modules/util";
 import authUtil from '@/modules/authUtil';
@@ -93,14 +93,6 @@ const fetchLibraries = async () => {
   }
 };
 
-const openLibraryPage = (library:Library) => {
-  let url = library.url;
-  if(util.isSmartPhone() && library.spUrl){
-    url = library.spUrl;
-  }
-  util.openPageAsNewTab(url);
-};
-
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
 const {isAppLoaded} = toRefs(props);
@@ -146,45 +138,34 @@ onMounted(init);
                 <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
               </div>
               <div class="row">
-
-                <c-round-btn
+                <c-round-link
                   title="図書館サイトを表示"
                   icon="account_balance"
-                  dense
-                  @click="openLibraryPage(library)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
+                  :href="util.isSmartPhone() && library.spUrl ? library.spUrl : library.url"
+                ></c-round-link>
+                <c-round-link
+                  title="Googleマップで表示"
+                  icon="place"
+                  :href="library.mapUrl"
+                ></c-round-link>
+                <c-round-link
                   v-if="library.calendarUrl"
                   title="カレンダーを表示"
                   icon="today"
-                  dense
-                  @click="util.openPageAsNewTab(library.calendarUrl)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
-                  title="Googleマップで表示"
-                  icon="place"
-                  dense
-                  @click="util.openPageAsNewTab(library.mapUrl)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
+                  :href="library.calendarUrl"
+                ></c-round-link>
+                <c-round-link
                   v-if="library.barcodeUrl"
                   title="バーコードを表示"
                   icon="qr_code_2"
-                  dense
-                  @click="util.openPageAsNewTab(library.barcodeUrl)"
-                  color="secondary"
-                ></c-round-btn>
+                  :href="library.barcodeUrl"
+                ></c-round-link>
                 <q-space></q-space>
-                <q-btn
-                  color="secondary"
-                  dense
-                  @click="util.openPageAsNewTab(library.toreadLink)"
-                >
-                  よみたいリスト
-                </q-btn>
+                <c-round-link
+                  title="読みたいリストで表示"
+                  icon="format_list_bulleted"
+                  :href="library.toreadLink"
+                ></c-round-link>
               </div>
               
             </q-card>
