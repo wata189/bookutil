@@ -3,11 +3,14 @@
 import { computed, ref, watch, toRefs, onMounted } from 'vue';
 import { Ref } from '@vue/runtime-core';
 
-import CRoundBtn from "@/components/c-round-btn.vue";
+import CRoundLink from "@/components/c-round-link.vue";
 
 import util from "@/modules/util";
 import authUtil from '@/modules/authUtil';
 import AxiosUtil from '@/modules/axiosUtil';
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
+const CACHE_KEY = "cache-libraries"
 
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
@@ -79,19 +82,15 @@ const dispLibraries = computed(() => {
 });
 
 const fetchLibraries = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const response = await axiosUtil.get(`/libraries/fetch?accessToken=${accessToken}`);
   if(response){
     libraries.value = response.data.libraries;
-  }
-};
 
-const openLibraryPage = (library:Library) => {
-  let url = library.url;
-  if(util.isSmartPhone() && library.spUrl){
-    url = library.spUrl;
+    // キャッシュ保存
+    const limitHours = 24 * 30; // キャッシュ期限は1月くらい
+    await cacheUtil.set(CACHE_KEY, response.data.libraries, limitHours);
   }
-  util.openPageAsNewTab(url);
 };
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
@@ -102,7 +101,14 @@ const init = async () => {
   // VueRouterで遷移→
   if(!isAppLoaded.value){return;}
 
-  await fetchLibraries();
+  // キャッシュからリスト取得してみる
+  const cachedLibraries: Library[] | null = await cacheUtil.get(CACHE_KEY);
+  if(cachedLibraries){
+    libraries.value = cachedLibraries;
+  }else{
+    // キャッシュから取得できなかったらサーバーから取得
+    await fetchLibraries();
+  }
 
   // 初回ロード→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
@@ -132,45 +138,34 @@ onMounted(init);
                 <span v-if="library.closestStation">{{ library.closestStation }}駅</span>
               </div>
               <div class="row">
-
-                <c-round-btn
+                <c-round-link
                   title="図書館サイトを表示"
                   icon="account_balance"
-                  dense
-                  @click="openLibraryPage(library)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
+                  :href="util.isSmartPhone() && library.spUrl ? library.spUrl : library.url"
+                ></c-round-link>
+                <c-round-link
+                  title="Googleマップで表示"
+                  icon="place"
+                  :href="library.mapUrl"
+                ></c-round-link>
+                <c-round-link
                   v-if="library.calendarUrl"
                   title="カレンダーを表示"
                   icon="today"
-                  dense
-                  @click="util.openPageAsNewTab(library.calendarUrl)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
-                  title="Googleマップで表示"
-                  icon="place"
-                  dense
-                  @click="util.openPageAsNewTab(library.mapUrl)"
-                  color="secondary"
-                ></c-round-btn>
-                <c-round-btn
+                  :href="library.calendarUrl"
+                ></c-round-link>
+                <c-round-link
                   v-if="library.barcodeUrl"
                   title="バーコードを表示"
                   icon="qr_code_2"
-                  dense
-                  @click="util.openPageAsNewTab(library.barcodeUrl)"
-                  color="secondary"
-                ></c-round-btn>
+                  :href="library.barcodeUrl"
+                ></c-round-link>
                 <q-space></q-space>
-                <q-btn
-                  color="secondary"
-                  dense
-                  @click="util.openPageAsNewTab(library.toreadLink)"
-                >
-                  よみたいリスト
-                </q-btn>
+                <c-round-link
+                  title="読みたいリストで表示"
+                  icon="format_list_bulleted"
+                  :href="library.toreadLink"
+                ></c-round-link>
               </div>
               
             </q-card>

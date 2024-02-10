@@ -8,6 +8,11 @@ import CRoundBtn from "@/components/c-round-btn.vue";
 
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
+const CACHE_KEY = {
+  IS_DARK_MODE: "cache-isDarkMode"
+};
 
 const router = useRouter();
 
@@ -28,12 +33,7 @@ interface Props {
 };
 const props = defineProps<Props>();
 
-
-// ダークモード情報をlocalstorageから取り出して設定
 const isDarkMode = ref(false);
-if(localStorage.isDarkMode === "true"){
-  isDarkMode.value = true;
-}
 
 const themeChangeTitle = computed(() => {
   const pre = isDarkMode.value ? "ライト" : "ダーク";
@@ -43,15 +43,21 @@ const themeChangeIcon = computed(() => {
   return isDarkMode.value ? "dark_mode" : "light_mode";
 });
 
-const toggleMode = () => {
-  setMode(!isDarkMode.value); //ダークモードをトグルして設定
+const toggleMode = async () => {
+  await setMode(!isDarkMode.value); //ダークモードをトグルして設定
 };
-const setMode = (isDark: boolean) => {
+const setMode = async (isDark: boolean) => {
   isDarkMode.value = isDark;
   Dark.set(isDark);
 
-  // ダークモードの値をlocalStorageに保存
-  localStorage.isDarkMode = isDark;
+  // ダークモードの値をキャッシュに保存
+  await cacheUtil.set(CACHE_KEY.IS_DARK_MODE, isDark);
+};
+
+// 認証情報以外のキャッシュをクリアして画面更新
+const clearCache = async () => {
+  await cacheUtil.refresh();
+  window.location.reload();
 };
 
 const iconSize = "24px";
@@ -59,7 +65,12 @@ const iconSize = "24px";
 const iconSrc = util.getIconHref();
 
 onMounted(async () => {
-  setMode(isDarkMode.value);
+  // ダークモード情報をキャッシュから取り出して設定
+  const cachedIsDarkMode:boolean | null = await cacheUtil.get(CACHE_KEY.IS_DARK_MODE);
+  if(cachedIsDarkMode){
+    isDarkMode.value = cachedIsDarkMode;
+  }
+  await setMode(isDarkMode.value);
 });
 
 </script>
@@ -89,6 +100,11 @@ onMounted(async () => {
         :title="themeChangeTitle"
         :icon="themeChangeIcon"
         @click="toggleMode"
+      ></c-round-btn>
+      <c-round-btn
+        title="キャッシュをクリアする"
+        icon="cached"
+        @click="clearCache"
       ></c-round-btn>
       <c-round-btn
         title="ユーザー情報"

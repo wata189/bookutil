@@ -8,6 +8,14 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 import googleBooksUtil from '@/modules/googleBooksUtil';
+import ndlSearchUtil from '@/modules/ndlSearchUtil';
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
+const CACHE_KEY = {
+  BOOKS: "cache-toreadBooks",
+  TAGS: "cache-toreadTags",
+  TAGS_HISTORIES: "cache-tagsHistories"
+};
 
 import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
@@ -15,7 +23,7 @@ import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 import CBookCard from '@/components/c-book-card.vue';
-import CLinkBtns from "@/components/c-link-btns.vue";
+import CBookLinks from "@/components/c-book-links.vue";
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -56,36 +64,7 @@ const filterCond = ref({
   word: "",
   isOnlyNewBook: false
 });
-const isShowFilterCond = ref(true);
-
-const SORT_KEY = {
-  ID: "更新日",
-  PAGE: "ページ数",
-  WANT: "よみたい度"
-};
-const sortKeyOptions = Object.values(SORT_KEY)
-const sortCond = ref({
-  isDesc: true,
-  key: SORT_KEY.ID
-});
-const isDescIcon = computed(() => {
-  return sortCond.value.isDesc ? "keyboard_double_arrow_down" : "keyboard_double_arrow_up"
-});
-const isDescTitle = computed(() => {
-  return sortCond.value.isDesc ? "昇順にする" : "降順にする"
-});
-// ソートキー変更時の降順昇順変更
-// 追加日→Desc、ページ数→Asc、よみたい順→desc
-const onChangeSortCondKey = (value:string) => {
-  if(value === SORT_KEY.ID){
-    sortCond.value.isDesc = true;
-  }else if(value === SORT_KEY.PAGE){
-    sortCond.value.isDesc = false;
-  }else{
-    sortCond.value.isDesc = true
-  }
-};
-
+const isShowFilterCond = ref(false);
 
 const labels = {
   bookName: "書籍名",
@@ -122,12 +101,6 @@ const filteredSortedToreadBooks = computed({
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
-    const isDesc = sortCond.value.isDesc;
-
-    // ソートは追加順のみ
-    const sortFunc = (aBook:Book, bBook:Book) => {
-      return isDesc ? bBook.updateAt - aBook.updateAt : aBook.updateAt - bBook.updateAt;
-    };
 
     /////// フィルター
     return toreadBooks.value.filter((book:Book) => {
@@ -151,7 +124,7 @@ const filteredSortedToreadBooks = computed({
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-    }).sort(sortFunc);
+    }).sort((aBook, bBook) => bBook.updateAt - aBook.updateAt);
 
   },
   set: (value) => {
@@ -177,14 +150,19 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
   if(response){
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
-const setInitInfo = (books:Book[], tags: string[]) => {
+const setInitInfo = async (books:Book[], tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
+
   toreadBooks.value = books.map((book:Book):Book => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
     if(book.coverUrl){
@@ -203,7 +181,7 @@ const setInitInfo = (books:Book[], tags: string[]) => {
 };
 
 const getBook = async (isbn:string) => {
-  const trimedIsbn = util.trimString(isbn) || "";
+  const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
   const book = await googleBooksUtil.getBook(trimedIsbn);
@@ -231,21 +209,21 @@ const createBook = () => {
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
-        addTagsHistories(bookDialog.value.form.tags);
+        await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
 };
-const addTagsHistories = (tags:string) => {
-  tagsHistories.push(tags);
-  if(tagsHistories.length > 10){
-    tagsHistories.shift();
+const addTagsHistories = async (tags:string) => {
+  tagsHistories.value.push(tags);
+  if(tagsHistories.value.length > 10){
+    tagsHistories.value.shift();
   }
-  localStorage.tagsHistories = tagsHistories;
+  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -260,10 +238,10 @@ const editBook = () => {
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
-        addTagsHistories(bookDialog.value.form.tags);
+        await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
@@ -288,7 +266,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   const response = await updateBook(book.documentId, book.updateAt, form);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 
@@ -331,7 +309,7 @@ const createUpdateParams = async (documentId:string, updateAt:number, form:BookF
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = await authUtil.getLocalStorageAccessToken();
+  const accessToken = await authUtil.getCacheAccessToken();
   const user = await authUtil.getUserInfo(accessToken);
   const email = user.email || "No User Data";
   const params:BookParams = {
@@ -341,14 +319,14 @@ const createBookParams = async (form:BookForm) => {
 
     // フォームのパラメータ
     bookName: form.bookName.trim(),
-    isbn: util.trimString(form.isbn),
+    isbn: form.isbn ? form.isbn.trim() : null,
     page: form.page || null,
-    authorName: util.trimString(form.authorName),
-    publisherName: util.trimString(form.publisherName),
-    memo: util.trimString(form.memo),
+    authorName: form.authorName ? form.authorName.trim() : null,
+    publisherName: form.publisherName ? form.publisherName : null,
+    memo: form.memo ? form.memo.trim() : null,
     newBookCheckFlg: form.newBookCheckFlg,
-    tags: util.trimString(form.tags) ? util.strToTag(form.tags.trim()) : [],
-    coverUrl: util.trimString(form.coverUrl),
+    tags: form.tags ? util.strToTag(form.tags.trim()) : [],
+    coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
     // アクセストークン
     accessToken: accessToken,
@@ -389,7 +367,7 @@ const deleteBooks = async (books:Book[]) => {
 ${dispBooks.join("\n")}`;
 
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
-    const accessToken = await authUtil.getLocalStorageAccessToken()
+    const accessToken = await authUtil.getCacheAccessToken()
     const user = await authUtil.getUserInfo(accessToken);
     const params:SimpleBooksParams = {
       books: simpleBooks,
@@ -399,7 +377,7 @@ ${dispBooks.join("\n")}`;
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
   });
 
@@ -475,25 +453,20 @@ const showEditBookDialog = (book:Book) => {
 };
 
 // ローカルストレージのタグ履歴取得
-const tagsHistories:string[] = [];
-if(localStorage.tagsHistories && localStorage.tagsHistories.length > 0){
-  for(const tagsHistory of localStorage.tagsHistories){
-    tagsHistories.push(tagsHistory.toString());
-  }
-}
-const setLatestTagsFromTagsHistories = () => {
-  const latestTags = tagsHistories.pop();
+const tagsHistories:Ref<string[]> = ref([]);
+const setLatestTagsFromTagsHistories = async () => {
+  const latestTags = tagsHistories.value.pop();
   if(latestTags){
     // 最新タグ設定
     bookDialog.value.form.tags = latestTags;
-    //localStorage更新
-    localStorage.tagsHistories = tagsHistories;
+    // キャッシュ更新
+    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
   }
 };
 
 // よみたいタグ取得→セット
 const setWantTag = async () => {
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   const params = {
     isbn: bookDialog.value.form.isbn,
@@ -519,14 +492,14 @@ const setWantTag = async () => {
 
 type AddTagForm = {
   tags: string
-}
+};
 type AddTagDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
   okFunction: Function,
   form: AddTagForm
-}
+};
 const addTagDialog:Ref<AddTagDialog> = ref({
   isShow: false,
   headerText: "",
@@ -573,13 +546,13 @@ const addTagsFromDialogForm = () => {
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
-      setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
   });
 };
 const addWantTag = async (book:Book) => {
   const simpleBook:SimpleBook = {documentId:book.documentId, updateAt:book.updateAt};
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   const params = {
     book: simpleBook,
@@ -589,7 +562,7 @@ const addWantTag = async (book:Book) => {
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 const addMultiTag = async () => {
@@ -603,7 +576,7 @@ const addMultiTag = async () => {
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
     // 画面情報再設定
-    setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
 };
 const addTags = async (books:Book[], tags:string[]) => {
@@ -616,7 +589,7 @@ const createAddTagParams = async (books:Book[], tags:string[]):Promise<SimpleBoo
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
 
-  const accessToken = await authUtil.getLocalStorageAccessToken()
+  const accessToken = await authUtil.getCacheAccessToken()
   const user = await authUtil.getUserInfo(accessToken);
   return {
     books: simpleBooks,
@@ -632,6 +605,49 @@ const validationRules = {
   page: [validationUtil.isNumber(labels.page)],
   coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
+
+const searchShortStorys = async (book:Book) => {
+  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
+
+  const shortStorys = await ndlSearchUtil.searchShortStorys(book.isbn);
+
+  if(shortStorys.length === 0){
+    emitError("エラー", "書籍内容がありません");
+    return;
+  }
+
+  // shortStorysをコピー
+  const copyText = shortStorys.map(shortStory => `${shortStory.author || ""}「${shortStory.title}」`).join("\n");
+  navigator.clipboard.writeText(copyText);
+  // ブクログへのリンクを表示するダイアログ表示
+  msgDialog.value = {
+    isShow: true,
+    headerText: "書籍内容をコピーしました",
+    okLabel: "ブクログを表示",
+    okFunction: () => {
+      const url = "https://booklog.jp/item/1/" + book.isbn;
+      util.openPageAsNewTab(url);
+    },
+    content: copyText
+  }
+};
+
+
+type MsgDialog = {
+  isShow: boolean,
+  headerText: string,
+  okLabel: string,
+  okFunction: Function,
+  content: string
+};
+const msgDialog:Ref<MsgDialog> = ref({
+  isShow: false,
+  headerText: "",
+  okLabel: "",
+  okFunction: () => {},
+  content: ""
+});
+
 // 外部連携フラグ
 let isExternalCooperation = false;
 
@@ -718,8 +734,21 @@ const init = async () => {
     filterCond.value.word = urlParamWord;
   }
 
-  await initToread();
+  // キャッシュからリスト取得してみる
+  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
+  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedToreadBooks && cachedToreadTags) {
+    await setInitInfo(cachedToreadBooks, cachedToreadTags);
+  }else{
+    await initToread();
+  }
   
+  // タグ履歴キャッシュ
+  const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
+  if(cachedTagsHistories){
+    tagsHistories.value = cachedTagsHistories;
+  }
+    
   // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
   unwatch();
@@ -788,6 +817,15 @@ onMounted(init);
                       @click="addWantTag(book)"
                     ></c-round-btn>
                   </div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="book.isbn"
+                      title="書籍内容検索"
+                      icon="menu_book"
+                      color="primary"
+                      @click="searchShortStorys(book)"
+                    ></c-round-btn>
+                  </div>
                   <div class="col"></div>
                   <div class="col-auto">
                     <c-round-btn
@@ -802,7 +840,7 @@ onMounted(init);
             </c-book-card>
           </div>
         </div>
-        <div class="row lt-md items-center">
+        <div class="row items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
             <c-pagination
@@ -816,93 +854,70 @@ onMounted(init);
         </div>
       </q-page>
     </q-page-container>
-    <q-footer elevated :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
-      <q-expansion-item
-        expand-icon-toggle
-        expand-separator
-        v-model="isShowFilterCond"
-      >
-        <template v-slot:header>
-          <q-item-section>
-            <div class="row items-center">
+    <q-footer class="bg-transparent">
+      <div class="row justify-end items-end">
+        <Transition>
+          <div v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
+            <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
+              <div class="col q-pa-sm">
+                <c-input-tag
+                  v-model="filterCond.word"
+                  label="検索"
+                  dense
+                  hint=",/スペースで区切られます"
+                  :options="toreadTagOptions"
+                  @update:model-value="toTopPagenation"
+                ></c-input-tag>
+              </div>
               <div class="col-auto q-pa-sm">
-                <q-select 
-                  label="ソート"
-                  v-model="sortCond.key" 
-                  dense 
-                  :options="sortKeyOptions"
-                  class="select-sort-key"
-                  @update:model-value="onChangeSortCondKey"
-                >
-                  <template v-slot:before>
-
-                    <c-round-btn
-                      :title="isDescTitle"  
-                      :icon="isDescIcon"
-                      dense
-                      @click="sortCond.isDesc = !sortCond.isDesc"
-                    ></c-round-btn>
-                  </template>
-                </q-select>
+                <q-toggle
+                  v-model="filterCond.isOnlyNewBook"
+                  label="新刊のみ"
+                  @update:model-value="toTopPagenation"
+                ></q-toggle>
               </div>
-              <div class="col-auto q-pa-sm row">
-                <c-round-btn
-                  title="一括削除"  
-                  icon="delete"
-                  color="negative"
-                  dense
-                  @click="deleteBooks(selectedBooks)"
-                ></c-round-btn>
-                <c-round-btn
-                  title="一括タグ"  
-                  icon="local_offer"
-                  color="secondary"
-                  dense
-                  @click="showAddTagDialog"
-                ></c-round-btn>
-                <c-round-btn
-                  title="新規作成"  
-                  icon="add"
-                  color="primary"
-                  dense
-                  @click="showNewBookDialog"
-                ></c-round-btn>
-              </div>
-              <q-space></q-space>
-              <c-pagination
-                v-if="isShowPagination"
-                v-model="pagination.number"
-                :max="paginationMax"
-                class="gt-sm"
-              ></c-pagination>
-              <div class="col-aut q-pa-sm text-secondary gt-sm">{{ filteredSortedToreadBooks.length }}冊</div>
-            </div>
-          </q-item-section>
-        </template>
-        <q-card>
-
-          <q-separator inset></q-separator>
-          <div class="row">
-            <div class="col q-pa-sm">
-              <c-input-tag
-                v-model="filterCond.word"
-                label="検索"
-                dense
-                hint=",/スペースで区切られます"
-                :options="toreadTagOptions"
-                @update:model-value="toTopPagenation"
-              ></c-input-tag>
-            </div>
-            <div class="col-auto q-pa-sm">
-              <q-toggle
-                v-model="filterCond.isOnlyNewBook"
-                label="新刊のみ"
-                @update:model-value="toTopPagenation"
-              ></q-toggle>
             </div>
           </div>
-        </q-card>
-      </q-expansion-item>
+        </Transition>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="検索"  
+            icon="search"
+            color="secondary"
+            :flat="false"
+            @click="isShowFilterCond =!isShowFilterCond"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            :disabled="selectedBooks.length === 0"
+            title="一括削除"  
+            icon="delete"
+            color="negative"
+            :flat="false"
+            @click="deleteBooks(selectedBooks)"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            :disabled="selectedBooks.length === 0"
+            title="一括タグ"  
+            icon="local_offer"
+            color="secondary"
+            :flat="false"
+            @click="showAddTagDialog"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="新規作成"  
+            icon="add"
+            color="primary"
+            :flat="false"
+            @click="showNewBookDialog"
+          ></c-round-btn>
+        </div>
+      </div>
     </q-footer>
 
 
@@ -957,11 +972,12 @@ onMounted(init);
           </div>
           
           <div class="col-12">
-            <c-link-btns
+            <c-book-links
               :bookName="bookDialog.form.bookName || ''"
+              :author-name="bookDialog.form.authorName"
               :isbn="bookDialog.form.isbn"
               :other-link="null"
-            ></c-link-btns>
+            ></c-book-links>
           </div>
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
@@ -1066,17 +1082,34 @@ onMounted(init);
         ></c-input-tag>
       </q-form>
     </c-dialog>
+    
+    <!-- 汎用ダイアログ -->
+    <c-dialog
+      v-model="msgDialog.isShow"
+      :header-text="msgDialog.headerText"
+      :okLabel="msgDialog.okLabel"
+      @ok="msgDialog.okFunction"
+    >
+      {{ msgDialog.content }}
+    </c-dialog>
   </q-layout>
 </template>
 
 <style scoped>
 .book-cover-wrapper{
-  max-width: 140px;
-  min-width: 140px;
+  max-width: 120px;
+  min-width: 120px;
 }
 
-.select-sort-key{
-  width: 148px;
+@media (min-width: 600px){
+  .book-cover-wrapper{
+    max-width: 150px;
+    min-width: 150px;
+  }
+}
+
+.filter-cond{
+  border-radius: 15px;
 }
 
 .set-tag-dialog-form-tags{
@@ -1115,5 +1148,15 @@ onMounted(init);
       #744d30 0.4%,
       #744d30 0.5%
     );
+}
+/* トランジションの設定 */
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }
 </style>
