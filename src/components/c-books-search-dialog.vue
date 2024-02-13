@@ -94,7 +94,7 @@ const selectBook = (book:GoogleBook) => {
               <c-round-btn
                 title="選択"
                 icon="add"
-                color="secondary"
+                color="primary"
                 @click="selectBook(book.googleBook)"
               ></c-round-btn>
             </div>

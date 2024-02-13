@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue';
+import util from "@/modules/util";
 
 const props = defineProps({
   modelValue: {type:Boolean, required: true},
@@ -30,8 +31,8 @@ const value = computed({
     persistent
     @show="emits('show')"
   >
-    <q-card>
-      <q-card-section class="row">
+    <q-card :class="util.isDarkMode()? '' : 'bg-pink-2'">
+      <q-card-section class="row" :class="util.isDarkMode()? '' : 'bg-pink-3'">
         <div class="text-h6">{{ headerText }}</div>
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />

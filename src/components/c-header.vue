@@ -76,7 +76,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-header reveal elevated :class="isDarkMode ? 'bg-dark' : 'bg-white text-black'">
+  <q-header reveal elevated :class="isDarkMode ? 'bg-dark text-primary' : 'bg-pink-3 text-black'">
     <q-toolbar>
       <q-toolbar-title shrink class="toolbar-title">
         <div @click="router.push('/')">
@@ -95,7 +95,7 @@ onMounted(async () => {
         :icon="menu.icon"
         :to="menu.to"
       />
-      <q-separator vertical inset />
+      <q-separator vertical inset color="" />
       <c-round-btn
         :title="themeChangeTitle"
         :icon="themeChangeIcon"

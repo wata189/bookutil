@@ -127,7 +127,7 @@ onMounted(init);
       <div class="row justify-center">
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
           <div v-for="library in dispLibraries" class="q-pa-md">
-            <q-card class="q-pa-md">
+            <q-card class="q-pa-md" :class="util.isDarkMode() ? '' : 'bg-pink-3'">
               <div class="text-h6">
                 
                 {{library.city}}図書館
@@ -141,29 +141,34 @@ onMounted(init);
                 <c-round-link
                   title="図書館サイトを表示"
                   icon="account_balance"
+                  color="primary"
                   :href="util.isSmartPhone() && library.spUrl ? library.spUrl : library.url"
                 ></c-round-link>
                 <c-round-link
                   title="Googleマップで表示"
                   icon="place"
+                  color="primary"
                   :href="library.mapUrl"
                 ></c-round-link>
                 <c-round-link
                   v-if="library.calendarUrl"
                   title="カレンダーを表示"
                   icon="today"
+                  color="primary"
                   :href="library.calendarUrl"
                 ></c-round-link>
                 <c-round-link
                   v-if="library.barcodeUrl"
                   title="バーコードを表示"
                   icon="qr_code_2"
+                  color="primary"
                   :href="library.barcodeUrl"
                 ></c-round-link>
                 <q-space></q-space>
                 <c-round-link
                   title="読みたいリストで表示"
                   icon="format_list_bulleted"
+                  color="primary"
                   :href="library.toreadLink"
                 ></c-round-link>
               </div>
