@@ -17,6 +17,7 @@
     "@types/xml-js": "^1.0.0",
     "@vue/test-utils": "^2.4.1",
     "amazon-cognito-identity-js": "^6.2.0",
+    "animate.css": "^4.1.1",
     "axios": "^1.4.0",
     "dexie": "^3.2.4",
     "quasar": "^2.11.10",

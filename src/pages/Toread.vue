@@ -24,6 +24,7 @@ import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 import CBookCard from '@/components/c-book-card.vue';
 import CBookLinks from "@/components/c-book-links.vue";
+import CTransition from "@/components/c-transition.vue";
 
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
@@ -772,7 +773,7 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
-          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
+          <div class="col-aut q-pa-sm text-primary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
@@ -792,7 +793,7 @@ onMounted(init);
                       v-model="book.newBookCheckFlg"
                       :true-value="1"
                       :false-value="0"
-                      color="teal"
+                      color="primary"
                       @update:model-value="toggleNewBookCheckFlg(book)"
                     >
                       図書館チェック
@@ -813,7 +814,7 @@ onMounted(init);
                       v-if="book.isbn"
                       title="よみたい"
                       icon="star_border"
-                      color="primary"
+                      color="secondary"
                       @click="addWantTag(book)"
                     ></c-round-btn>
                   </div>
@@ -822,7 +823,7 @@ onMounted(init);
                       v-if="book.isbn"
                       title="書籍内容検索"
                       icon="menu_book"
-                      color="primary"
+                      color="secondary"
                       @click="searchShortStorys(book)"
                     ></c-round-btn>
                   </div>
@@ -849,16 +850,20 @@ onMounted(init);
               :max="paginationMax"
             ></c-pagination>
           </div>
-          <div class="col-aut q-pa-sm text-secondary">{{ filteredSortedToreadBooks.length }}冊</div>
+          <div class="col-aut q-pa-sm text-primary">{{ filteredSortedToreadBooks.length }}冊</div>
           <q-space></q-space>
         </div>
       </q-page>
     </q-page-container>
     <q-footer class="bg-transparent">
       <div class="row justify-end items-end">
-        <Transition>
+        <c-transition
+          appear
+          enter="fadeIn"
+          leave="fadeOut"
+        >
           <div v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
-            <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-white text-black'">
+            <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
                   v-model="filterCond.word"
@@ -878,7 +883,7 @@ onMounted(init);
               </div>
             </div>
           </div>
-        </Transition>
+        </c-transition>
         <div class="col-auto q-pa-xs">
           <c-round-btn
             title="検索"  
@@ -1018,7 +1023,7 @@ onMounted(init);
               @click="setLatestTagsFromTagsHistories" 
               flat 
               label="タグ履歴" 
-              color="secondary" 
+              color="primary" 
             />
           </div>
           <div class="col-auto q-pa-xs">
@@ -1028,7 +1033,7 @@ onMounted(init);
               @click="setWantTag" 
               flat 
               label="よみたい" 
-              color="secondary"
+              color="primary"
             />
           </div>
           <q-space></q-space>
@@ -1114,49 +1119,5 @@ onMounted(init);
 
 .set-tag-dialog-form-tags{
   width: 300px;
-}
-
-.body--light .book-cover-wrapper{
-  background:
-    linear-gradient(
-      90deg,
-      rgba(208, 147, 82, 0.6),
-      rgba(192, 134, 70, 0.6) 60%,
-      rgba(208, 147, 82, 0.6)
-    ),
-    repeating-radial-gradient(
-      ellipse at 60% 500%,
-      #c08646,
-      #c08646 0.2%,
-      #d09352 0.6%,
-      #d09352 1%
-    );
-}
-
-.body--light .q-page-container{
-  background:
-    repeating-radial-gradient(
-      circle at -1000% 0%,
-      rgba(116, 77, 48, 0.7),
-      #573216 7.5%,
-      rgba(116, 77, 48, 0.9) 10%
-    ),
-    repeating-radial-gradient(
-      circle at -1000% 0%,
-      #573216,
-      #573216 0.1%,
-      #744d30 0.4%,
-      #744d30 0.5%
-    );
-}
-/* トランジションの設定 */
-.v-enter-active,
-.v-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.v-enter-from,
-.v-leave-to {
-  opacity: 0;
 }
 </style>

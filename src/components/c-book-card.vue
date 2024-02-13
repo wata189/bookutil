@@ -20,7 +20,7 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-<q-card class="q-pb-sm q-mx-sm" :flat="!util.isDarkMode()" :class="util.isDarkMode() ? 'bg-dark' : 'bg-transparent' " :title="props.book.bookName">
+<q-card class="q-pb-sm q-mx-sm" :flat="!util.isDarkMode()" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3' " :title="props.book.bookName">
   <slot name="header"></slot>
   <q-img
     :src="book.dispCoverUrl"
@@ -32,7 +32,7 @@ const props = defineProps<Props>();
   <div class="ellipsis q-px-sm book-card-item">
       {{ book.bookName }}
   </div>
-  <q-menu fit class="q-pa-md book-info">
+  <q-menu fit class="q-pa-md book-info" :class="util.isDarkMode() ? '' : 'bg-pink-2'">
     <div class="book-info-inner">
       <div class="text-bold">
         {{ book.bookName }}<template v-if="book.authorName"> / {{ book.authorName }}</template>
@@ -51,7 +51,7 @@ const props = defineProps<Props>();
         
       </q-expansion-item>
       <div>
-        <q-chip v-for="tag in book.tags" dense color="teal" text-color="white">{{ tag }}</q-chip>
+        <q-chip v-for="tag in book.tags" dense color="primary" text-color="white">{{ tag }}</q-chip>
       </div>
       <c-book-links
         :bookName="book.bookName"

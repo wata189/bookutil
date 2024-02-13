@@ -6,6 +6,7 @@ import { onMounted } from "@vue/runtime-core";
 import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
 import { useQuasar } from "quasar";
+import 'animate.css';
 const $q = useQuasar();
 
 import util from "@/modules/util";
@@ -95,11 +96,25 @@ onMounted(async () => {
 
   // メニュー情報設定
   const menuValues = [
-    {"name": "読みたいリスト", "to": "/toread", "icon": "format_list_bulleted", "description": "読みたい本をリスト化します。"}
+    {
+      "name": "読みたいリスト", 
+      "to": "/toread", 
+      "icon": "format_list_bulleted", 
+      "description": `管理者が読みたい本をカード形式で表示します。
+      カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
+      カーリル、Google Books、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
+      また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`}
   ]
   if(user.value.email){
     menuValues.push(
-      {"name": "図書館リスト", "to": "/libraries", "icon": "account_balance", "description": "利用する図書館の一覧を表示します。"}
+      {
+        "name": "図書館リスト", 
+        "to": "/libraries", 
+        "icon": "account_balance", 
+        "description": `管理者が利用する図書館の一覧を表示します。
+        各図書館の予約画面、Googleマップ、カレンダー、図書カードのバーコードへのリンクがあります。
+        また、図書館がタグに登録されている読みたいリストの本を表示できます。`
+      }
     )
   }else{
     // 未ログイン時は未ログインであることを通知する
