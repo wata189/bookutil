@@ -3,6 +3,8 @@ import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref, toRefs, watch } from 'vue';
 import { QForm} from "quasar";
 
+import { onClickOutside } from '@vueuse/core'
+
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
@@ -66,6 +68,11 @@ const filterCond = ref({
   isOnlyNewBook: false
 });
 const isShowFilterCond = ref(false);
+const filtercond = ref(null);
+const showfiltercondbtn = ref(null);
+onClickOutside(filtercond, () => {
+  isShowFilterCond.value = false;
+}, {ignore: [showfiltercondbtn]}); // filtercond表示ボタン押したときは対象外
 
 const labels = {
   bookName: "書籍名",
@@ -862,7 +869,7 @@ onMounted(init);
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
+          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
@@ -886,6 +893,7 @@ onMounted(init);
         </c-transition>
         <div class="col-auto q-pa-xs">
           <c-round-btn
+            ref="showfiltercondbtn"
             title="検索"  
             icon="search"
             color="secondary"
