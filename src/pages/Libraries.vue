@@ -4,6 +4,7 @@ import { computed, ref, watch, toRefs, onMounted } from 'vue';
 import { Ref } from '@vue/runtime-core';
 
 import CRoundLink from "@/components/c-round-link.vue";
+import CRoundBtn from "@/components/c-round-btn.vue";
 
 import util from "@/modules/util";
 import authUtil from '@/modules/authUtil';
@@ -165,12 +166,12 @@ onMounted(init);
                   :href="library.barcodeUrl"
                 ></c-round-link>
                 <q-space></q-space>
-                <c-round-link
+                <c-round-btn
+                  color="primary"
                   title="読みたいリストで表示"
                   icon="format_list_bulleted"
-                  color="primary"
-                  :href="library.toreadLink"
-                ></c-round-link>
+                  :to="library.toreadLink"
+                />
               </div>
               
             </q-card>
