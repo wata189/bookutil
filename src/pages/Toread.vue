@@ -3,8 +3,6 @@ import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref, toRefs, watch } from 'vue';
 import { QForm} from "quasar";
 
-import { onClickOutside } from '@vueuse/core'
-
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
@@ -68,12 +66,6 @@ const filterCond = ref({
   isOnlyNewBook: false
 });
 const isShowFilterCond = ref(false);
-const filtercond = ref(null);
-const showfiltercondbtn = ref(null);
-onClickOutside(filtercond, () => {
-  isShowFilterCond.value = false;
-}, {ignore: [showfiltercondbtn]}); // filtercond表示ボタン押したときは対象外
-
 const labels = {
   bookName: "書籍名",
   isbn: "ISBN",
@@ -769,7 +761,7 @@ onMounted(init);
 
 <template>
   <q-layout view="hHh lpr fFf">
-    <q-page-container>
+    <q-page-container @click="isShowFilterCond = false">
       <q-page>
         <div class="row lt-md items-center">
           <q-space></q-space>
