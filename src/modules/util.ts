@@ -101,16 +101,12 @@ const isbn13To10 = (isbn13:string):string => {
 const getOpenBdCoverUrl = (isbn:string):string => {
   if(!isIsbn(isbn))return IMG_PLACEHOLDER_PATH;
 
-  let isbn13 = isbn;
-  if(isbn.length !== 13){
-    isbn13 = isbn10To13(isbn);
-  }
+  const isbn13 = isbn.length === 13 ? isbn : isbn10To13(isbn);
   
   return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
 };
 
 const xml2json = (jsonStr:string):any => {
-  
   const dataStr:string = xml.xml2json(jsonStr, {compact: true});
   return JSON.parse(dataStr);
 };
