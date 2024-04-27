@@ -136,7 +136,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-layout>
+  <q-layout view="hHh LpR fFf">
     <c-header
       :page-name="pageName"
       :menus="menus"
@@ -144,16 +144,12 @@ onMounted(async () => {
       :is-loading="isLoading"
       @show-error-dialog="showErrorDialog"
     ></c-header>
-    <q-page-container>
-      <q-page>
-        <RouterView 
-          :menus="menus"
-          :is-app-loaded="isAppLoaded"
-          @show-error-dialog="showErrorDialog"
-          @show-confirm-dialog="showConfirmDialog"
-        />
-      </q-page>
-    </q-page-container>
+    <RouterView 
+      :menus="menus"
+      :is-app-loaded="isAppLoaded"
+      @show-error-dialog="showErrorDialog"
+      @show-confirm-dialog="showConfirmDialog"
+    />
 
 
     <!-- ダイアログ -->
