@@ -124,7 +124,7 @@ const filteredSortedToreadBooks = computed({
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-    }).sort((aBook, bBook) => bBook.updateAt - aBook.updateAt);
+    });
 
   },
   set: (value) => {
