@@ -60,8 +60,22 @@ const getIconHref = ():string => {
   return import.meta.env.DEV ? "img/icon.dev.svg" : "img/icon.svg";
 };
 
-const isbn10To13 = (isbn10:string):string => {
-  const isbn12 = "978" + isbn10.slice(0,-1);
+const isbn9To10 = (isbn9:string):string => {
+  const sum = isbn9.split('').reduce((acc, c, i) => {
+      return acc + Number(c[0]) * (10 - i);
+  }, 0);
+  let checkDigit = (11 - sum % 11).toString();
+  if(checkDigit === "10"){
+    checkDigit = "X";
+  }
+  if(checkDigit === "11"){
+    checkDigit = "0";
+  }
+
+  return isbn9 + checkDigit;
+};
+
+const isbn12To13 = (isbn12: string):string => {
   // チェックディジット計算
   const sum = isbn12.split("").map((num:string, index:number) => {
     //ウェイトは1→3→1→3の順
@@ -76,6 +90,14 @@ const isbn10To13 = (isbn10:string):string => {
   return isbn12 + checkDigit;
 };
 
+const isbn10To13 = (isbn10:string):string => {
+  return isbn12To13("978" + isbn10.slice(0,-1));
+};
+
+const isbn13To10 = (isbn13:string):string => {
+  return isbn9To10(isbn13.substring(3, 12));
+};
+
 const getOpenBdCoverUrl = (isbn:string):string => {
   if(!isIsbn(isbn))return IMG_PLACEHOLDER_PATH;
 
@@ -85,23 +107,6 @@ const getOpenBdCoverUrl = (isbn:string):string => {
   }
   
   return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
-};
-
-const isbn13To10 = (isbn13:string):string => {
-  const sum = isbn13.split('').slice(3, 12).reduce((acc, c, i) => {
-      return acc + Number(c[0]) * (10 - i);
-  }, 0);
-  let checkDigit = (11 - sum % 11).toString();
-  if(checkDigit === "10"){
-    checkDigit = "X";
-  }
-  if(checkDigit === "11"){
-    checkDigit = "0";
-  }
-
-  
-  const isbn10 = isbn13.substring(3, 12) + checkDigit;
-  return isbn10;
 };
 
 const xml2json = (jsonStr:string):any => {
@@ -166,6 +171,8 @@ export default {
   getOpenBdCoverUrl,
   isbn10To13,
   isbn13To10,
+  isbn9To10,
+  isbn12To13,
   xml2json,
   fullStr2Half
 }
