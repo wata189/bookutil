@@ -209,6 +209,9 @@ const setBookFromNdlSearch = (book:NdlBook) => {
   if(book.coverUrl){
     bookDialog.value.form.coverUrl = book.coverUrl;
   }
+  if(book.publisherName){
+    bookDialog.value.form.publisherName = book.publisherName;
+  }
 }
 
 const bookDialogForm:Ref<QForm | undefined> = ref();
