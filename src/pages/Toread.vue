@@ -7,8 +7,7 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import googleBooksUtil from '@/modules/googleBooksUtil';
-import ndlSearchUtil from '@/modules/ndlSearchUtil';
+import {NdlBook, getNdlBook, searchNdlShortStorys} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
@@ -17,7 +16,7 @@ const CACHE_KEY = {
   TAGS_HISTORIES: "cache-tagsHistories"
 };
 
-import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
+import CBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
@@ -184,16 +183,33 @@ const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const book = await googleBooksUtil.getBook(trimedIsbn);
+  const book = await getNdlBook(trimedIsbn);
   // 本があったらフォームに設定
   if(book){
-    setBookFromBooksSearchDialog(book);
+    setBookFromNdlSearch(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "GoogleBooksからデータを取得できませんでした");
+    emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
   }
-
 };
+
+const setBookFromNdlSearch = (book:NdlBook) => {
+  if(book.isbn){
+    bookDialog.value.form.isbn = book.isbn;
+  }
+  if(book.bookName){
+    bookDialog.value.form.bookName = book.bookName;
+  }
+  if(book.authorName){
+    bookDialog.value.form.authorName = book.authorName;
+  }
+  if(book.page){
+    bookDialog.value.form.page = book.page;
+  }
+  if(book.coverUrl){
+    bookDialog.value.form.coverUrl = book.coverUrl;
+  }
+}
 
 const bookDialogForm:Ref<QForm | undefined> = ref();
 const createBook = () => {
@@ -625,7 +641,7 @@ const validationRules = {
 const searchShortStorys = async (book:Book) => {
   if(!book.isbn || !util.isIsbn(book.isbn)){return;}
 
-  const shortStorys = await ndlSearchUtil.searchShortStorys(book.isbn);
+  const shortStorys = await searchNdlShortStorys(book.isbn);
 
   if(shortStorys.length === 0){
     emitError("エラー", "書籍内容がありません");
@@ -669,7 +685,7 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (book:GoogleBook) => {console.log(book)},
+  okFunction: (ndlBook:NdlBook) => {console.log(ndlBook)},
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
@@ -680,37 +696,9 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setBookFromBooksSearchDialog,
+    okFunction: setBookFromNdlSearch,
     searchWord
   };
-};
-type GoogleBook = {
-  bookName: string | undefined,
-  isbn: string | undefined,
-  authorName: string,
-  page: number | undefined,
-  coverUrl: string | undefined,
-  description: string | undefined
-};
-const setBookFromBooksSearchDialog = (googleBook:GoogleBook) => {
-  if(googleBook.isbn){
-    bookDialog.value.form.isbn = googleBook.isbn;
-  }
-  if(googleBook.bookName){
-    bookDialog.value.form.bookName = googleBook.bookName;
-  }
-  if(googleBook.authorName){
-    bookDialog.value.form.authorName = googleBook.authorName;
-  }
-  if(googleBook.page){
-    bookDialog.value.form.page = googleBook.page;
-  }
-  if(googleBook.coverUrl){
-    bookDialog.value.form.coverUrl = googleBook.coverUrl;
-  }
-  if(googleBook.description){
-    bookDialog.value.form.memo = googleBook.description;
-  }
 };
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
@@ -1083,7 +1071,7 @@ onMounted(init);
       v-model="booksSearchDialog.isShow"
       :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
-      @error="emitError('エラー', 'GoogleBooksからデータを取得できませんでした')"
+      @error="emitError('エラー', '国会図書館サーチからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
