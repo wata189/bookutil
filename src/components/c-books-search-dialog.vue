@@ -78,7 +78,7 @@ const selectBook = (book:NdlBook) => {
     class="books-search-dialog"
     no-padding
   >
-    <div class="row justify-center q-pa-md">
+    <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
       <div v-for="book in dispBooks" class="col book-cover-wrapper q-my-sm">
         <c-book-card :book="book">
           <template v-slot:header>
@@ -94,6 +94,9 @@ const selectBook = (book:NdlBook) => {
           </template>
         </c-book-card>
       </div>
+    </div>
+    <div v-else class="row justify-center q-pa-md">
+      <q-spinner-ios size="36px" class="text-primary" />
     </div>
   </c-dialog>
 </template>
