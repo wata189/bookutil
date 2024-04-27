@@ -5,10 +5,6 @@ import * as xml from "xml-js";
 const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
 
-const openPageAsNewTab = (url:string) => {
-  window.open(url, "_blank");
-};
-
 const isIsbn = (isbn: string):boolean => {
   const isbn10Regex = /^[0-9]{9}[0-9X]$/;
   const isbn13Regex = /^[0-9]{13}$/;
@@ -158,7 +154,6 @@ const fullStr2Half = (numStr:string):string => {
 };
 
 export default {
-  openPageAsNewTab,
   isIsbn,
   isExist,
   isUrl,
