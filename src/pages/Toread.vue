@@ -624,10 +624,8 @@ const searchShortStorys = async (book:Book) => {
     isShow: true,
     headerText: "書籍内容をコピーしました",
     okLabel: "ブクログを表示",
-    okFunction: () => {
-      const url = "https://booklog.jp/item/1/" + book.isbn;
-      util.openPageAsNewTab(url);
-    },
+    okFunction: undefined,
+    href: "https://booklog.jp/item/1/" + book.isbn,
     content: copyText
   }
 };
@@ -637,14 +635,16 @@ type MsgDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: Function,
+  okFunction: Function | undefined,
+  href: string | undefined,
   content: string
 };
 const msgDialog:Ref<MsgDialog> = ref({
   isShow: false,
   headerText: "",
   okLabel: "",
-  okFunction: () => {},
+  okFunction: undefined,
+  href: undefined,
   content: ""
 });
 
@@ -1092,7 +1092,7 @@ onMounted(init);
     v-model="msgDialog.isShow"
     :header-text="msgDialog.headerText"
     :okLabel="msgDialog.okLabel"
-    @ok="msgDialog.okFunction"
+    :href="msgDialog.href"
   >
     {{ msgDialog.content }}
   </c-dialog>
