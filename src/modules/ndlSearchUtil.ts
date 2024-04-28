@@ -72,7 +72,15 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
     const ndlUrl:string = ndlItem.guid._text;
     const ndlId:string | null = ndlUrl.split("/").pop() || null;
     const bookName:string = ndlItem.title._text;
-    const authorName:string = ndlItem["dc:creator"]._text.replaceAll(",", "").replaceAll(" ", "");
+    let authorName = "";
+    // 配列の場合がある
+    if(ndlItem["dc:creator"][0]){
+      authorName = ndlItem["dc:creator"].map((creatorItem:any) => {
+        return creatorItem._text.replaceAll(",", "").replaceAll(" ", "");
+      }).join(", ");
+    }else{
+      authorName = ndlItem["dc:creator"]._text.replaceAll(",", "").replaceAll(" ", "");
+    }
     const publisherName:string = ndlItem["dc:publisher"]._text;
     const page:number = Number(ndlItem["dc:extent"]._text.replace("p", ""));
   
