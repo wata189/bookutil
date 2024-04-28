@@ -343,7 +343,8 @@ const createBookParams = async (form:BookForm) => {
     authorName: form.authorName ? form.authorName.trim() : null,
     publisherName: form.publisherName ? form.publisherName : null,
     memo: form.memo ? form.memo.trim() : null,
-    newBookCheckFlg: form.newBookCheckFlg,
+    // 図書館チェックフラグはisbn入っているときのみ
+    newBookCheckFlg: form.isbn ? form.newBookCheckFlg : 0, 
     tags: form.tags ? util.strToTag(form.tags.trim()) : [],
     coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
@@ -1048,6 +1049,7 @@ onMounted(init);
           <div class="col-12 col-sm-auto q-pa-xs">
             <q-toggle
               v-model="bookDialog.form.newBookCheckFlg"
+              :disable="!(util.isExist(bookDialog.form.isbn) && util.isIsbn(bookDialog.form.isbn))"
               size="md"
               :true-value="1"
               :false-value="0"
