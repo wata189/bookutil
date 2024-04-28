@@ -1,36 +1,35 @@
 import axiosBase from "axios";
 import util from "./util";
 
+const NDL_SEARCH_URL = import.meta.env.VITE_NDL_SEARCH_URL
 
 const axios = axiosBase.create({
-  baseURL: import.meta.env.VITE_NDL_SEARCH_UTIL
+  baseURL: NDL_SEARCH_URL + "/api"
 });
 
-type NdlBook = {
+export type NdlBook = {
   ndlId: string | null,
   bookName: string,
-  isbn: string,
+  isbn: string | null,
+  authorName: string,
+  publisherName: string,
+  page: number,
+  coverUrl: string
 };
 
-const searchBooks = async (isbn:string):Promise<NdlBook|null> => {
+export const getNdlBook = async (isbn:string):Promise<NdlBook|null> => {
   let book:NdlBook|null = null;
 
   const path = `/opensearch?isbn=${isbn}`;
-  console.log(`searchBooks:${path}`);
+  console.log(`getNdlBooks:${path}`);
 
   try{
     const response = await axios.get(path);
     if(response && response.data){
       const searchResult:any = util.xml2json(response.data).rss.channel.item;
 
-      const searchItem = searchResult[0] ? searchResult[0] : searchResult;
-
-      // レスポンスから書誌IDを取得
-      const ndlUrl:string = searchItem.guid._text;
-      const ndlId:string | null = ndlUrl.split("/").pop() || null;
-      const bookName:string = searchItem.title._text;
-
-      book = { isbn, ndlId, bookName};
+      const ndlItem = searchResult[0] ? searchResult[0] : searchResult;
+      book = ndlItem2NdlBook(ndlItem);
     }
   }catch(error) {
     console.log(error);
@@ -39,15 +38,74 @@ const searchBooks = async (isbn:string):Promise<NdlBook|null> => {
   }
 };
 
+export const searchNdlBooks = async (searchWord:string) => {
+  let ndlBooks:NdlBook[] = [];
+  const path = `/opensearch?any=${searchWord}&cnt=50`;
+  console.log(`getNdlBooks:${path}`);
+  try {
+    const response = await axios.get(path);
+    if(response && response.data){
+      ndlBooks = xml2NdlBooks(response.data)
+    }
+  }catch(error) {
+    console.log(error);
+  }finally{
+    return ndlBooks;
+  }
+};
+
+const xml2NdlBooks = (xml:string):NdlBook[] => {
+  const ndlBooks:NdlBook[] = [];
+  const ndlItems:any[] = util.xml2json(xml).rss.channel.item;
+  for(const ndlItem of ndlItems){
+    const ndlBook = ndlItem2NdlBook(ndlItem);
+    if(ndlBook){
+      ndlBooks.push(ndlBook);
+    }
+  }
+  return ndlBooks;
+};
+const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
+  let ndlBook = null
+  // レスポンスから書誌IDを取得
+  try{
+    const ndlUrl:string = ndlItem.guid._text;
+    const ndlId:string | null = ndlUrl.split("/").pop() || null;
+    const bookName:string = ndlItem.title._text;
+    const authorName:string = ndlItem["dc:creator"]._text.replaceAll(",", "").replaceAll(" ", "");
+    const publisherName:string = ndlItem["dc:publisher"]._text;
+    const page:number = Number(ndlItem["dc:extent"]._text.replace("p", ""));
+  
+    let isbn = "";
+    for(const identifier of ndlItem["dc:identifier"]){
+      if(identifier._attributes["xsi:type"] === "dcndl:ISBN"
+        || identifier._attributes["xsi:type"] === "dcndl:ISBN13"
+      ){
+        isbn = identifier._text.replaceAll("-", "")
+        break;
+      }
+    }
+    if(isbn){
+      const isbn13 = isbn.length === 13 ? isbn : util.isbn10To13(isbn);
+      const coverUrl:string = `${NDL_SEARCH_URL}/thumbnail/${isbn13}.jpg`;
+      ndlBook = { isbn, ndlId, bookName, authorName, publisherName, page, coverUrl };
+    }
+  }catch(error) {
+    console.log(error);
+  }finally{
+    return ndlBook;
+  }
+};
+
 type ShortStory = {
   author: string|null,
   title: string
 };
-const searchShortStorys = async (isbn:string):Promise<ShortStory[]> => {
+export const searchNdlShortStorys = async (isbn:string):Promise<ShortStory[]> => {
   let shortStorys:ShortStory[] = [];
 
   try{
-    const ndlBook = await searchBooks(isbn);
+    const ndlBook = await getNdlBook(isbn);
 
 
     if(ndlBook && ndlBook.ndlId){
@@ -93,7 +151,3 @@ const searchShortStorys = async (isbn:string):Promise<ShortStory[]> => {
   }
 
 };
-export default {
-  searchBooks,
-  searchShortStorys
-}

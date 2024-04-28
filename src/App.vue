@@ -102,7 +102,7 @@ onMounted(async () => {
       "icon": "format_list_bulleted", 
       "description": `管理者が読みたい本をカード形式で表示します。
       カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
-      カーリル、Google Books、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
+      カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
       また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`}
   ]
   if(user.value.email){
@@ -136,7 +136,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-layout>
+  <q-layout view="hHh LpR fFf">
     <c-header
       :page-name="pageName"
       :menus="menus"
@@ -144,16 +144,12 @@ onMounted(async () => {
       :is-loading="isLoading"
       @show-error-dialog="showErrorDialog"
     ></c-header>
-    <q-page-container>
-      <q-page>
-        <RouterView 
-          :menus="menus"
-          :is-app-loaded="isAppLoaded"
-          @show-error-dialog="showErrorDialog"
-          @show-confirm-dialog="showConfirmDialog"
-        />
-      </q-page>
-    </q-page-container>
+    <RouterView 
+      :menus="menus"
+      :is-app-loaded="isAppLoaded"
+      @show-error-dialog="showErrorDialog"
+      @show-confirm-dialog="showConfirmDialog"
+    />
 
 
     <!-- ダイアログ -->

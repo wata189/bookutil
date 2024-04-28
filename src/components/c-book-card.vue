@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Ref, ref } from 'vue';
 
 import util from "@/modules/util";
 import CBookLinks from "@/components/c-book-links.vue";
@@ -17,17 +18,19 @@ interface Props {
 }
 const props = defineProps<Props>();
 
+const coverUrl:Ref<string> = ref(props.book.dispCoverUrl);
+
 </script>
 
 <template>
 <q-card class="q-pb-sm q-mx-sm" :flat="!util.isDarkMode()" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3' " :title="props.book.bookName">
   <slot name="header"></slot>
   <q-img
-    :src="book.dispCoverUrl"
+    :src="coverUrl"
     decoding="async"
     class="book-img book-card-item"
     fit="contain"
-    @error="book.dispCoverUrl = IMG_PLACEHOLDER_PATH"
+    @error="coverUrl = IMG_PLACEHOLDER_PATH"
   ></q-img>
   <div class="ellipsis q-px-sm book-card-item">
       {{ book.bookName }}

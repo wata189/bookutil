@@ -8,7 +8,8 @@ const props = defineProps({
   headerText: {type:String, required: true},
   okLabel: {type:String, default: "OK"},
   hideFooter: {type:Boolean, default: false},
-  noPadding: {type:Boolean, default: false}
+  noPadding: {type:Boolean, default: false},
+  href:{type:String, required: false}
 });
 const emits = defineEmits([
   "update:modelValue",
@@ -49,7 +50,16 @@ const value = computed({
       <q-card-section v-if="!hideFooter" class="row">
         <q-btn flat label="閉じる" color="secondary" v-close-popup />
         <q-space />
-        <q-btn flat :label="okLabel" color="primary" @click="emits('ok')"/>
+        <q-btn 
+          flat 
+          :label="okLabel" 
+          color="primary" 
+          :href="props.href" 
+          @click="emits('ok')"
+          target="_blank" 
+          noopener
+          norefferer
+        />
       </q-card-section>
     </q-card>
   </q-dialog>

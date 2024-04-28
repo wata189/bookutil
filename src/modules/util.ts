@@ -5,10 +5,6 @@ import * as xml from "xml-js";
 const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
 
-const openPageAsNewTab = (url:string) => {
-  window.open(url, "_blank");
-};
-
 const isIsbn = (isbn: string):boolean => {
   const isbn10Regex = /^[0-9]{9}[0-9X]$/;
   const isbn13Regex = /^[0-9]{13}$/;
@@ -64,8 +60,22 @@ const getIconHref = ():string => {
   return import.meta.env.DEV ? "img/icon.dev.svg" : "img/icon.svg";
 };
 
-const isbn10To13 = (isbn10:string):string => {
-  const isbn12 = "978" + isbn10.slice(0,-1);
+const isbn9To10 = (isbn9:string):string => {
+  const sum = isbn9.split('').reduce((acc, c, i) => {
+      return acc + Number(c[0]) * (10 - i);
+  }, 0);
+  let checkDigit = (11 - sum % 11).toString();
+  if(checkDigit === "10"){
+    checkDigit = "X";
+  }
+  if(checkDigit === "11"){
+    checkDigit = "0";
+  }
+
+  return isbn9 + checkDigit;
+};
+
+const isbn12To13 = (isbn12: string):string => {
   // チェックディジット計算
   const sum = isbn12.split("").map((num:string, index:number) => {
     //ウェイトは1→3→1→3の順
@@ -80,36 +90,23 @@ const isbn10To13 = (isbn10:string):string => {
   return isbn12 + checkDigit;
 };
 
+const isbn10To13 = (isbn10:string):string => {
+  return isbn12To13("978" + isbn10.slice(0,-1));
+};
+
+const isbn13To10 = (isbn13:string):string => {
+  return isbn9To10(isbn13.substring(3, 12));
+};
+
 const getOpenBdCoverUrl = (isbn:string):string => {
   if(!isIsbn(isbn))return IMG_PLACEHOLDER_PATH;
 
-  let isbn13 = isbn;
-  if(isbn.length !== 13){
-    isbn13 = isbn10To13(isbn);
-  }
+  const isbn13 = isbn.length === 13 ? isbn : isbn10To13(isbn);
   
   return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
 };
 
-const isbn13To10 = (isbn13:string):string => {
-  const sum = isbn13.split('').slice(3, 12).reduce((acc, c, i) => {
-      return acc + Number(c[0]) * (10 - i);
-  }, 0);
-  let checkDigit = (11 - sum % 11).toString();
-  if(checkDigit === "10"){
-    checkDigit = "X";
-  }
-  if(checkDigit === "11"){
-    checkDigit = "0";
-  }
-
-  
-  const isbn10 = isbn13.substring(3, 12) + checkDigit;
-  return isbn10;
-};
-
 const xml2json = (jsonStr:string):any => {
-  
   const dataStr:string = xml.xml2json(jsonStr, {compact: true});
   return JSON.parse(dataStr);
 };
@@ -158,7 +155,6 @@ const fullStr2Half = (numStr:string):string => {
 };
 
 export default {
-  openPageAsNewTab,
   isIsbn,
   isExist,
   isUrl,
@@ -171,6 +167,8 @@ export default {
   getOpenBdCoverUrl,
   isbn10To13,
   isbn13To10,
+  isbn9To10,
+  isbn12To13,
   xml2json,
   fullStr2Half
 }

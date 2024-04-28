@@ -3,14 +3,11 @@ import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref, toRefs, watch } from 'vue';
 import { QForm} from "quasar";
 
-import { onClickOutside } from '@vueuse/core'
-
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import googleBooksUtil from '@/modules/googleBooksUtil';
-import ndlSearchUtil from '@/modules/ndlSearchUtil';
+import {NdlBook, getNdlBook, searchNdlShortStorys} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
@@ -19,7 +16,7 @@ const CACHE_KEY = {
   TAGS_HISTORIES: "cache-tagsHistories"
 };
 
-import cBooksSearchDialog from '@/components/c-books-search-dialog.vue';
+import CBooksSearchDialog from '@/components/c-books-search-dialog.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
@@ -68,12 +65,6 @@ const filterCond = ref({
   isOnlyNewBook: false
 });
 const isShowFilterCond = ref(false);
-const filtercond = ref(null);
-const showfiltercondbtn = ref(null);
-onClickOutside(filtercond, () => {
-  isShowFilterCond.value = false;
-}, {ignore: [showfiltercondbtn]}); // filtercond表示ボタン押したときは対象外
-
 const labels = {
   bookName: "書籍名",
   isbn: "ISBN",
@@ -132,7 +123,7 @@ const filteredSortedToreadBooks = computed({
     }).filter((book:Book) => {
       // 図書館チェックのみでのフィルター
       return !filterIsOnlyNewBook || book.newBookCheckFlg;
-    }).sort((aBook, bBook) => bBook.updateAt - aBook.updateAt);
+    });
 
   },
   set: (value) => {
@@ -192,16 +183,36 @@ const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const book = await googleBooksUtil.getBook(trimedIsbn);
+  const book = await getNdlBook(trimedIsbn);
   // 本があったらフォームに設定
   if(book){
-    setBookFromBooksSearchDialog(book);
+    setBookFromNdlSearch(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "GoogleBooksからデータを取得できませんでした");
+    emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
   }
-
 };
+
+const setBookFromNdlSearch = (book:NdlBook) => {
+  if(book.isbn){
+    bookDialog.value.form.isbn = book.isbn;
+  }
+  if(book.bookName){
+    bookDialog.value.form.bookName = book.bookName;
+  }
+  if(book.authorName){
+    bookDialog.value.form.authorName = book.authorName;
+  }
+  if(book.page){
+    bookDialog.value.form.page = book.page;
+  }
+  if(book.coverUrl){
+    bookDialog.value.form.coverUrl = book.coverUrl;
+  }
+  if(book.publisherName){
+    bookDialog.value.form.publisherName = book.publisherName;
+  }
+}
 
 const bookDialogForm:Ref<QForm | undefined> = ref();
 const createBook = () => {
@@ -457,7 +468,23 @@ const showEditBookDialog = (book:Book) => {
     tags: book.tags.join("/")
   };
   bookDialog.value.isShow = true;
+};
 
+// isbnの入力補完
+const complementIsbn = (inputIsbn: string) => {
+  let isbn = "";
+  if(inputIsbn.length === 9){
+    isbn = util.isbn9To10(inputIsbn);
+  }else if(inputIsbn.length === 12){
+    isbn = util.isbn12To13(inputIsbn);
+  }
+  
+  if(util.isIsbn(isbn)){
+    console.log(bookDialog.value.form.isbn)
+    bookDialog.value.form.isbn = isbn;
+    console.log(isbn)
+    console.log(bookDialog.value.form.isbn)
+  }
 };
 
 // ローカルストレージのタグ履歴取得
@@ -617,7 +644,7 @@ const validationRules = {
 const searchShortStorys = async (book:Book) => {
   if(!book.isbn || !util.isIsbn(book.isbn)){return;}
 
-  const shortStorys = await ndlSearchUtil.searchShortStorys(book.isbn);
+  const shortStorys = await searchNdlShortStorys(book.isbn);
 
   if(shortStorys.length === 0){
     emitError("エラー", "書籍内容がありません");
@@ -632,10 +659,8 @@ const searchShortStorys = async (book:Book) => {
     isShow: true,
     headerText: "書籍内容をコピーしました",
     okLabel: "ブクログを表示",
-    okFunction: () => {
-      const url = "https://booklog.jp/item/1/" + book.isbn;
-      util.openPageAsNewTab(url);
-    },
+    okFunction: undefined,
+    href: "https://booklog.jp/item/1/" + book.isbn,
     content: copyText
   }
 };
@@ -645,14 +670,16 @@ type MsgDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: Function,
+  okFunction: Function | undefined,
+  href: string | undefined,
   content: string
 };
 const msgDialog:Ref<MsgDialog> = ref({
   isShow: false,
   headerText: "",
   okLabel: "",
-  okFunction: () => {},
+  okFunction: undefined,
+  href: undefined,
   content: ""
 });
 
@@ -661,7 +688,7 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (book:GoogleBook) => {console.log(book)},
+  okFunction: (ndlBook:NdlBook) => {console.log(ndlBook)},
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
@@ -672,37 +699,9 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setBookFromBooksSearchDialog,
+    okFunction: setBookFromNdlSearch,
     searchWord
   };
-};
-type GoogleBook = {
-  bookName: string | undefined,
-  isbn: string | undefined,
-  authorName: string,
-  page: number | undefined,
-  coverUrl: string | undefined,
-  description: string | undefined
-};
-const setBookFromBooksSearchDialog = (googleBook:GoogleBook) => {
-  if(googleBook.isbn){
-    bookDialog.value.form.isbn = googleBook.isbn;
-  }
-  if(googleBook.bookName){
-    bookDialog.value.form.bookName = googleBook.bookName;
-  }
-  if(googleBook.authorName){
-    bookDialog.value.form.authorName = googleBook.authorName;
-  }
-  if(googleBook.page){
-    bookDialog.value.form.page = googleBook.page;
-  }
-  if(googleBook.coverUrl){
-    bookDialog.value.form.coverUrl = googleBook.coverUrl;
-  }
-  if(googleBook.description){
-    bookDialog.value.form.memo = googleBook.description;
-  }
 };
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
@@ -768,8 +767,8 @@ onMounted(init);
 </script>
 
 <template>
-  <q-layout view="hHh lpr fFf">
-    <q-page-container>
+  <div>
+    <q-page-container @click="isShowFilterCond = false">
       <q-page>
         <div class="row lt-md items-center">
           <q-space></q-space>
@@ -971,6 +970,7 @@ onMounted(init);
               :label="labels.isbn"
               :rules="validationRules.isbn"
               mask="#########X###"
+              @update:model-value="complementIsbn(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1074,7 +1074,7 @@ onMounted(init);
       v-model="booksSearchDialog.isShow"
       :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
-      @error="emitError('エラー', 'GoogleBooksからデータを取得できませんでした')"
+      @error="emitError('エラー', '国会図書館サーチからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
@@ -1101,11 +1101,11 @@ onMounted(init);
       v-model="msgDialog.isShow"
       :header-text="msgDialog.headerText"
       :okLabel="msgDialog.okLabel"
-      @ok="msgDialog.okFunction"
+      :href="msgDialog.href"
     >
       {{ msgDialog.content }}
     </c-dialog>
-  </q-layout>
+  </div>
 </template>
 
 <style scoped>

@@ -2,7 +2,7 @@
 
 import { ComputedRef, Ref, computed, ref } from 'vue';
 
-import googleBooksUtil from '@/modules/googleBooksUtil';
+import {searchNdlBooks, NdlBook} from '@/modules/ndlSearchUtil.ts';
 
 import CDialog from "@/components/c-dialog.vue";
 import CBookCard from '@/components/c-book-card.vue';
@@ -26,15 +26,7 @@ const value = computed({
 });
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
-type GoogleBook = {
-  bookName: string | undefined,
-  isbn: string | undefined,
-  authorName: string,
-  page: number | undefined,
-  coverUrl: string | undefined,
-  description: string | undefined
-};
-const googleBooks:Ref<GoogleBook[]> = ref([]);
+const ndlBooks:Ref<NdlBook[]> = ref([]);
 
 interface Book {
   bookName: string,
@@ -43,33 +35,34 @@ interface Book {
   tags: string[],
   dispCoverUrl: string,
   memo: string | null,
-  googleBook: GoogleBook
+  ndlBook: NdlBook
 }
-const books:ComputedRef<Book[]> = computed(() =>{
-  return googleBooks.value.map((googleBook:GoogleBook) => {
+const dispBooks:ComputedRef<Book[]> = computed(() =>{
+  return ndlBooks.value.map((ndlBook:NdlBook) => {
+    console.log(ndlBook.coverUrl);
     return {
-      bookName: googleBook.bookName || "",
-      isbn: googleBook.isbn || null,
-      authorName: googleBook.authorName,
+      bookName: ndlBook.bookName || "",
+      isbn: ndlBook.isbn || null,
+      authorName: ndlBook.authorName,
       tags: [],
-      dispCoverUrl: googleBook.coverUrl || IMG_PLACEHOLDER_PATH,
-      memo: googleBook.description || null,
-      googleBook: googleBook
+      dispCoverUrl: ndlBook.coverUrl || IMG_PLACEHOLDER_PATH,
+      memo: null,
+      ndlBook: ndlBook
     };
   });
 });
 
 
 const searchBooks = async (searchWord:string) => {
-  googleBooks.value = await googleBooksUtil.searchBooks(searchWord);
+  ndlBooks.value = await searchNdlBooks(searchWord);
 
   // 検索結果ない場合はエラー投げる
-  if(googleBooks.value.length === 0){
+  if(ndlBooks.value.length === 0){
     value.value = false;
     emits("error");
   }
 };
-const selectBook = (book:GoogleBook) => {
+const selectBook = (book:NdlBook) => {
   value.value = false;
   emits("ok", book);
 };
@@ -81,12 +74,12 @@ const selectBook = (book:GoogleBook) => {
     header-text="書籍検索"
     hide-footer
     @show="searchBooks(props.searchWord)"
-    @hide="googleBooks = []"
+    @hide="ndlBooks = []"
     class="books-search-dialog"
     no-padding
   >
-    <div class="row justify-center q-pa-md">
-      <div v-for="book in books" class="col book-cover-wrapper q-my-sm">
+    <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
+      <div v-for="book in dispBooks" class="col book-cover-wrapper q-my-sm">
         <c-book-card :book="book">
           <template v-slot:header>
             <div class="row">
@@ -95,12 +88,15 @@ const selectBook = (book:GoogleBook) => {
                 title="選択"
                 icon="add"
                 color="primary"
-                @click="selectBook(book.googleBook)"
+                @click="selectBook(book.ndlBook)"
               ></c-round-btn>
             </div>
           </template>
         </c-book-card>
       </div>
+    </div>
+    <div v-else class="row justify-center q-pa-md">
+      <q-spinner-ios size="36px" class="text-primary" />
     </div>
   </c-dialog>
 </template>
