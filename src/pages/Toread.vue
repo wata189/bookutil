@@ -145,6 +145,15 @@ const dispToreadBooks = computed({
   }
 });
 
+const selectAllDispBooks = () => {
+  for(const dispToreadBook of dispToreadBooks.value){
+    const toreadBook = toreadBooks.value.find(toreadBook => toreadBook.documentId === dispToreadBook.documentId);
+    if(toreadBook){
+      toreadBook.isChecked = ref(true);
+    }
+  }
+};
+
 const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
@@ -905,7 +914,7 @@ onMounted(init);
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
+          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-6 col-md-auto q-pa-sm">
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
@@ -935,6 +944,15 @@ onMounted(init);
             color="secondary"
             :flat="false"
             @click="isShowFilterCond =!isShowFilterCond"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="全選択"  
+            icon="done_all"
+            color="secondary"
+            :flat="false"
+            @click="selectAllDispBooks"
           ></c-round-btn>
         </div>
         <div class="col-auto q-pa-xs">
