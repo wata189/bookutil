@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Dark } from "quasar";
-import { onMounted } from "@vue/runtime-core";
+import { Dark, QForm } from "quasar";
+import { onMounted, Ref } from "@vue/runtime-core";
 import { useRouter } from "vue-router";
 
+import CDialog from "@/components/c-dialog.vue";
 import CRoundBtn from "@/components/c-round-btn.vue";
 
 import authUtil from "@/modules/authUtil";
@@ -64,6 +65,34 @@ const iconSize = "24px";
 
 const iconSrc = util.getIconHref();
 
+const loginDialogForm:Ref<QForm | undefined> = ref();
+const loginDialog = ref({
+  isShow: false,
+  form: {
+    email: "",
+    password: ""
+  }
+});
+const showLoginDialog = () => {
+  console.log(authUtil.getUserInfo());
+  loginDialog.value.isShow = true;
+  
+  loginDialog.value.form = {
+    email: "",
+    password: ""
+  }
+};
+const login = async () => {
+  if(!loginDialogForm.value){return;}
+
+  loginDialogForm.value.validate().then(async(success:boolean)=>{
+    if(!success){return;}
+    loginDialog.value.isShow = false;
+    await authUtil.login(loginDialog.value.form.email, loginDialog.value.form.password);
+  })
+
+}
+
 onMounted(async () => {
   // ダークモード情報をキャッシュから取り出して設定
   const cachedIsDarkMode:boolean | null = await cacheUtil.get(CACHE_KEY.IS_DARK_MODE);
@@ -110,7 +139,7 @@ onMounted(async () => {
         title="ユーザー情報"
         icon="person"
       >
-        <q-menu>
+        <q-menu :class="isDarkMode ? '' : 'bg-pink-3 text-black'">
           <q-list>
             <template v-if="user.email">
               <q-item v-close-popup>
@@ -120,13 +149,43 @@ onMounted(async () => {
                 <q-item-section>ログアウト</q-item-section>
               </q-item>
             </template>
-            <q-item v-else clickable v-close-popup @click="authUtil.login">
+            <q-item v-else clickable v-close-popup @click="showLoginDialog">
               <q-item-section>ログイン</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
       </c-round-btn>
     </q-toolbar>
+    <c-dialog
+      v-model="loginDialog.isShow"
+      header-text="ログイン"
+      okLabel="ログイン"
+      @ok="login"
+    >
+      <q-form ref="loginDialogForm">
+        <div class="row">
+          <div class="col-12 q-pa-xs">
+            <!-- TODO: メアド・パスワードのバリデーション -->
+            <q-input
+              v-model="loginDialog.form.email"
+              type="email"
+              clearable
+              label="メールアドレス"
+            ></q-input>
+          </div>
+          <div class="col-12 q-pa-xs">
+            <!-- TODO: メアド・パスワードのバリデーション -->
+            <q-input
+              v-model="loginDialog.form.password"
+              type="password"
+              clearable
+              label="パスワード"
+            ></q-input>
+          </div>
+        </div>
+      </q-form>
+
+    </c-dialog>
   </q-header>
 </template>
 

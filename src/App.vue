@@ -30,7 +30,16 @@ interface Menu {
   icon: string,
   description: string
 };
-const menus:Ref<Menu[]> = ref([]);
+const menus:Ref<Menu[]> = ref([
+  {
+    "name": "読みたいリスト", 
+    "to": "/toread", 
+    "icon": "format_list_bulleted", 
+    "description": `管理者が読みたい本をカード形式で表示します。
+    カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
+    カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
+    また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`}
+]);
 
 const user = ref({email:""});
 
@@ -76,35 +85,10 @@ const hideLoading = () => {
 };
 const isAppLoaded = ref(false);
 
-onMounted(async () => {
-  // パラメータにcodeがあったらトークンを取得
-  const urlParams = (new URL(window.location.href)).searchParams;
-  const code = urlParams.get("code");
-
-  const beforeAccessToken = await authUtil.getCacheAccessToken();
-  // トークン取得
-  if(code && !beforeAccessToken){
-    await authUtil.getToken(code);
-  }
-
-  // ユーザー情報取得
-  const accessToken = await authUtil.getCacheAccessToken();
-  if(accessToken){
-    const userInfo = await authUtil.getUserInfo(accessToken);
-    user.value = userInfo;
-  }
-
+const setUserInfo = (userInfo: {email:string}) => {
+  user.value = userInfo
   // メニュー情報設定
-  const menuValues = [
-    {
-      "name": "読みたいリスト", 
-      "to": "/toread", 
-      "icon": "format_list_bulleted", 
-      "description": `管理者が読みたい本をカード形式で表示します。
-      カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
-      カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
-      また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`}
-  ]
+  const menuValues = [...menus.value];
   if(user.value.email){
     menuValues.push(
       {
@@ -127,11 +111,26 @@ onMounted(async () => {
     });
   }
   menus.value = menuValues;
+}
+onMounted(async () => {
 
-  // Appのロード完了フラグを立てる
-  isAppLoaded.value = true;
-
-  console.log("mounted app");
+  // ユーザー情報取得
+  const userInfo = authUtil.getUserInfo();
+  if(userInfo.email){
+    setUserInfo(userInfo);
+    // Appのロード完了フラグを立てる
+    isAppLoaded.value = true;
+    console.log("mounted app");
+  }else{
+    authUtil.waitAuthStateChanged(() => {
+      const userInfo = authUtil.getUserInfo();
+      if(userInfo.email){
+        setUserInfo(userInfo);
+      }
+      isAppLoaded.value = true;
+      console.log("mounted app");
+    });
+  }
 });
 </script>
 

@@ -158,8 +158,8 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = await authUtil.getCacheAccessToken();
-  const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/toread/init", {idToken});
   if(response){
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
@@ -322,7 +322,7 @@ type BookParams = {
     coverUrl: string | null,
     newBookCheckFlg: number,
     tags: string[],
-    accessToken: string,
+    idToken: string | null,
     isExternalCooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
@@ -337,8 +337,8 @@ const createUpdateParams = async (documentId:string, updateAt:number, form:BookF
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = await authUtil.getCacheAccessToken();
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken();
+  const user = authUtil.getUserInfo();
   const email = user.email || "No User Data";
   const params:BookParams = {
     documentId: null,
@@ -358,7 +358,7 @@ const createBookParams = async (form:BookForm) => {
     coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
     // アクセストークン
-    accessToken: accessToken,
+    idToken,
     // 外部連携フラグ
     isExternalCooperation: isExternalCooperation
   };
@@ -374,7 +374,7 @@ type SimpleBooksParams = {
   books: SimpleBook[];
   tags?: string[];
   user: string;
-  accessToken: string;
+  idToken: string | null;
 }
 const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
@@ -396,12 +396,12 @@ const deleteBooks = async (books:Book[]) => {
 ${dispBooks.join("\n")}`;
 
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
-    const accessToken = await authUtil.getCacheAccessToken()
-    const user = await authUtil.getUserInfo(accessToken);
+    const idToken = await authUtil.getIdToken()
+    const user = authUtil.getUserInfo();
     const params:SimpleBooksParams = {
       books: simpleBooks,
       user: user.email || "No User Data",
-      accessToken: accessToken
+      idToken
     };
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
@@ -547,12 +547,12 @@ const setLatestTagsFromTagsHistories = async () => {
 
 // よみたいタグ取得→セット
 const setWantTag = async () => {
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   const params = {
     isbn: bookDialog.value.form.isbn,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken: idToken,
   };
   const response = await axiosUtil.post(`/toread/tag/want/get`, params);
   if(response){
@@ -633,12 +633,12 @@ const addTagsFromDialogForm = () => {
 };
 const addWantTag = async (book:Book) => {
   const simpleBook:SimpleBook = {documentId:book.documentId, updateAt:book.updateAt};
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   const params = {
     book: simpleBook,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken
   };
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
@@ -670,12 +670,12 @@ const createAddTagParams = async (books:Book[], tags:string[]):Promise<SimpleBoo
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
 
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   return {
     books: simpleBooks,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken,
     tags: tags
   };
 };
