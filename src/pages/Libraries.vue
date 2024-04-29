@@ -123,8 +123,8 @@ onMounted(init);
 
 <template>
   
-  <q-layout view="hHh lpr fFf">
-    <q-page-container>
+  <q-page-container>
+    <q-page>
       <div class="row justify-center">
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
           <div v-for="library in dispLibraries" class="q-pa-md">
@@ -178,8 +178,8 @@ onMounted(init);
           </div>
         </div>
       </div>
-    </q-page-container>
-  </q-layout>
+    </q-page>
+  </q-page-container>
 
   
 </template>

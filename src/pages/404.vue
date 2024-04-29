@@ -27,12 +27,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="row justify-center q-pa-sm">
-    <div class="col-auto">
-      <div class="text-h1">{{ status }} {{ statusText }}</div>
-      <div class="text-h2">{{ msg }}</div>
-    </div>
-  </div>
+  <q-page-container>
+    <q-page>
+      <div class="row justify-center q-pa-sm">
+        <div class="col-auto">
+          <div class="text-h1">{{ status }} {{ statusText }}</div>
+          <div class="text-h2">{{ msg }}</div>
+        </div>
+      </div>
+    </q-page>
+  </q-page-container>
 </template>
 
 <style scoped>

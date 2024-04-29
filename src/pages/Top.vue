@@ -78,37 +78,39 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <div
-      v-for="introduction, i in introductions"
-      ref="introductionRefs"
-      :style="{height: '800px'}"
-      :class="i % 2 === 1 ? 'bg-pink-3' : 'bg-pink-2'"
-    >
-      <c-top-introduction
-        v-show="introduction.isVisible.value"
-        :name="introduction.name"
-        :description="introduction.description"
-        :to="introduction.to"
-        :img="introduction.img"
-        :icon="introduction.icon"
-        :icon-size="introduction.iconSize"
-        :class="introduction.class"
+  <q-page-container>
+    <q-page>
+      <div
+        v-for="introduction, i in introductions"
+        ref="introductionRefs"
+        :style="{height: '800px'}"
+        :class="i % 2 === 1 ? 'bg-pink-3' : 'bg-pink-2'"
       >
-        <div class="row justify-end">
-          <div class="col-auto">
-            <q-btn 
-              v-if="introduction.to"
-              rounded
-              color="primary"
-              icon="arrow_forward"
-              :to="introduction.to"
-            >表示する</q-btn>
+        <c-top-introduction
+          v-show="introduction.isVisible.value"
+          :name="introduction.name"
+          :description="introduction.description"
+          :to="introduction.to"
+          :img="introduction.img"
+          :icon="introduction.icon"
+          :icon-size="introduction.iconSize"
+          :class="introduction.class"
+        >
+          <div class="row justify-end">
+            <div class="col-auto">
+              <q-btn 
+                v-if="introduction.to"
+                rounded
+                color="primary"
+                icon="arrow_forward"
+                :to="introduction.to"
+              >表示する</q-btn>
+            </div>
           </div>
-        </div>
-      </c-top-introduction>
-    </div>
-  </div>
+        </c-top-introduction>
+      </div>
+    </q-page>
+  </q-page-container>
 </template>
 
 <style scoped>
