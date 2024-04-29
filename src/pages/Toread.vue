@@ -431,6 +431,18 @@ const bookDialog:Ref<BookDialog> = ref({
     tags: ""
   }
 });
+
+
+const isCreateUniqueIsbn = (val:string) => {
+  if(!util.isExist(val)){return true;}
+
+  let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
+  let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
+
+  const isbns = toreadBooks.value.map(book => book.isbn);
+
+  return (!isbns.includes(isbn13) && !isbns.includes(isbn10)) || "同じISBNの本があります";
+};
 const showNewBookDialog = () => {
   bookDialog.value.documentId = "";
   bookDialog.value.headerText = "新規作成";
@@ -448,8 +460,27 @@ const showNewBookDialog = () => {
     tags: ""
   };
   bookDialog.value.isShow = true;
+
+  validationRules.isbn = [
+    validationUtil.isIsbn(labels.isbn),
+    isCreateUniqueIsbn
+  ];
 };
 
+const isUpdateUniqueIsbn = (documentId:string) => {
+  return (val:string) => {
+    if(!util.isExist(val)){return true;}
+
+    let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
+    let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
+
+    const sameIsbnBook = toreadBooks.value.find(book => {
+      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId === documentId;
+    });
+
+    return util.isExist(sameIsbnBook) || "同じISBNの本があります";
+  }
+};
 // 編集ダイアログ表示
 const showEditBookDialog = (book:Book) => {
   bookDialog.value.documentId = book.documentId;
@@ -469,6 +500,11 @@ const showEditBookDialog = (book:Book) => {
     tags: book.tags.join("/")
   };
   bookDialog.value.isShow = true;
+
+  validationRules.isbn = [
+    validationUtil.isIsbn(labels.isbn),
+    isUpdateUniqueIsbn(book.documentId)
+  ];
 };
 
 // isbnの入力補完
