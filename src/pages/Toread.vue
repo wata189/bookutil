@@ -145,6 +145,15 @@ const dispToreadBooks = computed({
   }
 });
 
+const selectAllDispBooks = () => {
+  for(const dispToreadBook of dispToreadBooks.value){
+    const toreadBook = toreadBooks.value.find(toreadBook => toreadBook.documentId === dispToreadBook.documentId);
+    if(toreadBook){
+      toreadBook.isChecked = ref(true);
+    }
+  }
+};
+
 const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
@@ -343,7 +352,8 @@ const createBookParams = async (form:BookForm) => {
     authorName: form.authorName ? form.authorName.trim() : null,
     publisherName: form.publisherName ? form.publisherName : null,
     memo: form.memo ? form.memo.trim() : null,
-    newBookCheckFlg: form.newBookCheckFlg,
+    // 図書館チェックフラグはisbn入っているときのみ
+    newBookCheckFlg: form.isbn ? form.newBookCheckFlg : 0, 
     tags: form.tags ? util.strToTag(form.tags.trim()) : [],
     coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
@@ -430,6 +440,18 @@ const bookDialog:Ref<BookDialog> = ref({
     tags: ""
   }
 });
+
+
+const isCreateUniqueIsbn = (val:string) => {
+  if(!util.isExist(val)){return true;}
+
+  let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
+  let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
+
+  const isbns = toreadBooks.value.map(book => book.isbn);
+
+  return (!isbns.includes(isbn13) && !isbns.includes(isbn10)) || "同じISBNの本があります";
+};
 const showNewBookDialog = () => {
   bookDialog.value.documentId = "";
   bookDialog.value.headerText = "新規作成";
@@ -447,8 +469,27 @@ const showNewBookDialog = () => {
     tags: ""
   };
   bookDialog.value.isShow = true;
+
+  validationRules.isbn = [
+    validationUtil.isIsbn(labels.isbn),
+    isCreateUniqueIsbn
+  ];
 };
 
+const isUpdateUniqueIsbn = (documentId:string) => {
+  return (val:string) => {
+    if(!util.isExist(val)){return true;}
+
+    let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
+    let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
+
+    const sameIsbnBook = toreadBooks.value.find(book => {
+      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId === documentId;
+    });
+
+    return util.isExist(sameIsbnBook) || "同じISBNの本があります";
+  }
+};
 // 編集ダイアログ表示
 const showEditBookDialog = (book:Book) => {
   bookDialog.value.documentId = book.documentId;
@@ -468,6 +509,11 @@ const showEditBookDialog = (book:Book) => {
     tags: book.tags.join("/")
   };
   bookDialog.value.isShow = true;
+
+  validationRules.isbn = [
+    validationUtil.isIsbn(labels.isbn),
+    isUpdateUniqueIsbn(book.documentId)
+  ];
 };
 
 // isbnの入力補完
@@ -868,7 +914,7 @@ onMounted(init);
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-auto q-pa-sm">
+          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-6 col-md-auto q-pa-sm">
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
@@ -898,6 +944,15 @@ onMounted(init);
             color="secondary"
             :flat="false"
             @click="isShowFilterCond =!isShowFilterCond"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="全選択"  
+            icon="done_all"
+            color="secondary"
+            :flat="false"
+            @click="selectAllDispBooks"
           ></c-round-btn>
         </div>
         <div class="col-auto q-pa-xs">
@@ -1048,6 +1103,7 @@ onMounted(init);
           <div class="col-12 col-sm-auto q-pa-xs">
             <q-toggle
               v-model="bookDialog.form.newBookCheckFlg"
+              :disable="!(util.isExist(bookDialog.form.isbn) && util.isIsbn(bookDialog.form.isbn))"
               size="md"
               :true-value="1"
               :false-value="0"
