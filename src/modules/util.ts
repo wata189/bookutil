@@ -106,52 +106,19 @@ const getOpenBdCoverUrl = (isbn:string):string => {
   return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
 };
 
-const xml2json = (jsonStr:string):any => {
-  const dataStr:string = xml.xml2json(jsonStr, {compact: true});
+const xml2json = (xmlStr:string):any => {
+  const dataStr:string = xml.xml2json(xmlStr, {compact: true});
   return JSON.parse(dataStr);
 };
 
 const fullNum2HalfMap:Record<string, string> = {
-  "０": "0",
-  "１": "1",
-  "２": "2",
-  "３": "3",
-  "４": "4",
-  "５": "5",
-  "６": "6",
-  "７": "7",
-  "８": "8",
-  "９": "9",
-  "Ａ": "A",
-  "Ｂ": "B",
-  "Ｃ": "C",
-  "Ｄ": "D",
-  "Ｅ": "E",
-  "Ｆ": "F",
-  "Ｇ": "G",
-  "Ｈ": "H",
-  "Ｉ": "I",
-  "Ｊ": "J",
-  "Ｋ": "K",
-  "Ｌ": "L",
-  "Ｍ": "M",
-  "Ｎ": "N",
-  "Ｏ": "O",
-  "Ｐ": "P",
-  "Ｑ": "Q",
-  "Ｒ": "R",
-  "Ｓ": "S",
-  "Ｔ": "T",
-  "Ｕ": "U",
-  "Ｖ": "V",
-  "Ｗ": "W",
-  "Ｘ": "X",
-  "Ｙ": "Y",
-  "Ｚ": "Z",
-  "　": " "
+  "０": "0","１": "1","２": "2","３": "3","４": "4","５": "5","６": "6","７": "7","８": "8","９": "9",
+  "Ａ": "A","Ｂ": "B","Ｃ": "C","Ｄ": "D","Ｅ": "E","Ｆ": "F","Ｇ": "G","Ｈ": "H","Ｉ": "I","Ｊ": "J","Ｋ": "K","Ｌ": "L","Ｍ": "M","Ｎ": "N","Ｏ": "O","Ｐ": "P","Ｑ": "Q","Ｒ": "R","Ｓ": "S","Ｔ": "T","Ｕ": "U","Ｖ": "V","Ｗ": "W","Ｘ": "X","Ｙ": "Y","Ｚ": "Z",
+  "ａ": "a","ｂ": "b","ｃ": "c","ｄ": "d","ｅ": "e","ｆ": "f","ｇ": "g","ｈ": "h","ｉ": "i","ｊ": "j","ｋ": "k","ｌ": "l","ｍ": "m","ｎ": "n","ｏ": "o","ｐ": "p","ｑ": "q","ｒ": "r","ｓ": "s","ｔ": "t","ｕ": "u","ｖ": "v","ｗ": "w","ｘ": "x","ｙ": "y","ｚ": "z",
+  "　": " ","！": "!","？": "?","（": "(","）": ")"
 };
-const fullStr2Half = (numStr:string):string => {
-  return numStr.replace(/[０-９]/g, (char) => fullNum2HalfMap[char] || char);
+const fullStr2Half = (str:string):string => {
+  return str.split("").map(char => fullNum2HalfMap[char] || char).join("");
 };
 
 export default {
