@@ -53,9 +53,9 @@ const login = (email:string, password:string):Promise<void> => {
         resolve();
       })
       .catch(async (error) => {
-        // ログイン失敗でキャッシュクリアTODO: クリア必要？
+        // ログイン失敗でキャッシュクリア
+        await cacheUtil.refresh()
         // TODO:ログイン失敗したときエラーダイアログ投げる
-        await cacheUtil.clear()
         reject(error);
       });
 
@@ -65,7 +65,7 @@ const login = (email:string, password:string):Promise<void> => {
 const logout = async () => {
   await auth.signOut();
   // キャッシュ初期化
-  await cacheUtil.clear();
+  await cacheUtil.refresh();
   // 画面更新
   window.location.href = util.getCurrentUrl();
 };
