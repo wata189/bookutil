@@ -1,4 +1,3 @@
-import util from "@/modules/util";
 import { CacheUtil } from '@/modules/cacheUtil';
 
 import { initializeApp } from "firebase/app";
@@ -49,13 +48,13 @@ const login = (email:string, password:string):Promise<void> => {
       .then(async () => {
         // 認証成功した時
         console.log("login success")
-        window.location.href = util.getCurrentUrl();
+        // ログイン成功時、キャッシュクリアして諸々読み込み直す
+        await cacheUtil.clear()
+        window.location.reload();
         resolve();
       })
       .catch(async (error) => {
-        // ログイン失敗でキャッシュクリア
-        await cacheUtil.refresh()
-        // TODO:ログイン失敗したときエラーダイアログ投げる
+        console.log(error);
         reject(error);
       });
 

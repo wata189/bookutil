@@ -15,6 +15,12 @@ const CACHE_KEY = {
   IS_DARK_MODE: "cache-isDarkMode"
 };
 
+const EMIT_NAME_ERROR = "show-error-dialog";
+const emits = defineEmits(["show-error-dialog"]);
+const emitError = (statusText:string, msg:string, status?:number) => {
+  emits(EMIT_NAME_ERROR, status, statusText, msg);
+};
+
 const router = useRouter();
 
 interface Menu {
@@ -88,8 +94,13 @@ const login = async () => {
 
   loginDialogForm.value.validate().then(async(success:boolean)=>{
     if(!success){return;}
-    loginDialog.value.isShow = false;
-    await authUtil.login(loginDialog.value.form.email, loginDialog.value.form.password);
+
+    try{
+      await authUtil.login(loginDialog.value.form.email, loginDialog.value.form.password);
+    }catch(e){
+      // ログイン失敗時はエラーダイアログ出す
+      emitError("ログインエラー", "ログインに失敗しました", 403);
+    }
   })
 
 }
