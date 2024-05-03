@@ -11,6 +11,8 @@ const $q = useQuasar();
 
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
+import { CacheUtil } from '@/modules/cacheUtil';
+const cacheUtil = new CacheUtil();
 
 const isDev = import.meta.env.DEV;
 const pageName = isDev ? "(開発)" : "";
@@ -99,16 +101,7 @@ const setUserInfo = (userInfo: {email:string}) => {
         各図書館の予約画面、Googleマップ、カレンダー、図書カードのバーコードへのリンクがあります。
         また、図書館がタグに登録されている読みたいリストの本を表示できます。`
       }
-    )
-  }else{
-    // 未ログイン時は未ログインであることを通知する
-    $q.notify({
-      message: `ログインしていません。ログインしていない場合、一部の機能が制限されます。`,
-      color: "negative",
-      actions: [
-        {icon:"close", color: "white", round: true, handler: () => {}}
-      ]
-    });
+    );
   }
   menus.value = menuValues;
 }
@@ -122,10 +115,22 @@ onMounted(async () => {
     isAppLoaded.value = true;
     console.log("mounted app");
   }else{
-    authUtil.waitAuthStateChanged(() => {
+    // authが未ロードの場合もあるので、その場合はロードを待つ
+    authUtil.waitAuthStateChanged(async () => {
       const userInfo = authUtil.getUserInfo();
-      if(userInfo.email){
-        setUserInfo(userInfo);
+      setUserInfo(userInfo);
+      if(!userInfo.email){
+        // 未ログイン時はキャッシュ空にして、ログイン時のキャッシュが残らないようにする
+        await cacheUtil.clear();
+        // 未ログイン時は未ログインであることを通知する
+        $q.notify({
+          message: `ログインしていません。ログインしていない場合、一部の機能が制限されます。`,
+          color: "negative",
+          actions: [
+            {icon:"close", color: "white", round: true, handler: () => {}}
+          ]
+        });
+
       }
       isAppLoaded.value = true;
       console.log("mounted app");
@@ -141,6 +146,7 @@ onMounted(async () => {
       :menus="menus"
       :user="user"
       :is-loading="isLoading"
+      :is-app-loaded="isAppLoaded"
       @show-error-dialog="showErrorDialog"
     ></c-header>
     <RouterView 
