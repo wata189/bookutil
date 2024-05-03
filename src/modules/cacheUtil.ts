@@ -61,15 +61,9 @@ class CacheUtil {
     return await this.cacheTable.delete(key);
   }
 
-  //キャッシュを完全にリセットする処理
-  async clear(){
-    return await this.cacheTable.clear();
-  }
-
-  // キャッシュを一部を除いてリセットする処理
+  // キャッシュを一部を除いてクリアする処理
   // ダークモード設定消さない
-  // トークン情報は消さないので、ログイン状態は崩さずにキャッシュだけ消したいときに使う
-  async refresh(){
+  async clear(){
     const allCaches: Cache[] = await this.cacheTable.toArray();
     const deleteCaches:Cache[] = allCaches.filter((cache:Cache) => {
       return !PERMANENT_CACHE_KEY.includes(cache.key);

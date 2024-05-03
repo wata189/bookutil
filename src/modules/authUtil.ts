@@ -65,9 +65,9 @@ const login = (email:string, password:string):Promise<void> => {
 const logout = async () => {
   await auth.signOut();
   // キャッシュ初期化
-  await cacheUtil.refresh();
+  await cacheUtil.clear();
   // 画面更新
-  window.location.href = util.getCurrentUrl();
+  window.location.reload();
 };
 
 export default {
