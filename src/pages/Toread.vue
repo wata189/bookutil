@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref, toRefs, watch } from 'vue';
-import { QForm} from "quasar";
+import { QForm, useQuasar } from "quasar";
 
+import { NotifyUtil } from "@/modules/notifyUtil";
+const notifyUtil = new NotifyUtil(useQuasar());
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
@@ -158,8 +160,8 @@ const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
 const initToread = async () => {
-  const accessToken = await authUtil.getCacheAccessToken();
-  const response = await axiosUtil.get(`/toread/init?accessToken=${accessToken}`);
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/toread/init", {idToken});
   if(response){
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
@@ -236,6 +238,8 @@ const createBook = () => {
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
+      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      notifyUtil.notify(message);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
 
@@ -265,6 +269,8 @@ const editBook = () => {
     bookDialog.value.isShow = false;
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
+      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      notifyUtil.notify(message);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // タグ履歴更新
@@ -293,6 +299,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   };
   const response = await updateBook(book.documentId, book.updateAt, form);
   if(response){
+    // 図書館チェックフラグのトグルごときで通知メッセージは出さない
     // 画面情報再設定
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
@@ -322,7 +329,7 @@ type BookParams = {
     coverUrl: string | null,
     newBookCheckFlg: number,
     tags: string[],
-    accessToken: string,
+    idToken: string | null,
     isExternalCooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
@@ -337,8 +344,8 @@ const createUpdateParams = async (documentId:string, updateAt:number, form:BookF
   return params;
 };
 const createBookParams = async (form:BookForm) => {
-  const accessToken = await authUtil.getCacheAccessToken();
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken();
+  const user = authUtil.getUserInfo();
   const email = user.email || "No User Data";
   const params:BookParams = {
     documentId: null,
@@ -358,7 +365,7 @@ const createBookParams = async (form:BookForm) => {
     coverUrl: form.coverUrl ? form.coverUrl.trim() : null,
 
     // アクセストークン
-    accessToken: accessToken,
+    idToken,
     // 外部連携フラグ
     isExternalCooperation: isExternalCooperation
   };
@@ -374,7 +381,7 @@ type SimpleBooksParams = {
   books: SimpleBook[];
   tags?: string[];
   user: string;
-  accessToken: string;
+  idToken: string | null;
 }
 const selectedBooks = computed(() => {
   return toreadBooks.value.filter(book => book.isChecked);
@@ -396,15 +403,18 @@ const deleteBooks = async (books:Book[]) => {
 ${dispBooks.join("\n")}`;
 
   emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
-    const accessToken = await authUtil.getCacheAccessToken()
-    const user = await authUtil.getUserInfo(accessToken);
+    const idToken = await authUtil.getIdToken()
+    const user = authUtil.getUserInfo();
     const params:SimpleBooksParams = {
       books: simpleBooks,
       user: user.email || "No User Data",
-      accessToken: accessToken
+      idToken
     };
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
+      const message = `選択した本を削除しました`;
+      // TODO: 削除した本を戻す処理
+      notifyUtil.notify(message, [], true);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
@@ -547,12 +557,12 @@ const setLatestTagsFromTagsHistories = async () => {
 
 // よみたいタグ取得→セット
 const setWantTag = async () => {
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   const params = {
     isbn: bookDialog.value.form.isbn,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken: idToken,
   };
   const response = await axiosUtil.post(`/toread/tag/want/get`, params);
   if(response){
@@ -633,12 +643,12 @@ const addTagsFromDialogForm = () => {
 };
 const addWantTag = async (book:Book) => {
   const simpleBook:SimpleBook = {documentId:book.documentId, updateAt:book.updateAt};
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   const params = {
     book: simpleBook,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken
   };
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
@@ -656,6 +666,9 @@ const addMultiTag = async () => {
   addTagDialog.value.isShow = false;
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
+    
+    const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
+      notifyUtil.notify(message);
     // 画面情報再設定
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
@@ -670,12 +683,12 @@ const createAddTagParams = async (books:Book[], tags:string[]):Promise<SimpleBoo
     return {documentId:book.documentId, updateAt:book.updateAt}
   });
 
-  const accessToken = await authUtil.getCacheAccessToken()
-  const user = await authUtil.getUserInfo(accessToken);
+  const idToken = await authUtil.getIdToken()
+  const user = authUtil.getUserInfo();
   return {
     books: simpleBooks,
     user: user.email || "No User Data",
-    accessToken: accessToken,
+    idToken,
     tags: tags
   };
 };

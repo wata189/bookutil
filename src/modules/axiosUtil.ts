@@ -31,7 +31,7 @@ class AxiosUtil{
       // 成功時は普通にresponse返却
       return response;
     }, (error:AxiosError) => {
-      console.log(error);
+      console.error(error);
       const status = error.response?.status || null;
       const statusText = error.response?.statusText || "Server Error";
       const data:any = error.response?.data;
@@ -53,9 +53,9 @@ class AxiosUtil{
     return await this.axios.get(path, headerParams);
   }
 
-  async post(path:string, params?:Object){
+  async post(path:string, params?:Object, headers?:Object){
     console.log(`axios post ${path}`);
-    return await this.axios.post(path, params);
+    return await this.axios.post(path, params, headers);
   }
 }
 

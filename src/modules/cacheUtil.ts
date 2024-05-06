@@ -32,12 +32,9 @@ class CacheUtil {
  * @param {number} [limitHours] - キャッシュの期限（時間単位）
  */
   async set(key: string, value: any, limitHours?:number){
+    const defaultLimitHours = 24; // 引数ないときのデフォルトは24h
     // キャッシュ期限の計算
-    let limit:number | undefined = undefined;
-    if(limitHours){
-      limit = (new Date()).getTime();
-      limit += limitHours * 60 * 60 * 1000;
-    }
+    const limit = (new Date()).getTime() + (limitHours || defaultLimitHours) * 60 * 60 * 1000;
 
     const cache:Cache = {
       key, value, limit
@@ -64,14 +61,9 @@ class CacheUtil {
     return await this.cacheTable.delete(key);
   }
 
-  //キャッシュを完全にリセットする処理
+  // キャッシュを一部を除いてクリアする処理
+  // ダークモード設定消さない
   async clear(){
-    return await this.cacheTable.clear();
-  }
-
-  // キャッシュを一部を除いてリセットする処理
-  // トークン情報は消さないので、ログイン状態は崩さずにキャッシュだけ消したいときに使う
-  async refresh(){
     const allCaches: Cache[] = await this.cacheTable.toArray();
     const deleteCaches:Cache[] = allCaches.filter((cache:Cache) => {
       return !PERMANENT_CACHE_KEY.includes(cache.key);
