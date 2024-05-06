@@ -30,10 +30,29 @@ const isUrl = (valName:string) => {
   };
 };
 
+const isEmail = (valName:string) => {
+  return (val:string) => {
+    if(!util.isExist(val)){return true;}
+
+    const regex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~\-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$/;
+    return regex.test(val.toString()) || `${valName}は不正な形式のメールアドレスです`;
+  }
+};
+const isPassword = (valName:string) => {
+  return (val:string) => {
+    if(!util.isExist(val)){return true;}
+
+    const regex = /^[a-zA-Z0-9.?/\-!"#$%&'()^~|@`\{\}\[\]:*,<>_]{8,100}$/;
+    return regex.test(val.toString()) || `${valName}は不正な形式のパスワードです`;
+  }
+};
+
 
 export default {
   isExist,
   isNumber,
   isIsbn,
-  isUrl
+  isUrl,
+  isEmail,
+  isPassword
 }

@@ -10,6 +10,7 @@ import CRoundBtn from "@/components/c-round-btn.vue";
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import { CacheUtil } from '@/modules/cacheUtil';
+import validationUtil from "@/modules/validationUtil";
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
   IS_DARK_MODE: "cache-isDarkMode"
@@ -78,16 +79,17 @@ const loginDialog = ref({
   form: {
     email: "",
     password: ""
-  }
+  },
+  showPassword: false
 });
 const showLoginDialog = () => {
   console.log(authUtil.getUserInfo());
   loginDialog.value.isShow = true;
-  
   loginDialog.value.form = {
     email: "",
     password: ""
-  }
+  };
+  loginDialog.value.showPassword = false;
 };
 const login = async () => {
   if(!loginDialogForm.value){return;}
@@ -102,8 +104,15 @@ const login = async () => {
       emitError("ログインエラー", "ログインに失敗しました", 403);
     }
   })
-
 }
+const labels = {
+  email: "メールアドレス",
+  password: "パスワード"
+};
+const validationRules = {
+  email: [validationUtil.isExist(labels.email), validationUtil.isEmail(labels.email)],
+  password: [validationUtil.isExist(labels.password), validationUtil.isPassword(labels.password)],
+};
 
 const userInfoMenu:Ref<QMenu | undefined> = ref();
 
@@ -122,7 +131,7 @@ const init = async () => {
 
   // ログインしてなかったらメニュー開く
   if(!props.user.email){
-    userInfoMenu.value?.show();
+    showLoginDialog();
   }
   // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
   // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
@@ -192,25 +201,38 @@ onMounted(init);
       okLabel="ログイン"
       @ok="login"
     >
-      <q-form ref="loginDialogForm">
+      <q-form ref="loginDialogForm" class="login-dialog">
         <div class="row">
           <div class="col-12 q-pa-xs">
-            <!-- TODO: メアド・パスワードのバリデーション -->
             <q-input
               v-model="loginDialog.form.email"
               type="email"
               clearable
-              label="メールアドレス"
+              :label="labels.email"
+              :rules="validationRules.email"
             ></q-input>
           </div>
           <div class="col-12 q-pa-xs">
-            <!-- TODO: メアド・パスワードのバリデーション -->
             <q-input
               v-model="loginDialog.form.password"
               type="password"
               clearable
-              label="パスワード"
-            ></q-input>
+              :label="labels.password"
+              :rules="validationRules.password"
+            >
+            <template v-slot:append>
+              <q-icon
+                :name="loginDialog.showPassword ? 'visibility_off' : 'visibility'"
+                class="cursor-pointer"
+                @click="loginDialog.showPassword = !loginDialog.showPassword"
+              />
+            </template>
+            </q-input>
+            
+          </div>
+          <div class="col-12 q-pa-xs">
+            <div v-if="loginDialog.showPassword">{{ loginDialog.form.password }}</div>
+            <div v-else style="height: 21px"></div>
           </div>
         </div>
       </q-form>
