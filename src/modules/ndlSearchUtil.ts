@@ -81,18 +81,28 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
     }else{
       authorName = ndlItem["dc:creator"]._text.replaceAll(",", "").replaceAll(" ", "");
     }
+    authorName = authorName.replace(/[0-9\-]/g, "");
     const publisherName:string = ndlItem["dc:publisher"]._text;
     const page:number = Number(ndlItem["dc:extent"]._text.replace("p", ""));
   
     let isbn = "";
-    for(const identifier of ndlItem["dc:identifier"]){
-      if(identifier._attributes["xsi:type"] === "dcndl:ISBN"
-        || identifier._attributes["xsi:type"] === "dcndl:ISBN13"
+    if(ndlItem["dc:identifier"]){
+      for(const identifier of ndlItem["dc:identifier"]){
+        if(identifier._attributes["xsi:type"] === "dcndl:ISBN"
+          || identifier._attributes["xsi:type"] === "dcndl:ISBN13"
+        ){
+          isbn = identifier._text.replaceAll("-", "")
+          break;
+        }
+      }
+    }else{
+      if(ndlItem["dc:identifier"]._attributes["xsi:type"] === "dcndl:ISBN"
+        || ndlItem["dc:identifier"]._attributes["xsi:type"] === "dcndl:ISBN13"
       ){
-        isbn = identifier._text.replaceAll("-", "")
-        break;
+        isbn = ndlItem["dc:identifier"]._text.replaceAll("-", "")
       }
     }
+
     if(isbn){
       const isbn13 = isbn.length === 13 ? isbn : util.isbn10To13(isbn);
       const coverUrl:string = `${NDL_SEARCH_URL}/thumbnail/${isbn13}.jpg`;
