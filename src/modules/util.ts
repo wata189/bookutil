@@ -121,6 +121,7 @@ const fullStr2Half = (str:string):string => {
   return str.split("").map(char => fullNum2HalfMap[char] || char).join("");
 };
 
+
 export default {
   isIsbn,
   isExist,

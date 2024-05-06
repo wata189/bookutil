@@ -7,8 +7,9 @@ import { ref } from "@vue/reactivity";
 import { Ref } from "vue";
 import { useQuasar } from "quasar";
 import 'animate.css';
-const $q = useQuasar();
 
+import { NotifyUtil } from "@/modules/notifyUtil";
+const notifyUtil = new NotifyUtil(useQuasar());
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil"
 import { CacheUtil } from '@/modules/cacheUtil';
@@ -123,14 +124,8 @@ onMounted(async () => {
         // 未ログイン時はキャッシュ空にして、ログイン時のキャッシュが残らないようにする
         await cacheUtil.clear();
         // 未ログイン時は未ログインであることを通知する
-        $q.notify({
-          message: `ログインしていません。ログインしていない場合、一部の機能が制限されます。`,
-          color: "negative",
-          actions: [
-            {icon:"close", color: "white", round: true, handler: () => {}}
-          ]
-        });
-
+        const message = "ログインしていません。ログインしていない場合、一部の機能が制限されます。";
+        notifyUtil.notify(message, undefined, true);
       }
       isAppLoaded.value = true;
       console.log("mounted app");

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
 import { computed, ref, toRefs, watch } from 'vue';
-import { QForm} from "quasar";
+import { QForm, useQuasar } from "quasar";
 
+import { NotifyUtil } from "@/modules/notifyUtil";
+const notifyUtil = new NotifyUtil(useQuasar());
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
@@ -236,6 +238,8 @@ const createBook = () => {
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if(response){
+      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      notifyUtil.notify(message);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
 
@@ -265,6 +269,8 @@ const editBook = () => {
     bookDialog.value.isShow = false;
     const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
     if(response){
+      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      notifyUtil.notify(message);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
       // タグ履歴更新
@@ -293,6 +299,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   };
   const response = await updateBook(book.documentId, book.updateAt, form);
   if(response){
+    // 図書館チェックフラグのトグルごときで通知メッセージは出さない
     // 画面情報再設定
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
@@ -405,6 +412,9 @@ ${dispBooks.join("\n")}`;
     };
     const response = await axiosUtil.post(`/toread/delete`, params);
     if(response){
+      const message = `選択した本を削除しました`;
+      // TODO: 削除した本を戻す処理
+      notifyUtil.notify(message, [], true);
       // 画面情報再設定
       await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
     }
@@ -656,6 +666,9 @@ const addMultiTag = async () => {
   addTagDialog.value.isShow = false;
   const response = await addTags(selectedBooks.value, util.strToTag(addTagDialog.value.form.tags))
   if(response){
+    
+    const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
+      notifyUtil.notify(message);
     // 画面情報再設定
     await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
   }
