@@ -32,7 +32,7 @@ export const getNdlBook = async (isbn:string):Promise<NdlBook|null> => {
       book = ndlItem2NdlBook(ndlItem);
     }
   }catch(error) {
-    console.log(error);
+    console.error(error);
   }finally{
     return book;
   }
@@ -48,7 +48,7 @@ export const searchNdlBooks = async (searchWord:string) => {
       ndlBooks = xml2NdlBooks(response.data)
     }
   }catch(error) {
-    console.log(error);
+    console.error(error);
   }finally{
     return ndlBooks;
   }
@@ -99,7 +99,7 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
       ndlBook = { isbn, ndlId, bookName, authorName, publisherName, page, coverUrl };
     }
   }catch(error) {
-    console.log(error);
+    console.error(error);
   }finally{
     return ndlBook;
   }
@@ -153,7 +153,7 @@ export const searchNdlShortStorys = async (isbn:string):Promise<ShortStory[]> =>
     }
 
   }catch(error) {
-    console.log(error);
+    console.error(error);
   }finally{
     return shortStorys
   }
