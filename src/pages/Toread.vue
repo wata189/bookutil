@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ref, toRefs, watch } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { QForm, useQuasar } from "quasar";
 
 import { NotifyUtil } from "@/modules/notifyUtil";
@@ -760,12 +760,8 @@ const showBooksSearchDialog = (searchWord:string) => {
   };
 };
 
-// Appコンポーネントのロードが終わった後、子コンポーネントの処理
-// 初回ロードと画面遷移の療法に対応できるようにする
 const {isAppLoaded} = toRefs(props);
-const init = async () => {
-  if(!isAppLoaded.value){return;}
-
+onMounted(util.waitAppLoad(isAppLoaded, async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
@@ -811,15 +807,7 @@ const init = async () => {
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
-    
-  // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
-  // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
-  unwatch();
-
-  console.log("mounted toread");
-};
-const unwatch = watch(isAppLoaded, init);
-onMounted(init);
+}))
 </script>
 
 <template>
