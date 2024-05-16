@@ -527,19 +527,16 @@ const showEditBookDialog = (book:Book) => {
 };
 
 // isbnの入力補完
-const complementIsbn = (inputIsbn: string) => {
-  let isbn = "";
-  if(inputIsbn.length === 9){
-    isbn = util.isbn9To10(inputIsbn);
-  }else if(inputIsbn.length === 12){
-    isbn = util.isbn12To13(inputIsbn);
+const onUpdateIsbn = (inputIsbn: string) => {
+  let isbn = inputIsbn.replace(/-/g, "");
+  if(isbn.length === 9){
+    isbn = util.isbn9To10(isbn);
+  }else if(isbn.length === 12){
+    isbn = util.isbn12To13(isbn);
   }
   
   if(util.isIsbn(isbn)){
-    console.log(bookDialog.value.form.isbn)
     bookDialog.value.form.isbn = isbn;
-    console.log(isbn)
-    console.log(bookDialog.value.form.isbn)
   }
 };
 
@@ -1018,6 +1015,7 @@ onMounted(init);
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
+              
             >
               <template v-slot:append>
                 <q-btn 
@@ -1037,8 +1035,7 @@ onMounted(init);
               clearable
               :label="labels.isbn"
               :rules="validationRules.isbn"
-              mask="#########X###"
-              @update:model-value="complementIsbn(bookDialog.form.isbn)"
+              @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1129,7 +1126,7 @@ onMounted(init);
               v-model="bookDialog.form.memo"
               :label="labels.memo"
               type="textarea"
-              rows="3"
+              autogrow
             ></q-input>
           </div>
         </div>
