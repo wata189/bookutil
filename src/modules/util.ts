@@ -124,7 +124,7 @@ const fullStr2Half = (str:string):string => {
 
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
-const waitAppLoad = (isAppLoaded:Ref<boolean>, callback:Function) => {
+const waitParentMount = (isAppLoaded:Ref<boolean>, callback:Function) => {
   return () => {
     const process = async () => {
       if(!isAppLoaded.value){return;}
@@ -132,7 +132,6 @@ const waitAppLoad = (isAppLoaded:Ref<boolean>, callback:Function) => {
       // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
       await callback();
       unwatch();
-      console.log("mounted toread");
     }
     const unwatch = watch(isAppLoaded, process);
     process();
@@ -157,5 +156,5 @@ export default {
   isbn12To13,
   xml2json,
   fullStr2Half,
-  waitAppLoad
+  waitParentMount
 }

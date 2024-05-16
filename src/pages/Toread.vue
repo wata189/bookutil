@@ -761,7 +761,7 @@ const showBooksSearchDialog = (searchWord:string) => {
 };
 
 const {isAppLoaded} = toRefs(props);
-onMounted(util.waitAppLoad(isAppLoaded, async () => {
+onMounted(util.waitParentMount(isAppLoaded, async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
@@ -807,6 +807,8 @@ onMounted(util.waitAppLoad(isAppLoaded, async () => {
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
+
+  console.log("mounted toread");
 }))
 </script>
 
