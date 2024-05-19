@@ -40,7 +40,8 @@ export const getNdlBook = async (isbn:string):Promise<NdlBook|null> => {
 
 export const searchNdlBooks = async (searchWord:string) => {
   let ndlBooks:NdlBook[] = [];
-  const path = `/opensearch?any=${searchWord}&cnt=50`;
+  const formatted = searchWord.replace(/　/g, " "); // 全角スペースあるとエラー出るので半角にする
+  const path = `/opensearch?any=${formatted}&cnt=50`;
   console.log(`getNdlBooks:${path}`);
   try {
     const response = await axios.get(path);
@@ -115,7 +116,7 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
   }
 };
 
-type ShortStory = {
+export type ShortStory = {
   author: string|null,
   title: string
 };

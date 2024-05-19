@@ -26,6 +26,15 @@ const routes = [
       return await import('@/pages/Toread.vue');
     }
   },
+  {
+    path: '/bookshelf',
+    name: 'bookshelf',
+    props: true,
+    component: async () => {
+      return await import('@/pages/Bookshelf.vue');
+    }
+  },
+
 
   {
     path: '/libraries',

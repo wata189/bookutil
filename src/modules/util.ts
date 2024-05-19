@@ -1,5 +1,6 @@
 
 import { Dark } from 'quasar';
+import { Ref, watch } from 'vue';
 import * as xml from "xml-js";
 
 const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
@@ -121,6 +122,22 @@ const fullStr2Half = (str:string):string => {
   return str.split("").map(char => fullNum2HalfMap[char] || char).join("");
 };
 
+// Appコンポーネントのロードが終わった後、子コンポーネントの処理
+// 初回ロードと画面遷移の療法に対応できるようにする
+const waitParentMount = (isAppLoaded:Ref<boolean>, callback:Function) => {
+  return () => {
+    const process = async () => {
+      if(!isAppLoaded.value){return;}
+      // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
+      // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
+      await callback();
+      unwatch();
+    }
+    const unwatch = watch(isAppLoaded, process);
+    process();
+
+  }
+}
 
 export default {
   isIsbn,
@@ -138,5 +155,6 @@ export default {
   isbn9To10,
   isbn12To13,
   xml2json,
-  fullStr2Half
+  fullStr2Half,
+  waitParentMount
 }

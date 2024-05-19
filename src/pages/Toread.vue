@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ref, toRefs, watch } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { QForm, useQuasar } from "quasar";
 
 import { NotifyUtil } from "@/modules/notifyUtil";
@@ -306,31 +306,31 @@ const toggleNewBookCheckFlg = async (book:Book) => {
 };
 
 type BookForm = {
-    bookName: string,
-    isbn: string,
-    authorName: string,
-    publisherName: string,
-    page: number | null,
-    memo: string,
-    coverUrl: string,
-    newBookCheckFlg: number,
-    tags: string,
+  bookName: string,
+  isbn: string,
+  authorName: string,
+  publisherName: string,
+  page: number | null,
+  memo: string,
+  coverUrl: string,
+  newBookCheckFlg: number,
+  tags: string,
 }
 type BookParams = {
-    documentId: string | null,
-    updateAt: number | null,
-    user: string,
-    bookName: string,
-    isbn: string | null,
-    page: number | null,
-    authorName: string | null,
-    publisherName: string | null,
-    memo: string | null,
-    coverUrl: string | null,
-    newBookCheckFlg: number,
-    tags: string[],
-    idToken: string | null,
-    isExternalCooperation: boolean
+  documentId: string | null,
+  updateAt: number | null,
+  user: string,
+  bookName: string,
+  isbn: string | null,
+  page: number | null,
+  authorName: string | null,
+  publisherName: string | null,
+  memo: string | null,
+  coverUrl: string | null,
+  newBookCheckFlg: number,
+  tags: string[],
+  idToken: string | null,
+  isExternalCooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
   const params = await createBookParams(form);
@@ -462,7 +462,7 @@ const isCreateUniqueIsbn = (val:string) => {
 
   return (!isbns.includes(isbn13) && !isbns.includes(isbn10)) || "同じISBNの本があります";
 };
-const showNewBookDialog = () => {
+const showCreateBookDialog = () => {
   bookDialog.value.documentId = "";
   bookDialog.value.headerText = "新規作成";
   bookDialog.value.okLabel = "新規作成";
@@ -527,19 +527,16 @@ const showEditBookDialog = (book:Book) => {
 };
 
 // isbnの入力補完
-const complementIsbn = (inputIsbn: string) => {
-  let isbn = "";
-  if(inputIsbn.length === 9){
-    isbn = util.isbn9To10(inputIsbn);
-  }else if(inputIsbn.length === 12){
-    isbn = util.isbn12To13(inputIsbn);
+const onUpdateIsbn = (inputIsbn: string) => {
+  let isbn = inputIsbn.replace(/-/g, "");
+  if(isbn.length === 9){
+    isbn = util.isbn9To10(isbn);
+  }else if(isbn.length === 12){
+    isbn = util.isbn12To13(isbn);
   }
   
   if(util.isIsbn(isbn)){
-    console.log(bookDialog.value.form.isbn)
     bookDialog.value.form.isbn = isbn;
-    console.log(isbn)
-    console.log(bookDialog.value.form.isbn)
   }
 };
 
@@ -763,20 +760,88 @@ const showBooksSearchDialog = (searchWord:string) => {
   };
 };
 
-// Appコンポーネントのロードが終わった後、子コンポーネントの処理
-// 初回ロードと画面遷移の療法に対応できるようにする
-const {isAppLoaded} = toRefs(props);
-const init = async () => {
-  if(!isAppLoaded.value){return;}
+const newBooksDialogForm:Ref<QForm | undefined> = ref();
+const addNewBooks = () => {
+  // フォームのバリデーション処理
+  if(!newBooksDialogForm.value){return;}
+  newBooksDialogForm.value.validate().then(async (success:boolean) => {
+    if(!success){return;}
 
+    // ダイアログ消す
+    newBooksDialog.value.isShow = false;
+    // formを送る
+    const idToken = await authUtil.getIdToken();
+    const user = authUtil.getUserInfo();
+    const params = {
+      newBooks: newBooksDialog.value.forms,
+      idToken,
+      user: user.email || "No User Data"
+    };
+    const response = await axiosUtil.post(`/toread/newbooks/add`, params);
+    if(response){
+      const message = `新刊を一括追加しました`;
+      notifyUtil.notify(message);
+      // 画面情報再設定
+      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+
+      // タグ履歴更新
+      if(bookDialog.value.form.tags){
+        await addTagsHistories(bookDialog.value.form.tags);
+      }
+    }
+  });
+};
+type NewBookForm = {
+  documentId: string;
+  bookName: string;
+  isbn: string;
+  authorName: string;
+  publisherName: string;
+  newBookCheckFlg: number;
+  tags: string;
+  isAdd: boolean;
+  updateAt: number;
+}
+type NewBooksDialog = {
+  isShow: boolean,
+  headerText: string,
+  okLabel: string,
+  okFunction: Function,
+  forms: NewBookForm[]
+};
+const newBooksDialog:Ref<NewBooksDialog> = ref({
+  isShow: false,
+  headerText: "新刊一括追加",
+  okLabel: "一括追加",
+  okFunction: addNewBooks,
+  forms: []
+});
+// 新刊一括追加ダイアログ
+const showNewBooksDialog = async () => {
+  newBooksDialog.value.isShow = true;
+
+  // 新刊取得処理
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/toread/newbooks/fetch", {idToken});
+  if(response && response.data.newBooks.length > 0){
+    newBooksDialog.value.forms = response.data.newBooks;
+  }else{
+  newBooksDialog.value.isShow = false;
+    emitError("エラー", "追加していない新刊はありません");
+  }
+};
+
+const {isAppLoaded} = toRefs(props);
+onMounted(util.waitParentMount(isAppLoaded, async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
   const urlParams = (new URL(window.location.href)).searchParams;
   const urlParamIsbn = urlParams.get('isbn');
+  const urlParamAlertNewBooksFlg = urlParams.get("alertNewBooksFlg");
   if(urlParamIsbn){
 
     if(util.isIsbn(urlParamIsbn)){
       isExternalCooperation = true;
-      showNewBookDialog();
+      showCreateBookDialog();
 
       bookDialog.value.form.isbn = urlParamIsbn;
       await getBook(urlParamIsbn);
@@ -793,6 +858,9 @@ const init = async () => {
       // ISBNが取得できなかったことをアラートで表示
       emitError("エラー", "ISBNを取得できませんでした");
     }
+  }else if(util.isExist(urlParamAlertNewBooksFlg)){
+    // alertNewBooksから遷移してきた場合newBooks
+    await showNewBooksDialog();
   }
   
   const urlParamWord = urlParams.get("filterCondWord");
@@ -814,15 +882,9 @@ const init = async () => {
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
-    
-  // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
-  // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
-  unwatch();
 
   console.log("mounted toread");
-};
-const unwatch = watch(isAppLoaded, init);
-onMounted(init);
+}))
 </script>
 
 <template>
@@ -843,7 +905,14 @@ onMounted(init);
         </div>
         <div class="row justify-center q-pa-md">
           <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-my-sm">
-            <c-book-card :book="book">
+            <c-book-card
+              :book-name="book.bookName"
+              :isbn="book.isbn || ''"
+              :author-name="book.authorName || ''"
+              :tags="book.tags"
+              :disp-cover-url="book.dispCoverUrl"
+              :memo="book.memo || ''"
+            >
               <template v-slot:header>
                 <q-checkbox
                   v-model="book.isChecked"
@@ -994,7 +1063,16 @@ onMounted(init);
             icon="add"
             color="primary"
             :flat="false"
-            @click="showNewBookDialog"
+            @click="showCreateBookDialog"
+          ></c-round-btn>
+        </div>
+        <div class="col-auto q-pa-xs">
+          <c-round-btn
+            title="新刊一括追加"  
+            icon="notifications_active"
+            color="secondary"
+            :flat="false"
+            @click="showNewBooksDialog"
           ></c-round-btn>
         </div>
       </div>
@@ -1018,6 +1096,7 @@ onMounted(init);
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
+              
             >
               <template v-slot:append>
                 <q-btn 
@@ -1037,8 +1116,7 @@ onMounted(init);
               clearable
               :label="labels.isbn"
               :rules="validationRules.isbn"
-              mask="#########X###"
-              @update:model-value="complementIsbn(bookDialog.form.isbn)"
+              @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1129,7 +1207,7 @@ onMounted(init);
               v-model="bookDialog.form.memo"
               :label="labels.memo"
               type="textarea"
-              rows="3"
+              autogrow
             ></q-input>
           </div>
         </div>
@@ -1163,6 +1241,79 @@ onMounted(init);
           class="set-tag-dialog-form-tags"
         ></c-input-tag>
       </q-form>
+    </c-dialog>
+
+    <!-- 新刊一括追加ダイアログ -->
+    <c-dialog
+      v-model="newBooksDialog.isShow"
+      :header-text="newBooksDialog.headerText"
+      @hide="newBooksDialog.forms = []"
+      no-padding
+      @ok="newBooksDialog.okFunction"
+      :ok-label="newBooksDialog.okLabel"
+    >
+      <q-form v-if="newBooksDialog.forms.length > 0" ref="newBooksDialogForm">
+        <q-card v-for="form in newBooksDialog.forms" class="q-pa-sm q-ma-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2' ">
+          <div>
+            {{ form.authorName }}『{{ form.bookName }}』
+          </div>
+          <q-checkbox
+            v-model="form.isAdd"
+            label="追加する"
+          ></q-checkbox>
+            <q-expansion-item
+              v-model="form.isAdd"
+              header-style="display:none;"
+            >
+            
+            <div class="row">
+              <div class="col-12 col-sm-5 q-pa-xs">
+                <q-input
+                  v-model="form.bookName"
+                  clearable
+                  :label="labels.bookName"
+                  :rules="form.isAdd ? validationRules.bookName : []"
+                ></q-input>
+              </div>
+              <div class="col-6 col-sm-4 q-pa-xs">
+                <q-input
+                  clearable
+                  v-model="form.authorName"
+                  :label="labels.authorName"
+                ></q-input>
+              </div>
+              <div class="col-6 col-sm-3 q-pa-xs">
+                <q-input
+                  clearable
+                  v-model="form.publisherName"
+                  :label="labels.publisherName"
+                ></q-input>
+              </div>
+              <div class="col-12 q-pa-xs">
+                <c-input-tag
+                  v-model="form.tags"
+                  :label="labels.tags"
+                  hint=",/スペースで区切られます"
+                  :options="toreadTagOptions"
+                ></c-input-tag>
+              </div>
+              <div class="col-12 col-sm-auto q-pa-xs">
+                <q-toggle
+                  v-model="form.newBookCheckFlg"
+                  :disable="!(util.isExist(form.isbn) && util.isIsbn(form.isbn))"
+                  size="md"
+                  :true-value="1"
+                  :false-value="0"
+                  :label="labels.newBookCheckFlg"
+                ></q-toggle>
+              </div>
+            </div>
+          </q-expansion-item>
+        </q-card>
+      </q-form>
+      <div v-else class="row justify-center q-pa-md">
+        <q-spinner-ios size="36px" class="text-primary" />
+      </div>
     </c-dialog>
     
     <!-- 汎用ダイアログ -->

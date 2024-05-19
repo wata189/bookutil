@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { computed, ref, watch, toRefs, onMounted } from 'vue';
+import { computed, ref, toRefs, onMounted } from 'vue';
 import { Ref } from '@vue/runtime-core';
 
 import CRoundLink from "@/components/c-round-link.vue";
@@ -97,11 +97,7 @@ const fetchLibraries = async () => {
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
 const {isAppLoaded} = toRefs(props);
-const init = async () => {
-  // 初回ロード→onMountedのタイミングでは処理を行わないで、watchから呼び出されたタイミングで処理実行
-  // VueRouterで遷移→
-  if(!isAppLoaded.value){return;}
-
+onMounted(util.waitParentMount(isAppLoaded, async () => {
   // キャッシュからリスト取得してみる
   const cachedLibraries: Library[] | null = await cacheUtil.get(CACHE_KEY);
   if(cachedLibraries){
@@ -111,14 +107,9 @@ const init = async () => {
     await fetchLibraries();
   }
 
-  // 初回ロード→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
-  // VueRouterで遷移→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
-  unwatch();
-
   console.log("mounted libraries");
-};
-const unwatch = watch(isAppLoaded, init);
-onMounted(init);
+
+}));
 </script>
 
 <template>

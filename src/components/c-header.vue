@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, toRefs, watch } from "vue";
+import { computed, ref, toRefs } from "vue";
 import { Dark, QForm, QMenu } from "quasar";
 import { onMounted, Ref } from "@vue/runtime-core";
 import { useRouter } from "vue-router";
@@ -119,9 +119,7 @@ const userInfoMenu:Ref<QMenu | undefined> = ref();
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
 const {isAppLoaded} = toRefs(props);
-const init = async () => {
-  if(!isAppLoaded.value){return;}
-
+onMounted(util.waitParentMount(isAppLoaded, async () => {
   // ダークモード情報をキャッシュから取り出して設定
   const cachedIsDarkMode:boolean | null = await cacheUtil.get(CACHE_KEY.IS_DARK_MODE);
   if(cachedIsDarkMode){
@@ -133,13 +131,9 @@ const init = async () => {
   if(!props.user.email){
     showLoginDialog();
   }
-  // 初回ロード時→watchの中でinit呼ばれているのでunwatchして2回め動かないようにする
-  // VueRouterで遷移時→onMountedの中でinit呼ばれて、未使用のwatchをunwatch
-  unwatch();
-  console.log("mounted toread");
-}
-const unwatch = watch(isAppLoaded, init);
-onMounted(init);
+  
+  console.log("mounted c-header");
+}));
 
 </script>
 
