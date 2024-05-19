@@ -306,31 +306,31 @@ const toggleNewBookCheckFlg = async (book:Book) => {
 };
 
 type BookForm = {
-    bookName: string,
-    isbn: string,
-    authorName: string,
-    publisherName: string,
-    page: number | null,
-    memo: string,
-    coverUrl: string,
-    newBookCheckFlg: number,
-    tags: string,
+  bookName: string,
+  isbn: string,
+  authorName: string,
+  publisherName: string,
+  page: number | null,
+  memo: string,
+  coverUrl: string,
+  newBookCheckFlg: number,
+  tags: string,
 }
 type BookParams = {
-    documentId: string | null,
-    updateAt: number | null,
-    user: string,
-    bookName: string,
-    isbn: string | null,
-    page: number | null,
-    authorName: string | null,
-    publisherName: string | null,
-    memo: string | null,
-    coverUrl: string | null,
-    newBookCheckFlg: number,
-    tags: string[],
-    idToken: string | null,
-    isExternalCooperation: boolean
+  documentId: string | null,
+  updateAt: number | null,
+  user: string,
+  bookName: string,
+  isbn: string | null,
+  page: number | null,
+  authorName: string | null,
+  publisherName: string | null,
+  memo: string | null,
+  coverUrl: string | null,
+  newBookCheckFlg: number,
+  tags: string[],
+  idToken: string | null,
+  isExternalCooperation: boolean
 }
 const createCreateParams = async (form:BookForm) => {
   const params = await createBookParams(form);
@@ -905,7 +905,14 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         </div>
         <div class="row justify-center q-pa-md">
           <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-my-sm">
-            <c-book-card :book="book">
+            <c-book-card
+              :book-name="book.bookName"
+              :isbn="book.isbn || ''"
+              :author-name="book.authorName || ''"
+              :tags="book.tags"
+              :disp-cover-url="book.dispCoverUrl"
+              :memo="book.memo || ''"
+            >
               <template v-slot:header>
                 <q-checkbox
                   v-model="book.isChecked"

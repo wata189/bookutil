@@ -80,7 +80,14 @@ const selectBook = (book:NdlBook) => {
   >
     <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
       <div v-for="book in dispBooks" class="col book-cover-wrapper q-my-sm">
-        <c-book-card :book="book">
+        <c-book-card
+          :book-name="book.bookName"
+          :isbn="book.isbn || ''"
+          :author-name="book.authorName || ''"
+          :tags="book.tags"
+          :disp-cover-url="book.dispCoverUrl"
+          :memo="book.memo || ''"
+        >
           <template v-slot:header>
             <div class="row">
               <q-space></q-space>

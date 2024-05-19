@@ -116,7 +116,7 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
   }
 };
 
-type ShortStory = {
+export type ShortStory = {
   author: string|null,
   title: string
 };

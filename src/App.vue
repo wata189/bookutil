@@ -95,6 +95,15 @@ const setUserInfo = (userInfo: {email:string}) => {
   if(user.value.email){
     menuValues.push(
       {
+        "name": "本棚", 
+        "to": "/bookshelf", 
+        "icon": "menu_book", 
+        "description": `管理者が読んだ本をカード形式で表示します。
+        カードには評価を5段階で設定することができます。`
+      }
+    );
+    menuValues.push(
+      {
         "name": "図書館リスト", 
         "to": "/libraries", 
         "icon": "account_balance", 
