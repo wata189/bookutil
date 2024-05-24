@@ -96,6 +96,8 @@ const filteredSortedBookshelfBooks = computed({
 
     /////// フィルター
     return bookshelfBooks.value.filter((book:BookshelfBook) => {
+      // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
+      if(filterCond.value.isOnlyReadBook && !book.readDate){return false;}
       if(filterWords.length === 0){return true;}
       // 通常のワード検索
       const searchedText = [
@@ -543,16 +545,14 @@ const showBooksSearchDialog = (searchWord:string) => {
 
 const filterCond = ref({
   word: "",
-  isOnlyNewBook: false
+  isOnlyReadBook: false
 });
 
-const contentsTable = {
-  columns: [
-    {name: "authorName" , label: "", field: "authorName" , classes: "contents-table-author-name"},
-    {name: "contentName", label: "", field: "contentName"},
-    {name: "rate"       , label: "", field: "rate"       , classes: "contents-table-rate"},
-    {name: "deleteBtn"  , label: "", field: ""           , classes: "contents-table-delete-btn"}
-  ]
+
+const content2str = (contents:Content[]) => {
+  if(contents.length === 0){return undefined;}
+  return contents.map(content => `${content.authorName ? content.authorName : ""}「${content.contentName}」${"★".repeat(content.rate)}`)
+                .join("\n");
 };
 
 const {isAppLoaded} = toRefs(props);
@@ -601,8 +601,15 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :author-name="book.authorName || ''"
               :tags="book.tags"
               :disp-cover-url="book.dispCoverUrl"
+              :memo="content2str(book.contents)"
               hide-book-links
             >
+              <template v-slot:header>
+                  <div class="book-card-rate q-pl-sm">
+                    {{ "★".repeat(book.rate) }}
+                  </div>
+
+              </template>
               <template v-slot:menu-footer>
                 <div class="row">
                   <div class="col-12">
@@ -662,6 +669,13 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                   :options="tagOptions"
                   @update:model-value="toTopPagenation"
                 ></c-input-tag>
+              </div>
+              <div class="col-auto q-pa-sm">
+                <q-toggle
+                  v-model="filterCond.isOnlyReadBook"
+                  label="既読のみ"
+                  @update:model-value="toTopPagenation"
+                ></q-toggle>
               </div>
             </div>
           </div>
@@ -830,56 +844,42 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             />
           </div>
           <div v-if="bookDialog.form.contents.length > 0" class="col-12 q-pa-xs">
-            <q-table
-              bordered
-              hide-header
-              hide-bottom
-              :rows="bookDialog.form.contents"
-              :columns="contentsTable.columns"
-              row-key="contentName"
-              dense
-              :rows-per-page-options="[0]"
-              :card-class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2' "
-            >
-              <template v-slot:body="props">
-                <q-tr :props=props>
-                  <q-td key="authorName" :props="props">
-                    <q-input
-                      v-model="props.row.authorName"
-                      dense
-                      :label="labels.contents.authorName"
-                    ></q-input>
-                  </q-td>
-                  <q-td key="contentName" :props="props">
-                    <q-input
-                      v-model="props.row.contentName"
-                      dense
-                      :label="labels.contents.contentName"
-                      :rules="validationRules.contents.contentName"
-                    ></q-input>
-                  </q-td>
-                  <q-td key="rate" :props="props">
-                    <q-rating
-                      v-model="props.row.rate"
-                      max="5"
-                      color="primary"
-                    ></q-rating>
-                  </q-td>
-                  <q-td key="deleteBtn" :props="props">
-                    <c-round-btn
-                      title="削除"
-                      icon="delete"
-                      is-flat
-                      color="primary"
-                      dense
-                      @click="bookDialog.form.contents.splice(props.rowIndex, 1)"
-                    >
-
-                    </c-round-btn>
-                  </q-td>
-                </q-tr>
-              </template>
-            </q-table>
+            <q-card v-for="content, i in bookDialog.form.contents" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
+              <div class="row">
+                <div class="col-12 q-pa-xs">
+                  <q-input
+                    v-model="content.contentName"
+                    dense
+                    :label="labels.contents.contentName"
+                    :rules="validationRules.contents.contentName"
+                  ></q-input>
+                </div>
+                <div class="col q-pa-xs">
+                  <q-input
+                    v-model="content.authorName"
+                    dense
+                    :label="labels.contents.authorName"
+                  ></q-input>
+                </div>
+                <div class="col-auto q-pa-xs">
+                  <q-rating
+                    v-model="content.rate"
+                    max="5"
+                    color="primary"
+                  ></q-rating>
+                </div>
+                <div class="col-auto q-pa-xs">
+                  <c-round-btn
+                    title="削除"
+                    icon="delete"
+                    is-flat
+                    color="primary"
+                    dense
+                    @click="bookDialog.form.contents.splice(i, 1)"
+                  ></c-round-btn>
+                </div>
+              </div>
+            </q-card>
           </div>
         </div>
         
@@ -931,5 +931,9 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
 }
 .contents-table-delete-btn{
   width: 58px;
+}
+
+.book-card-rate{
+  height: 21px;
 }
 </style>
