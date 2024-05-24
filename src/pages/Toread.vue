@@ -9,10 +9,11 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import {NdlBook, getNdlBook, searchNdlShortStorys} from '@/modules/ndlSearchUtil';
+import {NdlBook, getNdlBook} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
+  BOOKSHELF: "cache-bookshelf",
   BOOKS: "cache-toreadBooks",
   TAGS: "cache-toreadTags",
   TAGS_HISTORIES: "cache-tagsHistories"
@@ -697,31 +698,6 @@ const validationRules = {
   coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
 
-const searchShortStorys = async (book:Book) => {
-  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
-
-  const shortStorys = await searchNdlShortStorys(book.isbn);
-
-  if(shortStorys.length === 0){
-    emitError("エラー", "書籍内容がありません");
-    return;
-  }
-
-  // shortStorysをコピー
-  const copyText = shortStorys.map(shortStory => `${shortStory.author || ""}「${shortStory.title}」`).join("\n");
-  navigator.clipboard.writeText(copyText);
-  // ブクログへのリンクを表示するダイアログ表示
-  msgDialog.value = {
-    isShow: true,
-    headerText: "書籍内容をコピーしました",
-    okLabel: "ブクログを表示",
-    okFunction: undefined,
-    href: "https://booklog.jp/item/1/" + book.isbn,
-    content: copyText
-  }
-};
-
-
 type MsgDialog = {
   isShow: boolean,
   headerText: string,
@@ -828,6 +804,79 @@ const showNewBooksDialog = async () => {
   }else{
   newBooksDialog.value.isShow = false;
     emitError("エラー", "追加していない新刊はありません");
+  }
+};
+
+type Content = {
+  authorName: string | null,
+  contentName: string,
+  rate: number
+};
+type BookshelfBook = {
+  documentId: string | null,
+  bookName: string,
+  isbn: string | null,
+  coverUrl: string,
+  authorName: string | null,
+  publisherName: string | null,
+  readDate: string | null,
+  updateAt: number,
+  tags: string[],
+  rate: number,
+  contents: Content[],
+  dispCoverUrl: string
+};
+type BookshelfBookParams = BookshelfBook & {
+  idToken: string | null,
+  user: string
+};
+const addBookshelf = async (book:Book) => {
+  // bookshelfに変形して登録
+  const idToken = await authUtil.getIdToken();
+  const user = authUtil.getUserInfo();
+  const email = user.email || "No User Data";
+  const tags = book.tags.filter(tag => {
+    // 一部タグをフィルタリング
+    return !["よみたい", "よんでいる", "図書館未定", "かいたい"].includes(tag);
+  }).filter(tag => {
+    // 図書館タグも除外
+    return !/.{1,}図書館$/.test(tag);
+  });
+  const params:BookshelfBookParams = {
+    documentId: null,
+    updateAt: 0,
+    user: email,
+    idToken,
+
+    bookName: book.bookName,
+    isbn: book.isbn,
+    authorName: book.authorName,
+    coverUrl: book.coverUrl,
+    publisherName: book.publisherName,
+    tags,
+    // bookshelf固有の情報
+    readDate: null,
+    rate: 0,
+    contents:[],
+    // dispCoverUrl型の関係で入れとく
+    dispCoverUrl: ""
+  };
+  const response = await axiosUtil.post(`/bookshelf/create`, params);
+  if(response){
+    // キャッシュに保存
+    const limitHours = 1;
+    await cacheUtil.set(CACHE_KEY.BOOKSHELF, response.data.books, limitHours);
+    await cacheUtil.set(CACHE_KEY.TAGS, response.data.tags, limitHours);
+    
+    const message = `『${params.bookName}』を本棚に新規作成しました`;
+    
+    notifyUtil.notify(message, [{
+      icon: "delete",
+      handler: () => {  // notifyコンポーネントがPromiseに対応していないためラップする
+        deleteBooks([book])
+      }
+    }]);
+
   }
 };
 
@@ -954,11 +1003,10 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                   </div>
                   <div class="col-auto">
                     <c-round-btn
-                      v-if="book.isbn"
-                      title="書籍内容検索"
+                      title="本棚登録"
                       icon="menu_book"
                       color="secondary"
-                      @click="searchShortStorys(book)"
+                      @click="addBookshelf(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
