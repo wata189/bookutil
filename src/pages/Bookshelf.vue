@@ -83,7 +83,8 @@ const filteredSortedBookshelfBooks = computed({
     const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
-    let sortFunc = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
+    const sortByUpdateAt = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
+    let sortFunc = sortByUpdateAt;
     // TODO: ソートあれこれ
     if(true){
       sortFunc = (a:BookshelfBook, b:BookshelfBook) => {
@@ -111,7 +112,9 @@ const filteredSortedBookshelfBooks = computed({
       // マイナス検索　マイナス検索1件でも引っかかったらダメ
       const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
       return hasPlusFilterWords && !hasMinusFilterWords;
-    }).sort(sortFunc);
+    })
+    .sort(sortByUpdateAt) // 1回更新順でソートする
+    .sort(sortFunc); // 選択した条件でソート
 
   },
   set: (value) => {
@@ -488,7 +491,14 @@ const labels = {
 const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
-  coverUrl: [validationUtil.isUrl(labels.coverUrl)]
+  coverUrl: [validationUtil.isUrl(labels.coverUrl)],
+  contents: {
+    readDate: [
+      validationUtil.isDateStr(labels.readDate),
+      validationUtil.isValidDate(labels.readDate)
+    ],
+    contentName: [validationUtil.isExist(labels.contents.contentName)]
+  }
 };
 const searchShortStorys = async (isbn:string) => {
   if(!isbn || !util.isIsbn(isbn)){return;}
@@ -773,12 +783,11 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         </div>
         <div class="row">
           <div class="col-12 col-sm-6 q-pa-xs">
-            <!-- TODO:Rules -->
             <q-input
               v-model="bookDialog.form.readDate"
               clearable
               :label="labels.readDate"
-              :rules="[]"
+              :rules="validationRules.contents.readDate"
               mask="XXXX/XX/XX"
             >
               <template v-slot:append>
@@ -842,11 +851,11 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                     ></q-input>
                   </q-td>
                   <q-td key="contentName" :props="props">
-                    <!-- TODO: contentNameのisExistチェック必要 -->
                     <q-input
                       v-model="props.row.contentName"
                       dense
                       :label="labels.contents.contentName"
+                      :rules="validationRules.contents.contentName"
                     ></q-input>
                   </q-td>
                   <q-td key="rate" :props="props">
