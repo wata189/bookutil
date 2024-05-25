@@ -179,7 +179,7 @@ const getBook = async (isbn:string) => {
     await setBookFromApiBook(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
+    emitError("エラー", "APIからデータを取得できませんでした");
   }
 };
 const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
