@@ -9,7 +9,8 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import {NdlBook, getNdlBook, searchNdlShortStorys, ShortStory} from '@/modules/ndlSearchUtil';
+import * as bookApiUtil from '@/modules/bookApiUtil';
+import {searchNdlShortStorys, ShortStory, getCoverUrl} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
@@ -158,7 +159,7 @@ const setInitInfo = async (books:BookshelfBook[], tags: string[]) => {
     if(book.coverUrl){
       dispCoverUrl = book.coverUrl;
     }else if(book.isbn){
-      dispCoverUrl = util.getOpenBdCoverUrl(book.isbn);
+      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
     }
     const retBook = {
       ...book,
@@ -172,34 +173,38 @@ const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const book = await getNdlBook(trimedIsbn);
+  const book = await bookApiUtil.getApiBook(trimedIsbn);
   // 本があったらフォームに設定
   if(book){
-    await setBookFromNdlSearch(book);
+    await setBookFromApiBook(book);
   }else{
     // なかったらエラーダイアログ
     emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
   }
 };
-const setBookFromNdlSearch = async (book:NdlBook) => {
-  if(book.isbn){
-    bookDialog.value.form.isbn = book.isbn;
-  }
-  if(book.bookName){
-    bookDialog.value.form.bookName = book.bookName;
-  }
-  if(book.authorName){
-    bookDialog.value.form.authorName = book.authorName;
-  }
-  if(book.coverUrl){
-    bookDialog.value.form.coverUrl = book.coverUrl;
-  }
-  if(book.publisherName){
-    bookDialog.value.form.publisherName = book.publisherName;
-  }
-  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
+const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
+  const apiBook = await bookApiUtil.getApiBook(book.isbn || "");
+  if(apiBook){
+    if(apiBook.isbn){
+      bookDialog.value.form.isbn = apiBook.isbn;
+    }
+    if(apiBook.bookName){
+      bookDialog.value.form.bookName = apiBook.bookName;
+    }
+    if(apiBook.authorName){
+      bookDialog.value.form.authorName = apiBook.authorName;
+    }
+    if(apiBook.coverUrl){
+      bookDialog.value.form.coverUrl = apiBook.coverUrl;
+    }
+    if(apiBook.publisherName){
+      bookDialog.value.form.publisherName = apiBook.publisherName;
+    }
 
-  const shortStorys = await searchNdlShortStorys(book.isbn);
+  }
+  if(!apiBook || !apiBook.isbn || !util.isIsbn(apiBook.isbn)){return;}
+
+  const shortStorys = await searchNdlShortStorys(apiBook.isbn);
   setShortStorysToContents(shortStorys);
 };
 
@@ -527,7 +532,7 @@ const setShortStorysToContents = (shortStorys: ShortStory[]) => {
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (ndlBook:NdlBook) => {console.log(ndlBook)},
+  okFunction: (apiBook:bookApiUtil.ApiBook) => {console.log(apiBook)},
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
@@ -538,7 +543,7 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setBookFromNdlSearch,
+    okFunction: setBookFromApiBook,
     searchWord
   };
 };

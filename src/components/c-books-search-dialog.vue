@@ -2,7 +2,7 @@
 
 import { ComputedRef, Ref, computed, ref } from 'vue';
 
-import {searchNdlBooks, NdlBook} from '@/modules/ndlSearchUtil.ts';
+import * as bookApiUtil from "@/modules/bookApiUtil.ts"
 
 import CDialog from "@/components/c-dialog.vue";
 import CBookCard from '@/components/c-book-card.vue';
@@ -26,7 +26,7 @@ const value = computed({
 });
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
-const ndlBooks:Ref<NdlBook[]> = ref([]);
+const apiBooks:Ref<bookApiUtil.ApiBook[]> = ref([]);
 
 interface Book {
   bookName: string,
@@ -35,34 +35,33 @@ interface Book {
   tags: string[],
   dispCoverUrl: string,
   memo: string | null,
-  ndlBook: NdlBook
+  apiBook: bookApiUtil.ApiBook
 }
 const dispBooks:ComputedRef<Book[]> = computed(() =>{
-  return ndlBooks.value.map((ndlBook:NdlBook) => {
-    console.log(ndlBook.coverUrl);
+  return apiBooks.value.map((apiBook:bookApiUtil.ApiBook) => {
     return {
-      bookName: ndlBook.bookName || "",
-      isbn: ndlBook.isbn || null,
-      authorName: ndlBook.authorName,
+      bookName: apiBook.bookName || "",
+      isbn: apiBook.isbn || null,
+      authorName: apiBook.authorName,
       tags: [],
-      dispCoverUrl: ndlBook.coverUrl || IMG_PLACEHOLDER_PATH,
+      dispCoverUrl: apiBook.coverUrl || IMG_PLACEHOLDER_PATH,
       memo: null,
-      ndlBook: ndlBook
+      apiBook: apiBook
     };
   });
 });
 
 
 const searchBooks = async (searchWord:string) => {
-  ndlBooks.value = await searchNdlBooks(searchWord);
+  apiBooks.value = await bookApiUtil.searchApiBooks(searchWord);
 
   // 検索結果ない場合はエラー投げる
-  if(ndlBooks.value.length === 0){
+  if(apiBooks.value.length === 0){
     value.value = false;
     emits("error");
   }
 };
-const selectBook = (book:NdlBook) => {
+const selectBook = (book:bookApiUtil.ApiBook) => {
   value.value = false;
   emits("ok", book);
 };
@@ -74,7 +73,7 @@ const selectBook = (book:NdlBook) => {
     header-text="書籍検索"
     hide-footer
     @show="searchBooks(props.searchWord)"
-    @hide="ndlBooks = []"
+    @hide="apiBooks = []"
     class="books-search-dialog"
     no-padding
   >
@@ -95,7 +94,7 @@ const selectBook = (book:NdlBook) => {
                 title="選択"
                 icon="add"
                 color="primary"
-                @click="selectBook(book.ndlBook)"
+                @click="selectBook(book.apiBook)"
               ></c-round-btn>
             </div>
           </template>

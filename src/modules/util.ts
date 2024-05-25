@@ -3,9 +3,6 @@ import { Dark } from 'quasar';
 import { Ref, watch } from 'vue';
 import * as xml from "xml-js";
 
-const OPEN_BD_COVER_URL:string = import.meta.env.VITE_OPEN_BD_COVER_URL;
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
-
 const isIsbn = (isbn: string):boolean => {
   const isbn10Regex = /^[0-9]{9}[0-9X]$/;
   const isbn13Regex = /^[0-9]{13}$/;
@@ -99,14 +96,6 @@ const isbn13To10 = (isbn13:string):string => {
   return isbn9To10(isbn13.substring(3, 12));
 };
 
-const getOpenBdCoverUrl = (isbn:string):string => {
-  if(!isIsbn(isbn))return IMG_PLACEHOLDER_PATH;
-
-  const isbn13 = isbn.length === 13 ? isbn : isbn10To13(isbn);
-  
-  return `${OPEN_BD_COVER_URL}/${isbn13}.jpg`;
-};
-
 const xml2json = (xmlStr:string):any => {
   const dataStr:string = xml.xml2json(xmlStr, {compact: true});
   return JSON.parse(dataStr);
@@ -149,7 +138,6 @@ export default {
   formatDateToStr,
   getCurrentUrl,
   getIconHref,
-  getOpenBdCoverUrl,
   isbn10To13,
   isbn13To10,
   isbn9To10,

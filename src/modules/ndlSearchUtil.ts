@@ -9,12 +9,11 @@ const axios = axiosBase.create({
 
 export type NdlBook = {
   ndlId: string | null,
-  bookName: string,
+  bookName: string | null,
   isbn: string | null,
-  authorName: string,
-  publisherName: string,
-  page: number,
-  coverUrl: string
+  authorName: string | null,
+  publisherName: string | null,
+  coverUrl: string | null
 };
 
 export const getNdlBook = async (isbn:string):Promise<NdlBook|null> => {
@@ -70,24 +69,25 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
   let ndlBook = null
   // レスポンスから書誌IDを取得
   try{
-    const ndlUrl:string = ndlItem.guid._text;
+    const ndlUrl = ndlItem.guid ? ndlItem.guid._text : null;
+
     const ndlId:string | null = ndlUrl.split("/").pop() || null;
-    const bookName:string = ndlItem.title._text;
-    let authorName = "";
+    const bookName:string = ndlItem.title ? ndlItem.title._text : null;
+    let authorName = null;
     // 配列の場合がある
-    if(ndlItem["dc:creator"][0]){
+    if(ndlItem["dc:creator"] && ndlItem["dc:creator"][0]){
       authorName = ndlItem["dc:creator"].map((creatorItem:any) => {
         return creatorItem._text.replaceAll(",", "").replaceAll(" ", "");
       }).join(", ");
-    }else{
+    }else if(ndlItem["dc:creator"]){
       authorName = ndlItem["dc:creator"]._text.replaceAll(",", "").replaceAll(" ", "");
     }
+    // NDLから取得した著者名には年号が入ってるので消す
     authorName = authorName.replace(/[0-9\-]/g, "");
-    const publisherName:string = ndlItem["dc:publisher"]._text;
-    const page:number = Number(ndlItem["dc:extent"]._text.replace("p", ""));
+    const publisherName:string = ndlItem["dc:publisher"] ? ndlItem["dc:publisher"]._text : null;
   
-    let isbn = "";
-    if(ndlItem["dc:identifier"]){
+    let isbn = null;
+    if(ndlItem["dc:identifier"] && ndlItem["dc:identifier"][0]){
       for(const identifier of ndlItem["dc:identifier"]){
         if(identifier._attributes["xsi:type"] === "dcndl:ISBN"
           || identifier._attributes["xsi:type"] === "dcndl:ISBN13"
@@ -96,7 +96,7 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
           break;
         }
       }
-    }else{
+    }else if(ndlItem["dc:identifier"]){
       if(ndlItem["dc:identifier"]._attributes["xsi:type"] === "dcndl:ISBN"
         || ndlItem["dc:identifier"]._attributes["xsi:type"] === "dcndl:ISBN13"
       ){
@@ -104,17 +104,26 @@ const ndlItem2NdlBook = (ndlItem:any):NdlBook | null => {
       }
     }
 
+    let coverUrl = null;
     if(isbn){
-      const isbn13 = isbn.length === 13 ? isbn : util.isbn10To13(isbn);
-      const coverUrl:string = `${NDL_SEARCH_URL}/thumbnail/${isbn13}.jpg`;
-      ndlBook = { isbn, ndlId, bookName, authorName, publisherName, page, coverUrl };
+      coverUrl = getCoverUrl(isbn);
     }
+    ndlBook = { isbn, ndlId, bookName, authorName, publisherName, coverUrl };
   }catch(error) {
     console.error(error);
   }finally{
     return ndlBook;
   }
 };
+
+export const getCoverUrl = (isbn:string) => {
+  if(!util.isIsbn(isbn))return null;
+
+  const isbn13 = isbn.length === 13 ? isbn : util.isbn10To13(isbn);
+  
+  return `${NDL_SEARCH_URL}/thumbnail/${isbn13}.jpg`;;
+
+}
 
 export type ShortStory = {
   author: string|null,
