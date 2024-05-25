@@ -1053,6 +1053,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
+                  id="filter-tag"
                   v-model="filterCond.word"
                   label="検索"
                   dense
@@ -1216,6 +1217,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div class="col-12 q-pa-xs">
             <c-input-tag
+              id="book-dialog-tag"
               v-model="bookDialog.form.tags"
               :label="labels.tags"
               hint=",/スペースで区切られます"
@@ -1287,6 +1289,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     >
       <q-form ref="addTagDialogForm">
         <c-input-tag
+          id="add-tag-dialog-tag"
           v-model="addTagDialog.form.tags"
           :label="labels.tags"
           hint=",/スペースで区切られます"
@@ -1345,6 +1348,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               </div>
               <div class="col-12 q-pa-xs">
                 <c-input-tag
+                  id="new-books-dialog-tag"
                   v-model="form.tags"
                   :label="labels.tags"
                   hint=",/スペースで区切られます"
