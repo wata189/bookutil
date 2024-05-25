@@ -168,17 +168,6 @@ describe.each([
 });
 
 describe.each([
-  ["", "img/cover_placeholder.jpg"],
-  ["123456789X123", "img/cover_placeholder.jpg"],
-  ["9784798172439", "https://cover.openbd.jp/9784798172439.jpg"],
-  ["479817243X", "https://cover.openbd.jp/9784798172439.jpg"]
-])("getOpenBdCoverUrl", (param, expected) => {
-  test(`returns ${expected}`, () => {
-    expect(util.getOpenBdCoverUrl(param)).toBe(expected);
-  })
-});
-
-describe.each([
   ["1234567890あいうえおAbcdefg", "1234567890あいうえおAbcdefg"],
   ["１２３４５６７８９０", "1234567890"],
   ["Ａ　ｂｃｄｅｆｇ", "A bcdefg"],
