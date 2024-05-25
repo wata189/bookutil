@@ -1149,7 +1149,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              
+              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1170,6 +1170,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :label="labels.isbn"
               :rules="validationRules.isbn"
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
+              @keydown.enter="getBook(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
