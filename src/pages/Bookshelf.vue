@@ -141,18 +141,30 @@ const dispBookshelfBooks = computed({
 const tagOptions:Ref<string[]> = ref([]);
 
 // 画面初期化
-const initBookshelf = async () => {
+const fetchTags = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/bookshelf/init", {idToken});
+  const response = await axiosUtil.post("/tag/fetch", {idToken});
   if(response){
-    await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+    await setTags(response.data.tags);
   }
 };
-const setInitInfo = async (books:BookshelfBook[], tags: string[]) => {
+const setTags = async (tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
+  tagOptions.value = tags;
+};
+const fetchBookshelfBooks = async () => {
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/bookshelf/fetch", {idToken});
+  if(response){
+    await setBookshelfBooks(response.data.bookshelfBooks);
+  }
+};
+const setBookshelfBooks = async (books:BookshelfBook[]) => {
   // キャッシュに保存
   const limitHours = 1;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
-  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
 
   bookshelfBooks.value = books.map((book:BookshelfBook):BookshelfBook => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
@@ -167,8 +179,8 @@ const setInitInfo = async (books:BookshelfBook[], tags: string[]) => {
     };
     return retBook;
   });
-  tagOptions.value = tags;
 };
+
 const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
@@ -224,7 +236,7 @@ const createBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -255,7 +267,7 @@ const editBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
         await addTagsHistories(bookDialog.value.form.tags);
@@ -346,7 +358,7 @@ const deleteBook = async (book:BookshelfBook) => {
       // TODO: 削除した本を戻す処理
       notifyUtil.notify(message, [], true);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
     }
   });
 
@@ -562,20 +574,26 @@ const content2str = (contents:Content[]) => {
 
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
-  // キャッシュからリスト取得してみる
-  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
-  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
-  if(cachedBookshelfBooks && cachedToreadTags) {
-    await setInitInfo(cachedBookshelfBooks, cachedToreadTags);
-  }else{
-    await initBookshelf();
-  }
-  
   // タグ履歴キャッシュ
   const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
+
+  // キャッシュからリスト取得してみる
+  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
+  if(cachedBookshelfBooks) {
+    await setBookshelfBooks(cachedBookshelfBooks);
+  }else{
+    await fetchBookshelfBooks();
+  }
+  const cachedTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedTags) {
+    await setTags(cachedTags);
+  }else{
+    fetchTags(); // tagOptions処理は完全に非同期で回す
+  }
+  
 
   console.log("mounted bookshelf");
 }))

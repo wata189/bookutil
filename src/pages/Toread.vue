@@ -161,20 +161,17 @@ const selectAllDispBooks = () => {
 const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
-const initToread = async () => {
+const fetchToreadBooks = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/toread/init", {idToken});
+  const response = await axiosUtil.post("/toread/fetch", {idToken});
   if(response){
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
-
-const setInitInfo = async (books:Book[], tags: string[]) => {
+const setToreadBooks = async (books:Book[]) => {
   // キャッシュに保存
   const limitHours = 1;
   await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
-  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
-
   toreadBooks.value = books.map((book:Book):Book => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
     if(book.coverUrl){
@@ -189,6 +186,19 @@ const setInitInfo = async (books:Book[], tags: string[]) => {
     };
     return retBook;
   });
+};
+
+const fetchTags = async () => {
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/tag/fetch", {idToken});
+  if(response){
+    await setTags(response.data.tags);
+  }
+};
+const setTags = async (tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
   toreadTagOptions.value = tags;
 };
 
@@ -247,7 +257,7 @@ const createBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -278,7 +288,7 @@ const editBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
         await addTagsHistories(bookDialog.value.form.tags);
@@ -307,7 +317,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   if(response){
     // 図書館チェックフラグのトグルごときで通知メッセージは出さない
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 
@@ -422,7 +432,7 @@ ${dispBooks.join("\n")}`;
       // TODO: 削除した本を戻す処理
       notifyUtil.notify(message, [], true);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
     }
   });
 
@@ -640,7 +650,7 @@ const addTagsFromDialogForm = () => {
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
     }
   });
 };
@@ -656,7 +666,7 @@ const addWantTag = async (book:Book) => {
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 const addMultiTag = async () => {
@@ -673,7 +683,7 @@ const addMultiTag = async () => {
     const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
       notifyUtil.notify(message);
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 const addTags = async (books:Book[], tags:string[]) => {
@@ -763,7 +773,7 @@ const addNewBooks = () => {
       const message = `新刊を一括追加しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -921,20 +931,25 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   if(urlParamWord){
     filterCond.value.word = urlParamWord;
   }
-
-  // キャッシュからリスト取得してみる
-  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
-  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
-  if(cachedToreadBooks && cachedToreadTags) {
-    await setInitInfo(cachedToreadBooks, cachedToreadTags);
-  }else{
-    await initToread();
-  }
   
   // タグ履歴キャッシュ
   const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
+  }
+
+  // キャッシュからリスト取得してみる
+  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
+  if(cachedToreadBooks){
+    await setToreadBooks(cachedToreadBooks);
+  }else{
+    await fetchToreadBooks();
+  }
+  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedToreadTags) {
+    await setTags(cachedToreadTags);
+  }else{
+    fetchTags(); // tagOptions処理は完全に非同期で回す
   }
 
   console.log("mounted toread");
