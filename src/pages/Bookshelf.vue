@@ -9,7 +9,8 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import {NdlBook, getNdlBook, searchNdlShortStorys, ShortStory} from '@/modules/ndlSearchUtil';
+import * as bookApiUtil from '@/modules/bookApiUtil';
+import {searchNdlShortStorys, ShortStory, getCoverUrl} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
@@ -83,7 +84,8 @@ const filteredSortedBookshelfBooks = computed({
     const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
-    let sortFunc = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
+    const sortByUpdateAt = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
+    let sortFunc = sortByUpdateAt;
     // TODO: ソートあれこれ
     if(true){
       sortFunc = (a:BookshelfBook, b:BookshelfBook) => {
@@ -95,6 +97,8 @@ const filteredSortedBookshelfBooks = computed({
 
     /////// フィルター
     return bookshelfBooks.value.filter((book:BookshelfBook) => {
+      // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
+      if(filterCond.value.isOnlyReadBook && !book.readDate){return false;}
       if(filterWords.length === 0){return true;}
       // 通常のワード検索
       const searchedText = [
@@ -111,7 +115,9 @@ const filteredSortedBookshelfBooks = computed({
       // マイナス検索　マイナス検索1件でも引っかかったらダメ
       const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
       return hasPlusFilterWords && !hasMinusFilterWords;
-    }).sort(sortFunc);
+    })
+    .sort(sortByUpdateAt) // 1回更新順でソートする
+    .sort(sortFunc); // 選択した条件でソート
 
   },
   set: (value) => {
@@ -135,25 +141,37 @@ const dispBookshelfBooks = computed({
 const tagOptions:Ref<string[]> = ref([]);
 
 // 画面初期化
-const initBookshelf = async () => {
+const fetchTags = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/bookshelf/init", {idToken});
+  const response = await axiosUtil.post("/tag/fetch", {idToken});
   if(response){
-    await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+    await setTags(response.data.tags);
   }
 };
-const setInitInfo = async (books:BookshelfBook[], tags: string[]) => {
+const setTags = async (tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
+  tagOptions.value = tags;
+};
+const fetchBookshelfBooks = async () => {
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/bookshelf/fetch", {idToken});
+  if(response){
+    await setBookshelfBooks(response.data.bookshelfBooks);
+  }
+};
+const setBookshelfBooks = async (books:BookshelfBook[]) => {
   // キャッシュに保存
   const limitHours = 1;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
-  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
 
   bookshelfBooks.value = books.map((book:BookshelfBook):BookshelfBook => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
     if(book.coverUrl){
       dispCoverUrl = book.coverUrl;
     }else if(book.isbn){
-      dispCoverUrl = util.getOpenBdCoverUrl(book.isbn);
+      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
     }
     const retBook = {
       ...book,
@@ -161,40 +179,44 @@ const setInitInfo = async (books:BookshelfBook[], tags: string[]) => {
     };
     return retBook;
   });
-  tagOptions.value = tags;
 };
+
 const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const book = await getNdlBook(trimedIsbn);
+  const book = await bookApiUtil.getApiBook(trimedIsbn);
   // 本があったらフォームに設定
   if(book){
-    await setBookFromNdlSearch(book);
+    await setBookFromApiBook(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
+    emitError("エラー", "APIからデータを取得できませんでした");
   }
 };
-const setBookFromNdlSearch = async (book:NdlBook) => {
-  if(book.isbn){
-    bookDialog.value.form.isbn = book.isbn;
-  }
-  if(book.bookName){
-    bookDialog.value.form.bookName = book.bookName;
-  }
-  if(book.authorName){
-    bookDialog.value.form.authorName = book.authorName;
-  }
-  if(book.coverUrl){
-    bookDialog.value.form.coverUrl = book.coverUrl;
-  }
-  if(book.publisherName){
-    bookDialog.value.form.publisherName = book.publisherName;
-  }
-  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
+const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
+  const apiBook = await bookApiUtil.getApiBook(book.isbn || "");
+  if(apiBook){
+    if(apiBook.isbn){
+      bookDialog.value.form.isbn = apiBook.isbn;
+    }
+    if(apiBook.bookName){
+      bookDialog.value.form.bookName = apiBook.bookName;
+    }
+    if(apiBook.authorName){
+      bookDialog.value.form.authorName = apiBook.authorName;
+    }
+    if(apiBook.coverUrl){
+      bookDialog.value.form.coverUrl = apiBook.coverUrl;
+    }
+    if(apiBook.publisherName){
+      bookDialog.value.form.publisherName = apiBook.publisherName;
+    }
 
-  const shortStorys = await searchNdlShortStorys(book.isbn);
+  }
+  if(!apiBook || !apiBook.isbn || !util.isIsbn(apiBook.isbn)){return;}
+
+  const shortStorys = await searchNdlShortStorys(apiBook.isbn);
   setShortStorysToContents(shortStorys);
 };
 
@@ -214,7 +236,7 @@ const createBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -245,7 +267,7 @@ const editBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
         await addTagsHistories(bookDialog.value.form.tags);
@@ -336,7 +358,7 @@ const deleteBook = async (book:BookshelfBook) => {
       // TODO: 削除した本を戻す処理
       notifyUtil.notify(message, [], true);
       // 画面情報再設定
-      await setInitInfo(response.data.bookshelfBooks, response.data.tags);
+      await setBookshelfBooks(response.data.bookshelfBooks);
     }
   });
 
@@ -488,7 +510,14 @@ const labels = {
 const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
-  coverUrl: [validationUtil.isUrl(labels.coverUrl)]
+  coverUrl: [validationUtil.isUrl(labels.coverUrl)],
+  contents: {
+    readDate: [
+      validationUtil.isDateStr(labels.readDate),
+      validationUtil.isValidDate(labels.readDate)
+    ],
+    contentName: [validationUtil.isExist(labels.contents.contentName)]
+  }
 };
 const searchShortStorys = async (isbn:string) => {
   if(!isbn || !util.isIsbn(isbn)){return;}
@@ -515,7 +544,7 @@ const setShortStorysToContents = (shortStorys: ShortStory[]) => {
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (ndlBook:NdlBook) => {console.log(ndlBook)},
+  okFunction: (apiBook:bookApiUtil.ApiBook) => {console.log(apiBook)},
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
@@ -526,41 +555,45 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setBookFromNdlSearch,
+    okFunction: setBookFromApiBook,
     searchWord
   };
 };
 
 const filterCond = ref({
   word: "",
-  isOnlyNewBook: false
+  isOnlyReadBook: false
 });
 
-const contentsTable = {
-  columns: [
-    {name: "authorName" , label: "", field: "authorName" , classes: "contents-table-author-name"},
-    {name: "contentName", label: "", field: "contentName"},
-    {name: "rate"       , label: "", field: "rate"       , classes: "contents-table-rate"},
-    {name: "deleteBtn"  , label: "", field: ""           , classes: "contents-table-delete-btn"}
-  ]
+
+const content2str = (contents:Content[]) => {
+  if(contents.length === 0){return undefined;}
+  return contents.map(content => `${content.authorName ? content.authorName : ""}「${content.contentName}」${"★".repeat(content.rate)}`)
+                .join("\n");
 };
 
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
-  // キャッシュからリスト取得してみる
-  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
-  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
-  if(cachedBookshelfBooks && cachedToreadTags) {
-    await setInitInfo(cachedBookshelfBooks, cachedToreadTags);
-  }else{
-    await initBookshelf();
-  }
-  
   // タグ履歴キャッシュ
   const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
+
+  // キャッシュからリスト取得してみる
+  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
+  if(cachedBookshelfBooks) {
+    await setBookshelfBooks(cachedBookshelfBooks);
+  }else{
+    await fetchBookshelfBooks();
+  }
+  const cachedTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedTags) {
+    await setTags(cachedTags);
+  }else{
+    fetchTags(); // tagOptions処理は完全に非同期で回す
+  }
+  
 
   console.log("mounted bookshelf");
 }))
@@ -591,8 +624,15 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :author-name="book.authorName || ''"
               :tags="book.tags"
               :disp-cover-url="book.dispCoverUrl"
+              :memo="content2str(book.contents)"
               hide-book-links
             >
+              <template v-slot:header>
+                  <div class="book-card-rate q-pl-sm">
+                    {{ "★".repeat(book.rate) }}
+                  </div>
+
+              </template>
               <template v-slot:menu-footer>
                 <div class="row">
                   <div class="col-12">
@@ -645,6 +685,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
+                  id="filter-tag"
                   v-model="filterCond.word"
                   label="検索"
                   dense
@@ -652,6 +693,13 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                   :options="tagOptions"
                   @update:model-value="toTopPagenation"
                 ></c-input-tag>
+              </div>
+              <div class="col-auto q-pa-sm">
+                <q-toggle
+                  v-model="filterCond.isOnlyReadBook"
+                  label="既読のみ"
+                  @update:model-value="toTopPagenation"
+                ></q-toggle>
               </div>
             </div>
           </div>
@@ -693,7 +741,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              
+              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -714,6 +762,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :label="labels.isbn"
               :rules="validationRules.isbn"
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
+              @keydown.enter="getBook(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -751,6 +800,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div class="col-12 q-pa-xs">
             <c-input-tag
+              id="book-dialog-tag"
               v-model="bookDialog.form.tags"
               :label="labels.tags"
               hint=",/スペースで区切られます"
@@ -773,12 +823,11 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         </div>
         <div class="row">
           <div class="col-12 col-sm-6 q-pa-xs">
-            <!-- TODO:Rules -->
             <q-input
               v-model="bookDialog.form.readDate"
               clearable
               :label="labels.readDate"
-              :rules="[]"
+              :rules="validationRules.contents.readDate"
               mask="XXXX/XX/XX"
             >
               <template v-slot:append>
@@ -821,56 +870,42 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             />
           </div>
           <div v-if="bookDialog.form.contents.length > 0" class="col-12 q-pa-xs">
-            <q-table
-              bordered
-              hide-header
-              hide-bottom
-              :rows="bookDialog.form.contents"
-              :columns="contentsTable.columns"
-              row-key="contentName"
-              dense
-              :rows-per-page-options="[0]"
-              :card-class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2' "
-            >
-              <template v-slot:body="props">
-                <q-tr :props=props>
-                  <q-td key="authorName" :props="props">
-                    <q-input
-                      v-model="props.row.authorName"
-                      dense
-                      :label="labels.contents.authorName"
-                    ></q-input>
-                  </q-td>
-                  <q-td key="contentName" :props="props">
-                    <!-- TODO: contentNameのisExistチェック必要 -->
-                    <q-input
-                      v-model="props.row.contentName"
-                      dense
-                      :label="labels.contents.contentName"
-                    ></q-input>
-                  </q-td>
-                  <q-td key="rate" :props="props">
-                    <q-rating
-                      v-model="props.row.rate"
-                      max="5"
-                      color="primary"
-                    ></q-rating>
-                  </q-td>
-                  <q-td key="deleteBtn" :props="props">
-                    <c-round-btn
-                      title="削除"
-                      icon="delete"
-                      is-flat
-                      color="primary"
-                      dense
-                      @click="bookDialog.form.contents.splice(props.rowIndex, 1)"
-                    >
-
-                    </c-round-btn>
-                  </q-td>
-                </q-tr>
-              </template>
-            </q-table>
+            <q-card v-for="content, i in bookDialog.form.contents" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
+              <div class="row">
+                <div class="col-12 q-pa-xs">
+                  <q-input
+                    v-model="content.contentName"
+                    dense
+                    :label="labels.contents.contentName"
+                    :rules="validationRules.contents.contentName"
+                  ></q-input>
+                </div>
+                <div class="col q-pa-xs">
+                  <q-input
+                    v-model="content.authorName"
+                    dense
+                    :label="labels.contents.authorName"
+                  ></q-input>
+                </div>
+                <div class="col-auto q-pa-xs">
+                  <q-rating
+                    v-model="content.rate"
+                    max="5"
+                    color="primary"
+                  ></q-rating>
+                </div>
+                <div class="col-auto q-pa-xs">
+                  <c-round-btn
+                    title="削除"
+                    icon="delete"
+                    is-flat
+                    color="primary"
+                    dense
+                    @click="bookDialog.form.contents.splice(i, 1)"
+                  ></c-round-btn>
+                </div>
+              </div>
+            </q-card>
           </div>
         </div>
         
@@ -922,5 +957,9 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
 }
 .contents-table-delete-btn{
   width: 58px;
+}
+
+.book-card-rate{
+  height: 21px;
 }
 </style>

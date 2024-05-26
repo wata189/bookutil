@@ -9,10 +9,12 @@ import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
-import {NdlBook, getNdlBook, searchNdlShortStorys} from '@/modules/ndlSearchUtil';
+import * as bookApiUtil from '@/modules/bookApiUtil';
+import {getCoverUrl} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
+  BOOKSHELF: "cache-bookshelf",
   BOOKS: "cache-toreadBooks",
   TAGS: "cache-toreadTags",
   TAGS_HISTORIES: "cache-tagsHistories"
@@ -159,26 +161,23 @@ const selectAllDispBooks = () => {
 const toreadTagOptions:Ref<string[]> = ref([]);
 
 // toread画面初期化処理
-const initToread = async () => {
+const fetchToreadBooks = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/toread/init", {idToken});
+  const response = await axiosUtil.post("/toread/fetch", {idToken});
   if(response){
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
-
-const setInitInfo = async (books:Book[], tags: string[]) => {
+const setToreadBooks = async (books:Book[]) => {
   // キャッシュに保存
   const limitHours = 1;
   await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
-  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
-
   toreadBooks.value = books.map((book:Book):Book => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
     if(book.coverUrl){
       dispCoverUrl = book.coverUrl;
     }else if(book.isbn){
-      dispCoverUrl = util.getOpenBdCoverUrl(book.isbn);
+      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;;
     }
     const retBook = {
       ...book,
@@ -187,6 +186,19 @@ const setInitInfo = async (books:Book[], tags: string[]) => {
     };
     return retBook;
   });
+};
+
+const fetchTags = async () => {
+  const idToken = await authUtil.getIdToken();
+  const response = await axiosUtil.post("/tag/fetch", {idToken});
+  if(response){
+    await setTags(response.data.tags);
+  }
+};
+const setTags = async (tags: string[]) => {
+  // キャッシュに保存
+  const limitHours = 1;
+  await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
   toreadTagOptions.value = tags;
 };
 
@@ -194,34 +206,38 @@ const getBook = async (isbn:string) => {
   const trimedIsbn = isbn.trim();
   if(!util.isIsbn(trimedIsbn)){return;}
 
-  const book = await getNdlBook(trimedIsbn);
+  const book = await bookApiUtil.getApiBook(trimedIsbn);
   // 本があったらフォームに設定
   if(book){
-    setBookFromNdlSearch(book);
+    await setBookFromApiBook(book);
   }else{
     // なかったらエラーダイアログ
-    emitError("エラー", "国立国会図書館サーチからデータを取得できませんでした");
+    emitError("エラー", "APIからデータを取得できませんでした");
   }
 };
 
-const setBookFromNdlSearch = (book:NdlBook) => {
-  if(book.isbn){
-    bookDialog.value.form.isbn = book.isbn;
-  }
-  if(book.bookName){
-    bookDialog.value.form.bookName = book.bookName;
-  }
-  if(book.authorName){
-    bookDialog.value.form.authorName = book.authorName;
-  }
-  if(book.page){
-    bookDialog.value.form.page = book.page;
-  }
-  if(book.coverUrl){
-    bookDialog.value.form.coverUrl = book.coverUrl;
-  }
-  if(book.publisherName){
-    bookDialog.value.form.publisherName = book.publisherName;
+const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
+  const apiBook = await bookApiUtil.getApiBook(book.isbn || "");
+  if(apiBook){
+    if(apiBook.isbn){
+      bookDialog.value.form.isbn = apiBook.isbn;
+    }
+    if(apiBook.bookName){
+      bookDialog.value.form.bookName = apiBook.bookName;
+    }
+    if(apiBook.authorName){
+      bookDialog.value.form.authorName = apiBook.authorName;
+    }
+    if(apiBook.coverUrl){
+      bookDialog.value.form.coverUrl = apiBook.coverUrl;
+    }
+    if(apiBook.publisherName){
+      bookDialog.value.form.publisherName = apiBook.publisherName;
+    }
+    if(apiBook.memo){
+      bookDialog.value.form.memo = apiBook.memo;
+
+    }
   }
 }
 
@@ -241,7 +257,7 @@ const createBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -272,7 +288,7 @@ const editBook = () => {
       const message = `『${bookDialog.value.form.bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
       // タグ履歴更新
       if(bookDialog.value.form.tags){
         await addTagsHistories(bookDialog.value.form.tags);
@@ -301,7 +317,7 @@ const toggleNewBookCheckFlg = async (book:Book) => {
   if(response){
     // 図書館チェックフラグのトグルごときで通知メッセージは出さない
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 
@@ -416,7 +432,7 @@ ${dispBooks.join("\n")}`;
       // TODO: 削除した本を戻す処理
       notifyUtil.notify(message, [], true);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
     }
   });
 
@@ -634,7 +650,7 @@ const addTagsFromDialogForm = () => {
     const response = await addTags(books, tags);
     if(response){
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
     }
   });
 };
@@ -650,7 +666,7 @@ const addWantTag = async (book:Book) => {
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
   if(response){
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 const addMultiTag = async () => {
@@ -667,7 +683,7 @@ const addMultiTag = async () => {
     const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
       notifyUtil.notify(message);
     // 画面情報再設定
-    await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+    await setToreadBooks(response.data.toreadBooks);
   }
 };
 const addTags = async (books:Book[], tags:string[]) => {
@@ -697,31 +713,6 @@ const validationRules = {
   coverUrl: [validationUtil.isUrl(labels.coverUrl)]
 };
 
-const searchShortStorys = async (book:Book) => {
-  if(!book.isbn || !util.isIsbn(book.isbn)){return;}
-
-  const shortStorys = await searchNdlShortStorys(book.isbn);
-
-  if(shortStorys.length === 0){
-    emitError("エラー", "書籍内容がありません");
-    return;
-  }
-
-  // shortStorysをコピー
-  const copyText = shortStorys.map(shortStory => `${shortStory.author || ""}「${shortStory.title}」`).join("\n");
-  navigator.clipboard.writeText(copyText);
-  // ブクログへのリンクを表示するダイアログ表示
-  msgDialog.value = {
-    isShow: true,
-    headerText: "書籍内容をコピーしました",
-    okLabel: "ブクログを表示",
-    okFunction: undefined,
-    href: "https://booklog.jp/item/1/" + book.isbn,
-    content: copyText
-  }
-};
-
-
 type MsgDialog = {
   isShow: boolean,
   headerText: string,
@@ -744,7 +735,7 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (ndlBook:NdlBook) => {console.log(ndlBook)},
+  okFunction: (apiBook:bookApiUtil.ApiBook) => {console.log(apiBook)},
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
@@ -755,7 +746,7 @@ const showBooksSearchDialog = (searchWord:string) => {
 
   booksSearchDialog.value = {
     isShow: true,
-    okFunction: setBookFromNdlSearch,
+    okFunction: setBookFromApiBook,
     searchWord
   };
 };
@@ -782,7 +773,7 @@ const addNewBooks = () => {
       const message = `新刊を一括追加しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setInitInfo(response.data.toreadBooks, response.data.toreadTags);
+      await setToreadBooks(response.data.toreadBooks);
 
       // タグ履歴更新
       if(bookDialog.value.form.tags){
@@ -831,6 +822,79 @@ const showNewBooksDialog = async () => {
   }
 };
 
+type Content = {
+  authorName: string | null,
+  contentName: string,
+  rate: number
+};
+type BookshelfBook = {
+  documentId: string | null,
+  bookName: string,
+  isbn: string | null,
+  coverUrl: string,
+  authorName: string | null,
+  publisherName: string | null,
+  readDate: string | null,
+  updateAt: number,
+  tags: string[],
+  rate: number,
+  contents: Content[],
+  dispCoverUrl: string
+};
+type BookshelfBookParams = BookshelfBook & {
+  idToken: string | null,
+  user: string
+};
+const addBookshelf = async (book:Book) => {
+  // bookshelfに変形して登録
+  const idToken = await authUtil.getIdToken();
+  const user = authUtil.getUserInfo();
+  const email = user.email || "No User Data";
+  const tags = book.tags.filter(tag => {
+    // 一部タグをフィルタリング
+    return !["よみたい", "よんでいる", "図書館未定", "かいたい"].includes(tag);
+  }).filter(tag => {
+    // 図書館タグも除外
+    return !/.{1,}図書館$/.test(tag);
+  });
+  const params:BookshelfBookParams = {
+    documentId: null,
+    updateAt: 0,
+    user: email,
+    idToken,
+
+    bookName: book.bookName,
+    isbn: book.isbn,
+    authorName: book.authorName,
+    coverUrl: book.coverUrl,
+    publisherName: book.publisherName,
+    tags,
+    // bookshelf固有の情報
+    readDate: null,
+    rate: 0,
+    contents:[],
+    // dispCoverUrl型の関係で入れとく
+    dispCoverUrl: ""
+  };
+  const response = await axiosUtil.post(`/bookshelf/create`, params);
+  if(response){
+    // キャッシュに保存
+    const limitHours = 1;
+    await cacheUtil.set(CACHE_KEY.BOOKSHELF, response.data.books, limitHours);
+    await cacheUtil.set(CACHE_KEY.TAGS, response.data.tags, limitHours);
+    
+    const message = `『${params.bookName}』を本棚に新規作成しました`;
+    
+    notifyUtil.notify(message, [{
+      icon: "delete",
+      handler: () => {  // notifyコンポーネントがPromiseに対応していないためラップする
+        deleteBooks([book])
+      }
+    }]);
+
+  }
+};
+
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
   // パラメータにisbnがあったらいきなりダイアログ表示
@@ -867,20 +931,25 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   if(urlParamWord){
     filterCond.value.word = urlParamWord;
   }
-
-  // キャッシュからリスト取得してみる
-  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
-  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
-  if(cachedToreadBooks && cachedToreadTags) {
-    await setInitInfo(cachedToreadBooks, cachedToreadTags);
-  }else{
-    await initToread();
-  }
   
   // タグ履歴キャッシュ
   const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
+  }
+
+  // キャッシュからリスト取得してみる
+  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
+  if(cachedToreadBooks){
+    await setToreadBooks(cachedToreadBooks);
+  }else{
+    await fetchToreadBooks();
+  }
+  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  if(cachedToreadTags) {
+    await setTags(cachedToreadTags);
+  }else{
+    fetchTags(); // tagOptions処理は完全に非同期で回す
   }
 
   console.log("mounted toread");
@@ -954,11 +1023,10 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                   </div>
                   <div class="col-auto">
                     <c-round-btn
-                      v-if="book.isbn"
-                      title="書籍内容検索"
+                      title="本棚登録"
                       icon="menu_book"
                       color="secondary"
-                      @click="searchShortStorys(book)"
+                      @click="addBookshelf(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
@@ -1000,6 +1068,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
+                  id="filter-tag"
                   v-model="filterCond.word"
                   label="検索"
                   dense
@@ -1096,7 +1165,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              
+              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1117,6 +1186,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :label="labels.isbn"
               :rules="validationRules.isbn"
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
+              @keydown.enter="getBook(bookDialog.form.isbn)"
             >
               <template v-slot:append>
                 <q-btn 
@@ -1162,6 +1232,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div class="col-12 q-pa-xs">
             <c-input-tag
+              id="book-dialog-tag"
               v-model="bookDialog.form.tags"
               :label="labels.tags"
               hint=",/スペースで区切られます"
@@ -1233,6 +1304,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     >
       <q-form ref="addTagDialogForm">
         <c-input-tag
+          id="add-tag-dialog-tag"
           v-model="addTagDialog.form.tags"
           :label="labels.tags"
           hint=",/スペースで区切られます"
@@ -1291,6 +1363,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               </div>
               <div class="col-12 q-pa-xs">
                 <c-input-tag
+                  id="new-books-dialog-tag"
                   v-model="form.tags"
                   :label="labels.tags"
                   hint=",/スペースで区切られます"

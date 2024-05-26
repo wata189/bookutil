@@ -47,6 +47,22 @@ const isPassword = (valName:string) => {
   }
 };
 
+const isDateStr = (valName:string) => {
+  return  (val:string) => {
+    if(!util.isExist(val)){return true;}
+
+    const regex = /^\d{4}\/\d{2}\/\d{2}/;
+    return regex.test(val) || `${valName}は/区切りで入力してください`;
+  };
+};
+const isValidDate = (valName:string) => {
+  return (val:string) => {
+    if(!util.isExist(val)){return true;}
+    
+    const date = new Date(val);
+    return !isNaN(date.getDate())|| `${valName}は存在する日付で入力してください`;
+  };
+}
 
 export default {
   isExist,
@@ -54,5 +70,7 @@ export default {
   isIsbn,
   isUrl,
   isEmail,
-  isPassword
+  isPassword,
+  isDateStr,
+  isValidDate
 }

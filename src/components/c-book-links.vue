@@ -33,15 +33,6 @@ const links:Link[] = [
     }
   },
   {
-    title: "ブクログ",
-    imgUrl: "img/booklog.jpg",
-    searchUrl: {
-      isbn: "https://booklog.jp/item/1/" + SEARCH_PLACEHOLDER,
-      bookName: "https://booklog.jp/search?keyword=" + SEARCH_PLACEHOLDER,
-      authorName: null
-    }
-  },
-  {
     title: "ブックウォーカー",
     imgUrl: "img/bookwalker.png",
     searchUrl: {
