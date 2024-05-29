@@ -194,8 +194,7 @@ const getBook = async (isbn:string) => {
     emitError("エラー", "APIからデータを取得できませんでした");
   }
 };
-const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
-  const apiBook = await bookApiUtil.getApiBook(book.isbn || "");
+const setBookFromApiBook = async (apiBook:bookApiUtil.ApiBook) => {
   if(apiBook){
     if(apiBook.isbn){
       bookDialog.value.form.isbn = apiBook.isbn;
@@ -544,7 +543,7 @@ const setShortStorysToContents = (shortStorys: ShortStory[]) => {
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (apiBook:bookApiUtil.ApiBook) => {console.log(apiBook)},
+  okFunction: setBookFromApiBook,
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {
