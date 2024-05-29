@@ -10,7 +10,7 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from '@/modules/axiosUtil';
 import * as bookApiUtil from '@/modules/bookApiUtil';
-import {searchNdlShortStorys, ShortStory, getCoverUrl} from '@/modules/ndlSearchUtil';
+import {searchNdlShortStorys, getCoverUrl} from '@/modules/ndlSearchUtil';
 import { CacheUtil } from '@/modules/cacheUtil';
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
@@ -213,7 +213,10 @@ const setBookFromApiBook = async (apiBook:bookApiUtil.ApiBook) => {
     }
 
   }
+
+  // isbnない場合やcontentsすでにある場合は終わり
   if(!apiBook || !apiBook.isbn || !util.isIsbn(apiBook.isbn)){return;}
+  if(bookDialog.value.form.contents.length > 0){return;}
 
   const shortStorys = await searchNdlShortStorys(apiBook.isbn);
   setShortStorysToContents(shortStorys);
@@ -530,15 +533,9 @@ const searchShortStorys = async (isbn:string) => {
 
   setShortStorysToContents(shortStorys);
 };
-const setShortStorysToContents = (shortStorys: ShortStory[]) => {
+const setShortStorysToContents = (shortStorys: Content[]) => {
   // shortStorysをcontentsとして設定
-  shortStorys.map(shortStory => {
-    return {
-      contentName: shortStory.title,
-      authorName: shortStory.author,
-      rate: 0
-    }
-  }).forEach(shortStory => bookDialog.value.form.contents.push(shortStory));
+  shortStorys.forEach(shortStory => bookDialog.value.form.contents.push(shortStory));
 };
 
 const booksSearchDialog = ref({
