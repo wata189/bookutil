@@ -533,9 +533,15 @@ const searchShortStorys = async (isbn:string) => {
 
   setShortStorysToContents(shortStorys);
 };
-const setShortStorysToContents = (shortStorys: Content[]) => {
-  // shortStorysをcontentsとして設定
-  shortStorys.forEach(shortStory => bookDialog.value.form.contents.push(shortStory));
+const setShortStorysToContents = (contents: Content[]) => {
+  bookDialog.value.form.contents = contents;
+};
+
+const calcRate = (contents: Content[]) => {
+  const calcedContents = contents.filter(content => content.rate > 0) // 点数つけたもののみで計算
+  const avg = calcedContents.map(content => content.rate)
+                .reduce((a, b) => {return a + b;}, 0) / calcedContents.length;
+  bookDialog.value.form.rate = Math.round(avg);
 };
 
 const booksSearchDialog = ref({
@@ -862,6 +868,15 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               @click="searchShortStorys(bookDialog.form.isbn)" 
               flat 
               label="書籍内容検索" 
+              color="primary" 
+            />
+          </div>
+          <div class="col-auto q-pa-xs">
+            <q-btn 
+              :disable="bookDialog.form.contents.length === 0"
+              @click="calcRate(bookDialog.form.contents)" 
+              flat 
+              label="点数計算" 
               color="primary" 
             />
           </div>
