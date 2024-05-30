@@ -77,26 +77,41 @@ const isShowPagination = computed(() => {
 const toTopPagenation = () => {
   pagination.value.number = 1;
 };
+
+const sortByReadDate = (a:BookshelfBook, b:BookshelfBook) => {
+  const aDateTime = new Date(a.readDate || "9999/12/31").getTime();
+  const bDateTime = new Date(b.readDate || "9999/12/31").getTime();
+  return bDateTime - aDateTime;
+};
 const filteredSortedBookshelfBooks = computed({
   get: () => {
     // 条件キャッシュ
     const filterWords = util.strToTag(filterCond.value.word);
     const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
+    //評価フィルターは1~5の選択時は無効
+    const useRateFilter = filterCond.value.rate.min !== 1 || filterCond.value.rate.max !== 5;
+    const filterDateRangeMin = (new Date(filterCond.value.readDate.min)).getTime();
+    const filterDateRangeMax = (new Date(filterCond.value.readDate.max)).getTime();
+    //読了日フィルターは読了日範囲最小値～最大値の選択時は無効
+    const useDateFilter = filterCond.value.readDate.min !== filterCondReadDateLimit.value.min || filterCond.value.readDate.max !== filterCondReadDateLimit.value.max;
     // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const sortByUpdateAt = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
     let sortFunc = sortByUpdateAt;
     // TODO: ソートあれこれ
     if(true){
-      sortFunc = (a:BookshelfBook, b:BookshelfBook) => {
-        const aDateTime = new Date(a.readDate || "9999/12/31").getTime();
-        const bDateTime = new Date(b.readDate || "9999/12/31").getTime();
-        return bDateTime - aDateTime;
-      };
+      sortFunc = sortByReadDate;
     }
 
     /////// フィルター
-    return bookshelfBooks.value.filter((book:BookshelfBook) => {
+    return bookshelfBooks.value.filter(book => {
+      // 評価によるフィルタリング
+      return !useRateFilter || (filterCond.value.rate.min <= book.rate && book.rate <= filterCond.value.rate.max);
+    }).filter(book => {
+      // 日付でフィルタリング
+      const dateTime = (new Date(book.readDate || "1970/01/01")).getTime();
+      return !useDateFilter || (filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax);
+    }).filter((book:BookshelfBook) => {
       // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
       if(filterCond.value.isOnlyReadBook && !book.readDate){return false;}
       if(filterWords.length === 0){return true;}
@@ -181,6 +196,10 @@ const setBookshelfBooks = async (books:BookshelfBook[]) => {
     };
     return retBook;
   });
+
+  // フィルターの日付の値いじる
+  filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
+  filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 };
 
 const getBook = async (isbn:string) => {
@@ -564,10 +583,49 @@ const showBooksSearchDialog = (searchWord:string) => {
   };
 };
 
+const filterCondReadDateLimit = computed(() => {
+  const dates = bookshelfBooks.value.filter((book) => { // readDateあるやつのみ対象
+    return !!book.readDate;
+  }).sort(sortByReadDate) // sort
+  .map(book => book.readDate || "9999/12/31");
+
+  return {
+    max: dates[0] || "2100/12/31", // 降順なので先頭が最大
+    min: dates[dates.length - 1] || "2000/01/01"
+  }
+});
+const MS_PER_SECOND     = 1000;
+const SECOND_PER_MINUTE = 60;
+const MINUTE_PER_HOUR   = 60;
+const HOUR_PER_DATE     = 24;
+const MS_PER_DATE = HOUR_PER_DATE * MINUTE_PER_HOUR * SECOND_PER_MINUTE * MS_PER_SECOND
+// yyyy/MM/ddの日付をUnix日付に変換
+const dateStr2Unixdate = (dateStr:string) => {
+  const date = new Date(dateStr.replace(/\//g, "-"));
+  const unixMs = date.getTime();
+  return Math.floor(unixMs / MS_PER_DATE);
+};
+const unixdate2DateStr = (unixdate:number) => {
+  return util.formatDateToStr((new Date(unixdate * MS_PER_DATE)), "yyyy/MM/dd");
+}
 const filterCond = ref({
   word: "",
-  isOnlyReadBook: false
+  isOnlyReadBook: false,
+  rate: {min: 1, max: 5},
+  readDate: {min: "2000/01/01", max: "2100/12/31"}
 });
+const filterCondReadDateRange = computed({
+  get: () => {
+    return {
+      min: dateStr2Unixdate(filterCond.value.readDate.min),
+      max: dateStr2Unixdate(filterCond.value.readDate.max)
+    }
+  },
+  set: (value) => {
+    filterCond.value.readDate.min = unixdate2DateStr(value.min);
+    filterCond.value.readDate.max = unixdate2DateStr(value.max);
+  }
+})
 
 
 const content2str = (contents:Content[]) => {
@@ -685,8 +743,82 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-6 col-md-auto q-pa-sm">
-            <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
+          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-8 col-md-6 col-lg-auto q-pa-sm">
+            <div class="row filter-cond shadow-up-12 items-center" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
+              <div class="col-2 q-pa-sm">
+                読了日
+              </div>
+              <div class="col-10 q-pa-sm">
+                <q-range
+                  v-model="filterCondReadDateRange"
+                  :min="dateStr2Unixdate(filterCondReadDateLimit.min)"
+                  :max="dateStr2Unixdate(filterCondReadDateLimit.max)"
+                  :step="1"
+                  color="primary"
+                ></q-range>
+              </div>
+              <div class="col-2 q-pa-sm">
+                <!-- 位置調整のための空のcol -->
+              </div>
+              <div class="col-5 q-pa-sm">
+                <q-input
+                  v-model="filterCond.readDate.min"
+                  label="開始"
+                  :rules="validationRules.contents.readDate"
+                  mask="XXXX/XX/XX"
+                  dense
+                >
+                  <template v-slot:append>
+                    <q-btn 
+                      round 
+                      dense 
+                      flat 
+                      icon="event"
+                    >
+                      <q-popup-proxy v-model="bookDialog.showDatePopup">
+                        <q-date v-model="filterCond.readDate.min" today-btn @update:model-value="bookDialog.showDatePopup = false" />
+                      </q-popup-proxy>
+                    </q-btn>
+                  </template>
+                </q-input>
+              </div>
+              <div class="col-5 q-pa-sm">
+                <q-input
+                  v-model="filterCond.readDate.max"
+                  label="終了"
+                  :rules="validationRules.contents.readDate"
+                  mask="XXXX/XX/XX"
+                  dense
+                >
+                  <template v-slot:append>
+                    <q-btn 
+                      round 
+                      dense 
+                      flat 
+                      icon="event"
+                    >
+                      <q-popup-proxy v-model="bookDialog.showDatePopup">
+                        <q-date v-model="filterCond.readDate.max" today-btn @update:model-value="bookDialog.showDatePopup = false" />
+                      </q-popup-proxy>
+                    </q-btn>
+                  </template>
+                </q-input>
+              </div>
+
+              <div class="col-2 q-pa-sm">
+                評価
+              </div>
+              <div class="col-10 q-pa-sm">
+                <q-range
+                  v-model="filterCond.rate"
+                  :min="1"
+                  :max="5"
+                  :step="1"
+                  color="primary"
+                  label-always
+                  markers
+                ></q-range>
+              </div>
               <div class="col q-pa-sm">
                 <c-input-tag
                   id="filter-tag"
@@ -851,7 +983,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-rating
               v-model="bookDialog.form.rate"
-              size="3.3em"
+              size="3em"
               max="5"
               color="primary"
             />
@@ -884,7 +1016,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div v-if="bookDialog.form.contents.length > 0" class="col-12 q-pa-xs">
             <q-card v-for="content, i in bookDialog.form.contents" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
-              <div class="row">
+              <div class="row items-center">
                 <div class="col-12 q-pa-xs">
                   <q-input
                     v-model="content.contentName"
