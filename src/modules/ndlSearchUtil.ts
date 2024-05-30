@@ -125,12 +125,13 @@ export const getCoverUrl = (isbn:string) => {
 
 }
 
-export type ShortStory = {
-  author: string|null,
-  title: string
+type Content = {
+  authorName: string | null,
+  contentName: string,
+  rate: number
 };
-export const searchNdlShortStorys = async (isbn:string):Promise<ShortStory[]> => {
-  let shortStorys:ShortStory[] = [];
+export const searchNdlShortStorys = async (isbn:string):Promise<Content[]> => {
+  let shortStorys:Content[] = [];
 
   try{
     const ndlBook = await getNdlBook(isbn);
@@ -164,8 +165,9 @@ export const searchNdlShortStorys = async (isbn:string):Promise<ShortStory[]> =>
 
             return {
               // トリム、全角数字→半角数字の整形
-              author: author ? util.fullStr2Half(author).trim() : null, 
-              title
+              authorName: author ? util.fullStr2Half(author).trim() : null, 
+              contentName: title,
+              rate: 0 // rateはデフォルトで0
             };
           });
         }

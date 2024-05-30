@@ -216,8 +216,7 @@ const getBook = async (isbn:string) => {
   }
 };
 
-const setBookFromApiBook = async (book:bookApiUtil.ApiBook) => {
-  const apiBook = await bookApiUtil.getApiBook(book.isbn || "");
+const setBookFromApiBook = async (apiBook:bookApiUtil.ApiBook) => {
   if(apiBook){
     if(apiBook.isbn){
       bookDialog.value.form.isbn = apiBook.isbn;
@@ -735,7 +734,7 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
-  okFunction: (apiBook:bookApiUtil.ApiBook) => {console.log(apiBook)},
+  okFunction: setBookFromApiBook,
   searchWord: ""
 });
 const showBooksSearchDialog = (searchWord:string) => {

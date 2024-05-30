@@ -7,6 +7,7 @@ import * as bookApiUtil from "@/modules/bookApiUtil.ts"
 import CDialog from "@/components/c-dialog.vue";
 import CBookCard from '@/components/c-book-card.vue';
 import CRoundBtn from '@/components/c-round-btn.vue';
+import util from '@/modules/util';
 
 const props = defineProps({
   modelValue: {type:Boolean, required: true},
@@ -61,9 +62,17 @@ const searchBooks = async (searchWord:string) => {
     emits("error");
   }
 };
-const selectBook = (book:bookApiUtil.ApiBook) => {
+const selectBook = async (book:bookApiUtil.ApiBook) => {
+  let apiBook = book;
+  if(book.isbn && util.isIsbn(book.isbn)){
+    const newApiBook = await bookApiUtil.getApiBook(book.isbn);
+    if(newApiBook){
+      apiBook = newApiBook;
+    }
+  }
+
   value.value = false;
-  emits("ok", book);
+  emits("ok", apiBook);
 };
 </script>
 
