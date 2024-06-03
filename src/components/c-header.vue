@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, toRefs } from "vue";
+import { ComputedRef, computed, ref, toRefs } from "vue";
 import { Dark, QForm, QMenu } from "quasar";
 import { onMounted, Ref } from "@vue/runtime-core";
 import { useRouter } from "vue-router";
@@ -41,6 +41,31 @@ interface Props {
   isAppLoaded: boolean
 };
 const props = defineProps<Props>();
+
+type DispMenu = Menu & {
+  textColor: string
+  color: string
+};
+const dispMenus:ComputedRef<DispMenu[]> = computed(() => {
+  const isDarkMode = util.isDarkMode();
+  return props.menus.map(menu => {
+    const isCurrent = menu.to === router.currentRoute.value.path;
+    let textColor = "";
+    let color = "";
+    if(isDarkMode){
+      textColor = isCurrent ? "dark" : "primary";
+      color     = isCurrent ? "primary" : "dark";
+    }else{
+      textColor = isCurrent ? "accent" : "dark";
+      color     = isCurrent ? "dark" : "accent";
+    }
+    return {
+      ...menu,
+      textColor,
+      color
+    }
+  })
+})
 
 const isDarkMode = ref(false);
 
@@ -152,10 +177,14 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
 
       <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
       <c-round-btn
-        v-for="menu in menus"
+        v-for="menu in dispMenus"
         :title="menu.name"
         :icon="menu.icon"
         :to="menu.to"
+        :color="menu.color"
+        :text-color="menu.textColor"
+        unelevated
+        :is-flat="false"
       />
       <q-separator vertical inset color="" />
       <c-round-btn
