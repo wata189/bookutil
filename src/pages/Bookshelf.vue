@@ -596,38 +596,12 @@ const filterCondReadDateLimit = computed(() => {
     min: dates[dates.length - 1] || "2000/01/01"
   }
 });
-const MS_PER_SECOND     = 1000;
-const SECOND_PER_MINUTE = 60;
-const MINUTE_PER_HOUR   = 60;
-const HOUR_PER_DATE     = 24;
-const MS_PER_DATE = HOUR_PER_DATE * MINUTE_PER_HOUR * SECOND_PER_MINUTE * MS_PER_SECOND
-// yyyy/MM/ddの日付をUnix日付に変換
-const dateStr2Unixdate = (dateStr:string) => {
-  const date = new Date(dateStr.replace(/\//g, "-"));
-  const unixMs = date.getTime();
-  return Math.floor(unixMs / MS_PER_DATE);
-};
-const unixdate2DateStr = (unixdate:number) => {
-  return util.formatDateToStr((new Date(unixdate * MS_PER_DATE)), "yyyy/MM/dd");
-}
 const filterCond = ref({
   word: "",
   isOnlyReadBook: false,
   rate: {min: 1, max: 5},
   readDate: {min: "2000/01/01", max: "2100/12/31"}
 });
-const filterCondReadDateRange = computed({
-  get: () => {
-    return {
-      min: dateStr2Unixdate(filterCond.value.readDate.min),
-      max: dateStr2Unixdate(filterCond.value.readDate.max)
-    }
-  },
-  set: (value) => {
-    filterCond.value.readDate.min = unixdate2DateStr(value.min);
-    filterCond.value.readDate.max = unixdate2DateStr(value.max);
-  }
-})
 
 
 const content2str = (contents:Content[]) => {
@@ -749,18 +723,6 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             <div class="row filter-cond shadow-up-12 items-center" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col-2 q-pa-sm">
                 読了日
-              </div>
-              <div class="col-10 q-pa-sm">
-                <q-range
-                  v-model="filterCondReadDateRange"
-                  :min="dateStr2Unixdate(filterCondReadDateLimit.min)"
-                  :max="dateStr2Unixdate(filterCondReadDateLimit.max)"
-                  :step="1"
-                  color="primary"
-                ></q-range>
-              </div>
-              <div class="col-2 q-pa-sm">
-                <!-- 位置調整のための空のcol -->
               </div>
               <div class="col-5 q-pa-sm">
                 <q-input
