@@ -86,7 +86,7 @@ const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
           bookName: volumeInfo.title || null,
           authorName,
           memo: volumeInfo.description || null,
-          coverUrl
+          coverUrl: toHttps(coverUrl || "")
         };
       });
     }
@@ -97,6 +97,13 @@ const searchBooks = async (searchWord:string):Promise<GoogleBook[]> => {
     return books;
   }
 };
+
+const toHttps = (url: string) => {
+  if(!url){return url;}
+  if(!url.startsWith("http:")){return url;}
+
+  return url.replace(/^http:/, "https:");
+}
 
 export default {
   searchBooks,
