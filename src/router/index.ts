@@ -6,15 +6,7 @@ const routes = [
     name: 'index',
     props: true,
     component: async () => {
-      return await import('@/pages/Top.vue');
-    }
-  },
-  {
-    path: '/top',
-    name: 'top',
-    props: true,
-    component: async () => {
-      return await import('@/pages/Top.vue');
+      return await import('@/pages/Toread.vue');
     }
   },
 
