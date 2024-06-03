@@ -3,7 +3,6 @@
 import { computed, PropType, ref } from 'vue';
 
 const props = defineProps({
-  id: {type:String, required:true},
   modelValue: {type:String, required: true},
   label: {type:String, default: ""},
   hint: {type:String, default: ""},
@@ -21,12 +20,35 @@ const emits = defineEmits([
   "update:modelValue"
 ]);
 
-// const selected = ref("");
+const selected = ref("");
 
 const options = ref(props.options);
-const filteredOptions = computed(() => {
-  return options.value.filter(option => option.includes(value.value))
-});
+const filterFn = (val:string, update:any) => {
+  if (val === '') {
+    update(() => {
+      options.value = props.options
+
+      // here you have access to "ref" which
+      // is the Vue reference of the QSelect
+    })
+    return
+  }
+
+  update(() => {
+    const needle = val.toLowerCase()
+    options.value = props.options.filter(v => v.toLowerCase().indexOf(needle) > -1)
+  })
+};
+
+const addTag = () => {
+  if(value.value){
+    value.value += "/" + selected.value;
+  }else{
+    value.value = selected.value;
+  }
+  // タグ検索空にする
+  selected.value = "";
+};
 
 </script>
 
@@ -35,14 +57,24 @@ const filteredOptions = computed(() => {
     v-model="value"
     :label="label"
     :hint="hint"
-    :list="id + '-list'"
   >
-    <datalist :id="id + '-list'">
-      <option v-for="option in filteredOptions" :value="option"></option>
-    </datalist>
     <template v-slot:append>
       <q-icon v-if="value" name="cancel" @click.stop.prevent="value = ''" class="cursor-pointer" />
+      <q-btn round dense flat icon="local_offer">
+        <q-menu fit class="q-pa-sm">
+          <q-select
+            v-model="selected"
+            use-input
+            dense
+            :options="options"
+            @filter="filterFn"
+            label="タグを検索"
+            @update:model-value="addTag()"
+          ></q-select>
+        </q-menu>
+      </q-btn>
     </template>
+  
   </q-input>
 
 </template>
