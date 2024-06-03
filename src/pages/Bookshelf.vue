@@ -167,7 +167,7 @@ const fetchTags = async () => {
 };
 const setTags = async (tags: string[]) => {
   // キャッシュに保存
-  const limitHours = 1;
+  const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
   tagOptions.value = tags;
 };
@@ -180,7 +180,7 @@ const fetchBookshelfBooks = async () => {
 };
 const setBookshelfBooks = async (books:BookshelfBook[]) => {
   // キャッシュに保存
-  const limitHours = 1;
+  const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
 
   bookshelfBooks.value = books.map((book:BookshelfBook):BookshelfBook => {
@@ -273,7 +273,8 @@ const addTagsHistories = async (tags:string) => {
   if(tagsHistories.value.length > 10){
     tagsHistories.value.shift();
   }
-  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
+  const limitHours = 24;
+  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -510,7 +511,8 @@ const setLatestTagsFromTagsHistories = async () => {
     // 最新タグ設定
     bookDialog.value.form.tags = latestTags;
     // キャッシュ更新
-    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
+    const limitHours = 24;
+    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
   }
 };
 

@@ -59,8 +59,8 @@ const setMode = async (isDark: boolean) => {
   isDarkMode.value = isDark;
   Dark.set(isDark);
 
-  // ダークモードの値をキャッシュに保存
-  await cacheUtil.set(CACHE_KEY.IS_DARK_MODE, isDark);
+  // ダークモードの値をキャッシュに保存 1Month程度
+  await cacheUtil.set(CACHE_KEY.IS_DARK_MODE, isDark, 24 * 30);
 };
 
 // 認証情報以外のキャッシュをクリアして画面更新

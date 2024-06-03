@@ -170,7 +170,7 @@ const fetchToreadBooks = async () => {
 };
 const setToreadBooks = async (books:Book[]) => {
   // キャッシュに保存
-  const limitHours = 1;
+  const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
   toreadBooks.value = books.map((book:Book):Book => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
@@ -197,7 +197,7 @@ const fetchTags = async () => {
 };
 const setTags = async (tags: string[]) => {
   // キャッシュに保存
-  const limitHours = 1;
+  const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.TAGS, tags, limitHours);
   toreadTagOptions.value = tags;
 };
@@ -270,7 +270,8 @@ const addTagsHistories = async (tags:string) => {
   if(tagsHistories.value.length > 10){
     tagsHistories.value.shift();
   }
-  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
+  const limitHours = 24;
+  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
 };
 const editBook = () => {
   // フォームのバリデーション処理
@@ -563,7 +564,8 @@ const setLatestTagsFromTagsHistories = async () => {
     // 最新タグ設定
     bookDialog.value.form.tags = latestTags;
     // キャッシュ更新
-    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value]);
+    const limitHours = 24;
+    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
   }
 };
 
@@ -878,9 +880,8 @@ const addBookshelf = async (book:Book) => {
   const response = await axiosUtil.post(`/bookshelf/create`, params);
   if(response){
     // キャッシュに保存
-    const limitHours = 1;
+    const limitHours = 24;
     await cacheUtil.set(CACHE_KEY.BOOKSHELF, response.data.books, limitHours);
-    await cacheUtil.set(CACHE_KEY.TAGS, response.data.tags, limitHours);
     
     const message = `『${params.bookName}』を本棚に新規作成しました`;
     
