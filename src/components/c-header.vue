@@ -49,7 +49,8 @@ type DispMenu = Menu & {
 const dispMenus:ComputedRef<DispMenu[]> = computed(() => {
   const isDarkMode = util.isDarkMode();
   return props.menus.map(menu => {
-    const isCurrent = menu.to === router.currentRoute.value.path;
+    const path = router.currentRoute.value.path === "/" ? "/toread" : router.currentRoute.value.path;
+    const isCurrent = menu.to === path;
     let textColor = "";
     let color = "";
     if(isDarkMode){
