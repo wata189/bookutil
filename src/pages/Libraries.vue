@@ -22,12 +22,6 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-type BusinessHours = {
-  dayOfWeek: number,
-  isOpen: boolean,
-  startTime?: string,
-  endTime?: string
-}
 type Library = {
   id: string,
   city: string,
@@ -35,50 +29,19 @@ type Library = {
   closestStation? : string,
   url: string,
   mapUrl: string,
-  businessHours: BusinessHours[],
   spUrl?: string,
   calendarUrl?: string,
   barcodeUrl?: string
 }
 const libraries:Ref<Library[]> = ref([]);
 
-const weekNum = (new Date()).getDay();
-
 const dispLibraries = computed(() => {
 
   return libraries.value.map(library => {
 
-    const businessHour = library.businessHours.find(hour => hour.dayOfWeek === weekNum) || {isOpen: false};
-
-    const dispBusinessHours = library.businessHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek ).map(businessHour => {
-
-      let dispStartTime = null;
-      let dispEndTime = null;
-      if(businessHour.isOpen && businessHour.startTime && businessHour.endTime){
-
-        dispStartTime = businessHour.startTime.slice(0, 2) + ":" + businessHour.startTime.slice(2);
-        dispEndTime = businessHour.endTime.slice(0, 2) + ":" + businessHour.endTime.slice(2);
-      }
-      
-      return {
-        ...businessHour,
-        dispStartTime,
-        dispEndTime
-      }
-    })
-
-    let isOpenLibrary = businessHour.isOpen;
-    if(businessHour.isOpen && businessHour.startTime && businessHour.endTime){
-      const tmpTime = Number(util.formatDateToStr(new Date(), "hhmm"));
-      const startTime = Number(businessHour.startTime);
-      const endTime = Number(businessHour.endTime);
-
-      isOpenLibrary = startTime <= tmpTime && tmpTime <= endTime;
-    }
-
     const toreadLink = `toread?filterCondWord=${library.city}図書館 よみたい`
 
-    return {...library, businessHour, dispBusinessHours, isOpenLibrary, toreadLink};
+    return {...library, toreadLink};
   });
 });
 
