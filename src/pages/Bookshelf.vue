@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ref, toRefs } from 'vue';
+import { computed, ComputedRef, ref, toRefs } from "vue";
 import { QForm, useQuasar } from "quasar";
+import VueApexCharts from "vue3-apexcharts";
 
 import { NotifyUtil } from "@/modules/notifyUtil";
 const notifyUtil = new NotifyUtil(useQuasar());
@@ -610,6 +611,77 @@ const content2str = (contents:Content[]) => {
                 .join("\n");
 };
 
+type ChartData = {
+  name: string,
+  data: number[]
+}
+type Chart = {
+  type: string,
+  data: ChartData[],
+  options: {
+    chart: {
+      id: string
+    },
+    xaxis: {
+      categories: string[]
+    }
+  }
+};
+const chart:ComputedRef<Chart> = computed(() => {
+  const books:BookshelfBook[] = filteredSortedBookshelfBooks.value.filter(b => b.readDate); // 読了日あるものだけ対象
+  // 設定した条件を元にaxisとdataを作る
+  let data:ChartData[] = [];
+  let categories:string[] = [];
+  let type = "bar";
+  if(chartType.value === "barByMonth"){
+    // 月別に分解して件数計算
+    const months = util.removeDuplicateElements<string>(books.map(b => b.readDate || "").map(readDate => readDate.substring(0, 7)))
+      .reverse(); // もともとreadDate降順になってるので、昇順に戻す
+    categories = months;
+    data = [{
+      name: "",
+      data: months.map(month => books.filter(b => b.readDate && b.readDate.startsWith(month)).length)
+    }]
+  }else if(chartType.value === "barByYear"){
+    const months = util.removeDuplicateElements<string>(books.map(b => b.readDate || "").map(readDate => readDate.substring(0, 5)))
+      .reverse(); // もともとreadDate降順になってるので、昇順に戻す
+    categories = months;
+    data = [{
+      name: "",
+      data: months.map(month => books.filter(b => b.readDate && b.readDate.startsWith(month)).length)
+    }]
+  }
+
+  return {
+    type,
+    data,
+    options: {
+      chart: {
+        id: "chart"
+      },
+      xaxis: {
+        categories
+      }
+    }
+  }
+
+});
+type ChartType = "barByMonth" | "barByYear";
+const chartType:Ref<ChartType> = ref("barByMonth");
+const chartTypeOptions = [
+  {label: "", value: "barByMonth", slot: "barByMonth"},
+  {label: "", value: "barByYear", slot: "barByYear"}
+  //TODO: 平均評価を年別グラフに出す
+];
+const isShowChart = ref(false);
+const chartHeight = ref(0);
+const showChart = () => {
+  // 高さ設定　resizeイベントにこれ設定するとリサイズで消えちゃうので、チャート表示時に1回だけ行う
+  chartHeight.value = window.innerHeight - 52 - 50 - 50 - 50;
+  isShowChart.value = true;
+}
+
+
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
   // タグ履歴キャッシュ
@@ -641,7 +713,35 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   <div>
     
     <q-page-container @click="isShowFilterCond = false">
-      <q-page>
+      <q-page v-if="isShowChart">
+        <div class="row">
+          <div class="col-4 q-pa-sm">
+            <q-btn-toggle
+              v-model="chartType"
+              :options="chartTypeOptions"
+            >
+              <template v-slot:barByMonth>
+                <q-icon title="月グラフ" name="bar_chart" />
+              </template>
+              <template v-slot:barByYear>
+                <q-icon title="年グラフ" name="leaderboard" />
+              </template>
+            </q-btn-toggle>
+          </div>
+          <div class="col-12 q-pa-sm">
+            <vue-apex-charts
+              :type="chart.type"
+              :series="chart.data"
+              :options="chart.options"
+              width="100%"
+              :height="chartHeight"
+            ></vue-apex-charts>
+
+          </div>
+        </div>
+      </q-page>
+      <q-page v-else>
+        
         <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
@@ -807,23 +907,46 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         <div class="col-auto q-pa-xs">
           <c-round-btn
             ref="showfiltercondbtn"
-            title="検索"  
+            title="フィルター"  
             icon="search"
             color="secondary"
             :flat="false"
             @click="isShowFilterCond =!isShowFilterCond"
           ></c-round-btn>
         </div>
-        <!-- TODO:ソート -->
-        <div class="col-auto q-pa-xs">
-          <c-round-btn
-            title="新規作成"  
-            icon="add"
-            color="primary"
-            :flat="false"
-            @click="showCreateBookDialog"
-          ></c-round-btn>
-        </div>
+        <template v-if="isShowChart">
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              title="本棚表示"  
+              icon="menu_book"
+              color="secondary"
+              :flat="false"
+              @click="isShowChart = false"
+            ></c-round-btn>
+          </div>
+        </template>
+        <template v-else>
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              title="グラフ表示"  
+              icon="bar_chart"
+              color="secondary"
+              :flat="false"
+              @click="showChart"
+            ></c-round-btn>
+          </div>
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              title="新規作成"  
+              icon="add"
+              color="primary"
+              :flat="false"
+              @click="showCreateBookDialog"
+            ></c-round-btn>
+          </div>
+
+        </template>
+        
       </div>
     </q-footer>
     <!-- 新規作成・編集ダイアログ -->
@@ -1021,6 +1144,9 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         
       </q-form>
     </c-dialog>
+
+
+
 
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
