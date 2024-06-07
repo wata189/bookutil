@@ -763,7 +763,6 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :tags="book.tags"
               :disp-cover-url="book.dispCoverUrl"
               :memo="content2str(book.contents)"
-              hide-book-links
             >
               <template v-slot:header>
                   <div class="book-card-rate q-pl-sm">
