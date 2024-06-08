@@ -17,8 +17,8 @@ type Link = {
   title: string,
   imgUrl: string,
   searchUrl: {
-    isbn: string,
-    bookName: string
+    isbn: string | null
+    bookName: string | null
     authorName: string | null
   }
 };
@@ -36,7 +36,7 @@ const links:Link[] = [
     title: "ブックウォーカー",
     imgUrl: "img/bookwalker.png",
     searchUrl: {
-      isbn: "",
+      isbn: null,
       bookName: "https://bookwalker.jp/search/?qcat=&word=" + SEARCH_PLACEHOLDER,
       authorName: null
     }
@@ -69,11 +69,20 @@ const links:Link[] = [
     }
   },
   {
+    title: "マルチサーチ",
+    imgUrl: "img/multisearch.ico",
+    searchUrl: {
+      isbn: "https://wata189.github.io/multisearch-vite/?isbn=" + SEARCH_PLACEHOLDER,
+      bookName: "https://wata189.github.io/multisearch-vite/?bookName=" + SEARCH_PLACEHOLDER,
+      authorName: null
+    }
+  },
+  {
     title: "Wikipedia",
     imgUrl: "img/wikipedia.png",
     searchUrl: {
-      isbn: "",
-      bookName: "",
+      isbn: null,
+      bookName: null,
       authorName: "https://ja.wikipedia.org/wiki/" + SEARCH_PLACEHOLDER
     }
   }

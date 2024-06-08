@@ -127,6 +127,11 @@ const waitParentMount = (isAppLoaded:Ref<boolean>, callback:Function) => {
 
   }
 }
+// set→array変換で重複削除
+// javascriptはsetも順序が保証される
+const removeDuplicateElements = <T>(array:T[]):T[] => {
+  return [...(new Set(array))]
+};
 
 export default {
   isIsbn,
@@ -144,5 +149,6 @@ export default {
   isbn12To13,
   xml2json,
   fullStr2Half,
-  waitParentMount
+  waitParentMount,
+  removeDuplicateElements
 }
