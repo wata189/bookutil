@@ -437,10 +437,10 @@ const isUpdateUniqueIsbn = (documentId:string) => {
     let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
 
     const sameIsbnBook = bookshelfBooks.value.find(book => {
-      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId === documentId;
+      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId !== documentId;
     });
 
-    return util.isExist(sameIsbnBook) || "同じISBNの本があります";
+    return !util.isExist(sameIsbnBook) || "同じISBNの本があります";
   }
 };
 const showCreateBookDialog = () => {
