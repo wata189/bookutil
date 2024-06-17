@@ -26,6 +26,7 @@ import CInputTag from "@/components/c-input-tag.vue";
 import CPagination from '@/components/c-pagination.vue';
 import CBookCard from '@/components/c-book-card.vue';
 import CTransition from "@/components/c-transition.vue";
+import CInputDate from "@/components/c-input-date.vue";
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
 const EMIT_NAME_CONFIRM = "show-confirm-dialog";
@@ -436,10 +437,10 @@ const isUpdateUniqueIsbn = (documentId:string) => {
     let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
 
     const sameIsbnBook = bookshelfBooks.value.find(book => {
-      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId === documentId;
+      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId !== documentId;
     });
 
-    return util.isExist(sameIsbnBook) || "同じISBNの本があります";
+    return !util.isExist(sameIsbnBook) || "同じISBNの本があります";
   }
 };
 const showCreateBookDialog = () => {
@@ -824,48 +825,22 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                 読了日
               </div>
               <div class="col-5 q-pa-sm">
-                <q-input
+                <c-input-date
                   v-model="filterCond.readDate.min"
                   label="開始"
                   :rules="validationRules.contents.readDate"
-                  mask="XXXX/XX/XX"
+                  clearable
                   dense
-                >
-                  <template v-slot:append>
-                    <q-btn 
-                      round 
-                      dense 
-                      flat 
-                      icon="event"
-                    >
-                      <q-popup-proxy v-model="bookDialog.showDatePopup">
-                        <q-date v-model="filterCond.readDate.min" today-btn @update:model-value="bookDialog.showDatePopup = false" />
-                      </q-popup-proxy>
-                    </q-btn>
-                  </template>
-                </q-input>
+                ></c-input-date>
               </div>
               <div class="col-5 q-pa-sm">
-                <q-input
+                <c-input-date
                   v-model="filterCond.readDate.max"
                   label="終了"
                   :rules="validationRules.contents.readDate"
-                  mask="XXXX/XX/XX"
+                  clearable
                   dense
-                >
-                  <template v-slot:append>
-                    <q-btn 
-                      round 
-                      dense 
-                      flat 
-                      icon="event"
-                    >
-                      <q-popup-proxy v-model="bookDialog.showDatePopup">
-                        <q-date v-model="filterCond.readDate.max" today-btn @update:model-value="bookDialog.showDatePopup = false" />
-                      </q-popup-proxy>
-                    </q-btn>
-                  </template>
-                </q-input>
+                ></c-input-date>
               </div>
 
               <div class="col-2 q-pa-sm">
@@ -1045,26 +1020,12 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         </div>
         <div class="row">
           <div class="col-12 col-sm-6 q-pa-xs">
-            <q-input
+            <c-input-date
               v-model="bookDialog.form.readDate"
-              clearable
               :label="labels.readDate"
               :rules="validationRules.contents.readDate"
-              mask="XXXX/XX/XX"
-            >
-              <template v-slot:append>
-                <q-btn 
-                  round 
-                  dense 
-                  flat 
-                  icon="event"
-                >
-                  <q-popup-proxy v-model="bookDialog.showDatePopup">
-                    <q-date v-model="bookDialog.form.readDate" today-btn @update:model-value="bookDialog.showDatePopup = false" />
-                  </q-popup-proxy>
-                </q-btn>
-              </template>
-            </q-input>
+              clearable
+            ></c-input-date>
           </div>
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-rating

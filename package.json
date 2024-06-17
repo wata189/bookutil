@@ -10,13 +10,14 @@
     "----↓Web開発----": "",
     "devVue": "npm run test && vite",
     "----↓androidビルド----": "",
-    "buildAndroidApk": "npm run build && npx cap sync && npx cap open android",
+    "buildAndroidApk": "npm run build && npm run createApkImg && npx cap sync && npx cap open android",
     "----↓モジュール----": "",
     "build": "npm run test && vue-tsc && vite build",
     "preview": "vite preview",
     "test": "npm run testVueModules && npm run testVueComponents",
     "testVueModules": "npx vitest run test.modules.test.ts",
-    "testVueComponents": "npx vitest run test.components.test.ts"
+    "testVueComponents": "npx vitest run test.components.test.ts",
+    "createApkImg": "npx @capacitor/assets generate --android"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
@@ -42,6 +43,7 @@
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@quasar/vite-plugin": "^1.3.1",
     "@types/jest": "^29.5.3",
     "@types/node": "^16.18.25",
