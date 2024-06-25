@@ -853,7 +853,7 @@ const addBookshelf = async (book:Book) => {
   const email = user.email || "No User Data";
   const tags = book.tags.filter(tag => {
     // 一部タグをフィルタリング
-    return !["よみたい", "よんでいる", "図書館未定", "かいたい"].includes(tag);
+    return !["よみたい", "よんでいる", "図書館未定", "かいたい", "よやくする"].includes(tag);
   }).filter(tag => {
     // 図書館タグも除外
     return !/.{1,}図書館$/.test(tag);
@@ -874,7 +874,7 @@ const addBookshelf = async (book:Book) => {
     readDate: null,
     rate: 0,
     contents:[],
-    // dispCoverUrl型の関係で入れとく
+    // dispCoverUrl 型の関係で入れとく
     dispCoverUrl: ""
   };
   const response = await axiosUtil.post(`/bookshelf/create`, params);

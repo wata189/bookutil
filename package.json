@@ -8,9 +8,9 @@
   },
   "scripts": {
     "----↓Web開発----": "",
-    "devVue": "npm run test && vite",
+    "Webサーバ": "npm run test && vite",
     "----↓androidビルド----": "",
-    "buildAndroidApk": "npm run build && npm run createApkImg && npx cap sync && npx cap open android",
+    "androidビルド": "npm run build && npm run createApkImg && npx cap sync && npx cap open android",
     "----↓モジュール----": "",
     "build": "npm run test && vue-tsc && vite build",
     "preview": "vite preview",
