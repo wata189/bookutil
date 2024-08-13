@@ -198,10 +198,6 @@ const setBookshelfBooks = async (books:BookshelfBook[]) => {
     };
     return retBook;
   });
-
-  // フィルターの日付の値いじる
-  filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
-  filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 };
 
 const getBook = async (isbn:string) => {
@@ -396,7 +392,7 @@ type BookDialog = {
   headerText: string,
   showDatePopup: boolean,
   okLabel: string,
-  okFunction: Function,
+  okFunction: ((...args: any[]) => any),
   form: BookshelfBookForm
 };
 const bookDialog:Ref<BookDialog> = ref({
@@ -698,6 +694,11 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   }else{
     await fetchBookshelfBooks();
   }
+      
+  // フィルターの日付の値設定
+  filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
+  filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
+
   const cachedTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
   if(cachedTags) {
     await setTags(cachedTags);

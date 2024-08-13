@@ -444,7 +444,7 @@ type BookDialog = {
   updateAt: number | null,
   headerText: string,
   okLabel: string,
-  okFunction: Function,
+  okFunction: ((...args: any[]) => any),
   form: BookForm
 }
 const bookDialog:Ref<BookDialog> = ref({
@@ -798,7 +798,7 @@ type NewBooksDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: Function,
+  okFunction: ((...args: any[]) => any),
   forms: NewBookForm[]
 };
 const newBooksDialog:Ref<NewBooksDialog> = ref({
