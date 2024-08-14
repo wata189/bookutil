@@ -9,7 +9,7 @@ const props = defineProps({
   okLabel: {type:String, default: "OK"},
   hideFooter: {type:Boolean, default: false},
   noPadding: {type:Boolean, default: false},
-  href:{type:String, required: false}
+  href:{type:String, default: ""}
 });
 const emits = defineEmits([
   "update:modelValue",
@@ -36,7 +36,7 @@ const value = computed({
       <q-card-section class="row" :class="util.isDarkMode()? '' : 'bg-pink-3'">
         <div class="text-h6">{{ headerText }}</div>
         <q-space />
-        <q-btn icon="close" flat round dense v-close-popup />
+        <q-btn v-close-popup icon="close" flat round dense />
       </q-card-section>
 
       <q-separator></q-separator>
@@ -48,17 +48,17 @@ const value = computed({
       <q-separator v-if="!hideFooter"></q-separator>
 
       <q-card-section v-if="!hideFooter" class="row">
-        <q-btn flat label="閉じる" color="secondary" v-close-popup />
+        <q-btn v-close-popup flat label="閉じる" color="secondary" />
         <q-space />
         <q-btn 
           flat 
           :label="okLabel" 
           color="primary" 
           :href="props.href" 
-          @click="emits('ok')"
-          target="_blank" 
-          noopener
+          target="_blank"
+          noopener 
           norefferer
+          @click="emits('ok')"
         />
       </q-card-section>
     </q-card>

@@ -1,4 +1,4 @@
-import Dexie from 'dexie';
+import Dexie from "dexie";
 
 const dataBaseVer = 1;
 const dataBaseName = "Cache";
@@ -7,49 +7,52 @@ const dataBaseTableName = "cacheTable";
 const PERMANENT_CACHE_KEY = [
   "cache-accessToken",
   "cache-refreshToken",
-  "cache-isDarkMode"
+  "cache-isDarkMode",
 ];
 
-interface Cache{
-  key:string;
+interface Cache {
+  key: string;
   limit: number | undefined;
-  value: any;
+  value: unknown;
 }
 
 class CacheUtil {
   cacheTable: Dexie.Table<Cache, string>;
-  constructor(){
+  constructor() {
     const db = new Dexie(dataBaseName);
     db.version(dataBaseVer).stores({
-      [dataBaseTableName]: "key"
+      [dataBaseTableName]: "key",
     });
     this.cacheTable = db.table(dataBaseTableName) as Dexie.Table<Cache, string>;
   }
 
   /**
- * @param {string} key - キー
- * @param {any} value - バリュー
- * @param {number} [limitHours] - キャッシュの期限（時間単位）
- */
-  async set(key: string, value: any, limitHours?:number){
+   * @param {string} key - キー
+   * @param {unknown} value - バリュー
+   * @param {number} [limitHours] - キャッシュの期限（時間単位）
+   */
+  async set(key: string, value: unknown, limitHours?: number) {
     const defaultLimitHours = 24; // 引数ないときのデフォルトは24h
     // キャッシュ期限の計算
-    const limit = (new Date()).getTime() + (limitHours || defaultLimitHours) * 60 * 60 * 1000;
+    const limit =
+      new Date().getTime() + (limitHours || defaultLimitHours) * 60 * 60 * 1000;
 
-    const cache:Cache = {
-      key, value, limit
+    const cache: Cache = {
+      key,
+      value,
+      limit,
     };
     await this.cacheTable.put(cache);
   }
 
-  async get(key: string){
-    let value:any = null;
+  async get(key: string) {
+    let value: unknown = null;
     const cache = await this.cacheTable.get(key);
-    if(cache){
+    if (cache) {
       // 期限ありキャッシュで期限を超えている場合はキャッシュ削除
-      if(cache.limit && cache.limit < new Date().getTime()){
+      if (cache.limit && cache.limit < new Date().getTime()) {
         await this.delete(key);
-      }else{
+      } else {
         // 期限なしのキャッシュの場合は普通に返却
         value = cache.value;
       }
@@ -57,26 +60,23 @@ class CacheUtil {
     return value;
   }
 
-  async delete(key: string){
+  async delete(key: string) {
     return await this.cacheTable.delete(key);
   }
 
   // キャッシュを一部を除いてクリアする処理
   // ダークモード設定消さない
-  async clear(){
+  async clear() {
     const allCaches: Cache[] = await this.cacheTable.toArray();
-    const deleteCaches:Cache[] = allCaches.filter((cache:Cache) => {
+    const deleteCaches: Cache[] = allCaches.filter((cache: Cache) => {
       return !PERMANENT_CACHE_KEY.includes(cache.key);
     });
-    const promises:Promise<void>[] = [];
-    for (const cache of deleteCaches){
+    const promises: Promise<void>[] = [];
+    for (const cache of deleteCaches) {
       promises.push(this.delete(cache.key));
     }
     return Promise.all(promises);
   }
-
 }
 
-export{
-  CacheUtil
-}
+export { CacheUtil };

@@ -9,7 +9,7 @@ const props = defineProps({
   bookName: {type:String, required:true},
   isbn: {type:String, default:""},
   authorName: {type:String, default:""},
-  tags: {type:Array<String>, default:[]},
+  tags: {type:Array<string>, default:[]},
   dispCoverUrl: {type:String, required:true},
   memo: {type:String, default:""},
   hideBookLinks: {type:Boolean, default:false}
@@ -26,7 +26,7 @@ const props = defineProps({
     class="book-img book-card-item"
     fit="contain"
   >
-    <template v-slot:error>
+    <template #error>
       <q-img
         :src="IMG_PLACEHOLDER_PATH"
         decoding="async"
@@ -50,7 +50,7 @@ const props = defineProps({
         v-if="memo"
         dense
       >
-        <template v-slot:header="{expanded}">
+        <template #header="{expanded}">
           <q-item-section class="ellipsis">
             <template v-if="!expanded">{{ memo }}</template>
           </q-item-section>
@@ -59,11 +59,11 @@ const props = defineProps({
         
       </q-expansion-item>
       <div>
-        <q-chip v-for="tag in tags" dense color="primary" text-color="white">{{ tag }}</q-chip>
+        <q-chip v-for="tag in tags" :key="tag" dense color="primary" text-color="white">{{ tag }}</q-chip>
       </div>
       <c-book-links
         v-if="!hideBookLinks"
-        :bookName="bookName"
+        :book-name="bookName"
         :isbn="isbn"
         :author-name="authorName"
         :other-link="memo"

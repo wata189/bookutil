@@ -29,7 +29,7 @@ const isShow = ref(false);
     :rules="rules"
     mask="XXXX/XX/XX"
   >
-    <template v-slot:append>
+    <template #append>
       <q-btn 
         round 
         dense 

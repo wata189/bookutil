@@ -1,7 +1,7 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 
-import { computed, ref, toRefs, onMounted } from 'vue';
-import { Ref } from '@vue/runtime-core';
+import { computed, ref, toRefs, onMounted, Ref } from 'vue';
 
 import CRoundLink from "@/components/c-round-link.vue";
 import CRoundBtn from "@/components/c-round-btn.vue";
@@ -81,7 +81,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <q-page>
       <div class="row justify-center">
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
-          <div v-for="library in dispLibraries" class="q-pa-md">
+          <div v-for="library in dispLibraries" :key="library.id" class="q-pa-md">
             <q-card class="q-pa-md" :class="util.isDarkMode() ? '' : 'bg-pink-3'">
               <div class="text-h6">
                 

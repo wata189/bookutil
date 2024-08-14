@@ -1,6 +1,6 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ComputedRef, ref, toRefs } from "vue";
+import { onMounted, Ref, computed, ComputedRef, ref, toRefs } from 'vue';
 import { QForm, useQuasar } from "quasar";
 import VueApexCharts from "vue3-apexcharts";
 
@@ -50,7 +50,7 @@ type Content = {
   rate: number
 };
 type BookshelfBook = {
-  documentId: string | null,
+  documentId: string | undefined,
   bookName: string,
   isbn: string | null,
   coverUrl: string,
@@ -96,14 +96,14 @@ const filteredSortedBookshelfBooks = computed({
     const filterDateRangeMax = (new Date(filterCond.value.readDate.max)).getTime();
     //読了日フィルターは読了日範囲最小値～最大値の選択時は無効
     const useDateFilter = filterCond.value.readDate.min !== filterCondReadDateLimit.value.min || filterCond.value.readDate.max !== filterCondReadDateLimit.value.max;
-    // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
+    // マイナス検索の単語を抽出 最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const sortByUpdateAt = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
-    let sortFunc = sortByUpdateAt;
+    let sortFunc = sortByReadDate;
     // TODO: ソートあれこれ
-    if(true){
-      sortFunc = sortByReadDate;
-    }
+    // if(true){
+    //   sortFunc = sortByReadDate;
+    // }
 
     /////// フィルター
     return bookshelfBooks.value.filter(book => {
@@ -127,11 +127,12 @@ const filteredSortedBookshelfBooks = computed({
         ...book.contents.map(content => content.authorName),
         ...book.contents.map(content => content.contentName)
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
+      // eslint-disable-next-line no-irregular-whitespace
       .replace(/[ 　,]/g, ""); // 空白など削除
 
       // すべてのキーワードがひっかかったらtrue
       const hasPlusFilterWords = plusFilterWords.filter(word => searchedText.includes(word)).length === plusFilterWords.length;
-      // マイナス検索　マイナス検索1件でも引っかかったらダメ
+      // マイナス検索 マイナス検索1件でも引っかかったらダメ
       const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
       return hasPlusFilterWords && !hasMinusFilterWords;
     })
@@ -333,7 +334,7 @@ const createBookParams = async (form:BookshelfBookForm) => {
   const user = authUtil.getUserInfo();
   const email = user.email || "No User Data";
   const params:BookshelfBookParams = {
-    documentId: null,
+    documentId: undefined,
     updateAt: 0,
     user: email,
 
@@ -392,7 +393,7 @@ type BookDialog = {
   headerText: string,
   showDatePopup: boolean,
   okLabel: string,
-  okFunction: ((...args: any[]) => any),
+  okFunction: (() => void),
   form: BookshelfBookForm
 };
 const bookDialog:Ref<BookDialog> = ref({
@@ -673,7 +674,7 @@ const chartTypeOptions = [
 const isShowChart = ref(false);
 const chartHeight = ref(0);
 const showChart = () => {
-  // 高さ設定　resizeイベントにこれ設定するとリサイズで消えちゃうので、チャート表示時に1回だけ行う
+  // 高さ設定 resizeイベントにこれ設定するとリサイズで消えちゃうので、チャート表示時に1回だけ行う
   chartHeight.value = window.innerHeight - 52 - 50 - 50 - 50;
   isShowChart.value = true;
 }
@@ -682,13 +683,13 @@ const showChart = () => {
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
   // タグ履歴キャッシュ
-  const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
+  const cachedTagsHistories = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES) as string[] | null;
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
 
   // キャッシュからリスト取得してみる
-  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
+  const cachedBookshelfBooks = await cacheUtil.get(CACHE_KEY.BOOKSHELF) as BookshelfBook[] | null;
   if(cachedBookshelfBooks) {
     await setBookshelfBooks(cachedBookshelfBooks);
   }else{
@@ -699,7 +700,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
   filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 
-  const cachedTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  const cachedTags = await cacheUtil.get(CACHE_KEY.TAGS) as string[] | null;
   if(cachedTags) {
     await setTags(cachedTags);
   }else{
@@ -722,10 +723,10 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               v-model="chartType"
               :options="chartTypeOptions"
             >
-              <template v-slot:barByMonth>
+              <template #barByMonth>
                 <q-icon title="月グラフ" name="bar_chart" />
               </template>
-              <template v-slot:barByYear>
+              <template #barByYear>
                 <q-icon title="年グラフ" name="leaderboard" />
               </template>
             </q-btn-toggle>
@@ -757,7 +758,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
-          <div v-for="book in dispBookshelfBooks" class="col book-cover-wrapper q-my-sm">
+          <div v-for="book in dispBookshelfBooks" :key="book.documentId" class="col book-cover-wrapper q-my-sm">
             <c-book-card
               :book-name="book.bookName"
               :isbn="book.isbn || ''"
@@ -766,13 +767,13 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :disp-cover-url="book.dispCoverUrl"
               :memo="content2str(book.contents)"
             >
-              <template v-slot:header>
+              <template #header>
                   <div class="book-card-rate q-pl-sm">
                     {{ "★".repeat(book.rate) }}
                   </div>
 
               </template>
-              <template v-slot:menu-footer>
+              <template #menu-footer>
                 <div class="row">
                   <div class="col-12">
                     読了日：{{ book.readDate }}
@@ -820,7 +821,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-8 col-md-6 col-lg-auto q-pa-sm">
+          <div v-if="isShowFilterCond" ref="filtercond" class="col-12 col-sm-8 col-md-6 col-lg-auto q-pa-sm">
             <div class="row filter-cond shadow-up-12 items-center" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col-2 q-pa-sm">
                 読了日
@@ -928,7 +929,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="bookDialog.isShow"
       :header-text="bookDialog.headerText"
-      :okLabel="bookDialog.okLabel"
+      :ok-label="bookDialog.okLabel"
       @ok="bookDialog.okFunction"
     >
       <q-form ref="bookDialogForm">
@@ -941,7 +942,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :rules="validationRules.bookName"
               @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
-              <template v-slot:append>
+              <template #append>
                 <q-btn 
                   round 
                   dense 
@@ -962,7 +963,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
               @keydown.enter="getBook(bookDialog.form.isbn)"
             >
-              <template v-slot:append>
+              <template #append>
                 <q-btn 
                   round 
                   dense 
@@ -976,8 +977,8 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
-              clearable
               v-model="bookDialog.form.authorName"
+              clearable
               :label="labels.authorName"
             ></q-input>
           </div>
@@ -1012,10 +1013,10 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           <div class="col-auto q-pa-xs">
             <q-btn 
               :disable="tagsHistories.length <= 0" 
-              @click="setLatestTagsFromTagsHistories" 
               flat 
               label="タグ履歴" 
               color="primary" 
+              @click="setLatestTagsFromTagsHistories" 
             />
           </div>
         </div>
@@ -1038,32 +1039,32 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div class="col-auto q-pa-xs">
             <q-btn 
-              @click="bookDialog.form.contents.push({authorName: '', contentName: '', rate: 0})" 
               flat 
               label="1行追加" 
               color="primary" 
+              @click="bookDialog.form.contents.push({authorName: '', contentName: '', rate: 0})" 
             />
           </div>
           <div class="col-auto q-pa-xs">
             <q-btn 
               :disable="!util.isExist(bookDialog.form.isbn)|| !util.isIsbn(bookDialog.form.isbn)"
-              @click="searchShortStorys(bookDialog.form.isbn)" 
               flat 
               label="書籍内容検索" 
               color="primary" 
+              @click="searchShortStorys(bookDialog.form.isbn)" 
             />
           </div>
           <div class="col-auto q-pa-xs">
             <q-btn 
               :disable="bookDialog.form.contents.length === 0"
-              @click="calcRate(bookDialog.form.contents)" 
               flat 
               label="点数計算" 
               color="primary" 
+              @click="calcRate(bookDialog.form.contents)" 
             />
           </div>
           <div v-if="bookDialog.form.contents.length > 0" class="col-12 q-pa-xs">
-            <q-card v-for="content, i in bookDialog.form.contents" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
+            <q-card v-for="content, i in bookDialog.form.contents" :key="'content-' + i" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
               <div class="row items-center">
                 <div class="col-12 q-pa-xs">
                   <q-input

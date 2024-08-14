@@ -1,7 +1,12 @@
-import { CacheUtil } from '@/modules/cacheUtil';
+import { CacheUtil } from "@/modules/cacheUtil";
 
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  User,
+} from "firebase/auth";
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -11,45 +16,44 @@ const auth = getAuth(initApp);
 
 const cacheUtil = new CacheUtil();
 
-type User = {
-  email:string
-}
+type UserData = {
+  email: string;
+};
 // トークン取得処理
-const getIdToken = async ():Promise<string | null> =>{
+const getIdToken = async (): Promise<string | null> => {
   const idToken = await auth.currentUser?.getIdToken();
   return idToken || null;
 };
 
 // firebaseの読み込み処理が完了してから何かを行う処理
-const waitAuthStateChanged = (func:Function) => {
+const waitAuthStateChanged = (func: (user: User | null) => void) => {
   onAuthStateChanged(auth, (user) => {
     func(user);
   });
 };
 
 // アクセストークン→ユーザー情報を取得
-const getUserInfo = ():User =>{
-  const user = {email: ""};
+const getUserInfo = (): UserData => {
+  const user = { email: "" };
 
-  try{
-    if(auth.currentUser && auth.currentUser.email){
+  try {
+    if (auth.currentUser && auth.currentUser.email) {
       user.email = auth.currentUser.email;
     }
-  }catch(error){
+  } catch (error) {
     console.log(error);
-  }finally{
-    return user;
   }
+  return user;
 };
 // ログイン
-const login = (email:string, password:string):Promise<void> => {
+const login = (email: string, password: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     signInWithEmailAndPassword(auth, email, password)
       .then(async () => {
         // 認証成功した時
-        console.log("login success")
+        console.log("login success");
         // ログイン成功時、キャッシュクリアして諸々読み込み直す
-        await cacheUtil.clear()
+        await cacheUtil.clear();
         window.location.reload();
         resolve();
       })
@@ -57,8 +61,7 @@ const login = (email:string, password:string):Promise<void> => {
         console.log(error);
         reject(error);
       });
-
-  })
+  });
 };
 // ログアウト
 const logout = async () => {
@@ -74,5 +77,5 @@ export default {
   getUserInfo,
   login,
   logout,
-  waitAuthStateChanged
-}
+  waitAuthStateChanged,
+};

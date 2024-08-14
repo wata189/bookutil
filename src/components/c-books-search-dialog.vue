@@ -81,13 +81,13 @@ const selectBook = async (book:bookApiUtil.ApiBook) => {
     v-model="value"
     header-text="書籍検索"
     hide-footer
-    @show="searchBooks(props.searchWord)"
-    @hide="apiBooks = []"
     class="books-search-dialog"
     no-padding
+    @show="searchBooks(props.searchWord)"
+    @hide="apiBooks = []"
   >
     <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
-      <div v-for="book in dispBooks" class="col book-cover-wrapper q-my-sm">
+      <div v-for="book, i in dispBooks" :key="'search-book-' + i" class="col book-cover-wrapper q-my-sm">
         <c-book-card
           :book-name="book.bookName"
           :isbn="book.isbn || ''"
@@ -96,7 +96,7 @@ const selectBook = async (book:bookApiUtil.ApiBook) => {
           :disp-cover-url="book.dispCoverUrl"
           :memo="book.memo || ''"
         >
-          <template v-slot:header>
+          <template #header>
             <div class="row">
               <q-space></q-space>
               <c-round-btn

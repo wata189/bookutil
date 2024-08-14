@@ -2,9 +2,7 @@
 import CHeader from "@/components/c-header.vue";
 import CConfirmDialog from "@/components/c-confirm-dialog.vue";
 
-import { onMounted } from "@vue/runtime-core";
-import { ref } from "@vue/reactivity";
-import { Ref } from "vue";
+import { Ref, ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import 'animate.css';
 
@@ -51,7 +49,7 @@ type Dialog = {
   headerText: string,
   msg: string,
   isError?: boolean,
-  next?: Function,
+  next?: (() => void),
   isNegative?: boolean
 };
 const dialog:Ref<Dialog> = ref({
@@ -69,7 +67,7 @@ const showErrorDialog = (status: number, statusText: string, msg: string) => {
 
   
 };
-const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, next:Function) => {
+const showConfirmDialog = (headerText:string, msg:string, isNegative:boolean, next:(() => void)) => {
   dialog.value = {
     isShow: true,
     headerText,
@@ -175,9 +173,9 @@ onMounted(async () => {
     <!-- ajax-barのhijak-filter機能でAPI叩いたのを検知して、ローディングを表示させる -->
     <q-ajax-bar
       :hijak-filter="util.isUrl"
+      color="transparent"
       @start="showLoading"
       @stop="hideLoading"
-      color="transparent"
     ></q-ajax-bar>
 
     

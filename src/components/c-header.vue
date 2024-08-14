@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ComputedRef, computed, ref, toRefs } from "vue";
 import { Dark, QForm, QMenu } from "quasar";
-import { onMounted, Ref } from "@vue/runtime-core";
+import { onMounted, Ref } from "vue";
 import { useRouter } from "vue-router";
 
 import CDialog from "@/components/c-dialog.vue";
@@ -109,7 +109,6 @@ const loginDialog = ref({
   showPassword: false
 });
 const showLoginDialog = () => {
-  console.log(authUtil.getUserInfo());
   loginDialog.value.isShow = true;
   loginDialog.value.form = {
     email: "",
@@ -126,6 +125,7 @@ const login = async () => {
     try{
       await authUtil.login(loginDialog.value.form.email, loginDialog.value.form.password);
     }catch(e){
+      console.error(e);
       // ログイン失敗時はエラーダイアログ出す
       emitError("ログインエラー", "ログインに失敗しました", 403);
     }
@@ -147,7 +147,7 @@ const userInfoMenu:Ref<QMenu | undefined> = ref();
 const {isAppLoaded} = toRefs(props);
 onMounted(util.waitParentMount(isAppLoaded, async () => {
   // ダークモード情報をキャッシュから取り出して設定
-  const cachedIsDarkMode:boolean | null = await cacheUtil.get(CACHE_KEY.IS_DARK_MODE);
+  const cachedIsDarkMode = await cacheUtil.get(CACHE_KEY.IS_DARK_MODE) as boolean | null;
   if(cachedIsDarkMode){
     isDarkMode.value = cachedIsDarkMode;
   }
@@ -179,6 +179,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
       <!-- ヘッダーの遷移アイコンは引数からurlとアイコンと名前受け取る -->
       <c-round-btn
         v-for="menu in dispMenus"
+        :key="menu.name"
         :title="menu.name"
         :icon="menu.icon"
         :to="menu.to"
@@ -208,11 +209,11 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               <q-item v-close-popup>
                 <q-item-section>{{ user.email }}</q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="authUtil.logout">
+              <q-item v-close-popup clickable @click="authUtil.logout">
                 <q-item-section>ログアウト</q-item-section>
               </q-item>
             </template>
-            <q-item v-else clickable v-close-popup @click="showLoginDialog">
+            <q-item v-else v-close-popup clickable @click="showLoginDialog">
               <q-item-section>ログイン</q-item-section>
             </q-item>
           </q-list>
@@ -222,7 +223,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="loginDialog.isShow"
       header-text="ログイン"
-      okLabel="ログイン"
+      ok-label="ログイン"
       @ok="login"
     >
       <q-form ref="loginDialogForm" class="login-dialog">
@@ -244,7 +245,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :label="labels.password"
               :rules="validationRules.password"
             >
-            <template v-slot:append>
+            <template #append>
               <q-icon
                 :name="loginDialog.showPassword ? 'visibility_off' : 'visibility'"
                 class="cursor-pointer"

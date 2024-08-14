@@ -20,10 +20,10 @@ const emits = defineEmits(["click"]);
     :color="props.color"
     :title="props.title"
     :href="props.href"
-    @click="emits('click')"
     :target="props.target"
     noopener
     norefferer
+    @click="emits('click')"
   >
     <q-icon v-if="props.icon" size="28px" :name="props.icon" />
     <q-avatar v-else size="32.58px">

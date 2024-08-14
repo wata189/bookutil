@@ -9,7 +9,7 @@ const props = defineProps({
   cancelLabel: {type:String, default: "キャンセル"},
   isError: {type:Boolean, default: false},
   isNegative: {type:Boolean, default: false},
-  next: {type:Function}
+  next: {type:Function, default: undefined}
 });
 const emits = defineEmits(["update:modelValue"]);
 const value = computed({
@@ -46,9 +46,7 @@ const okBtnColor = computed(() => {
 
 const ok = () => {
   value.value = false;
-  if(props.next){
-    props.next();
-  }
+  if(props.next)props.next();
 }
 </script>
 
@@ -61,7 +59,7 @@ const ok = () => {
       <q-card-section class="row" :class="headerClass">
         <div class="text-h6">{{ headerText.trim() }}</div>
         <q-space />
-        <q-btn icon="close" flat round dense v-close-popup />
+        <q-btn v-close-popup icon="close" flat round dense />
       </q-card-section>
 
       <q-separator v-if="isShowSeparator"></q-separator>
@@ -74,7 +72,7 @@ const ok = () => {
 
 
       <q-card-actions class="row" :class="footerClass">
-        <q-btn v-if="!isError" flat :label="cancelLabel" :color="cancelBtnColor" v-close-popup />
+        <q-btn v-if="!isError" v-close-popup flat :label="cancelLabel" :color="cancelBtnColor" />
         <q-space />
         <q-btn flat :label="okLabel" :color="okBtnColor" @click="ok"/>
       </q-card-actions>

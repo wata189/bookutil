@@ -2,10 +2,10 @@
 
 const props = defineProps({
   title:{type:String, default: ""},
-  icon:{type:String, required:false},
+  icon:{type:String, default: ""},
   isFlat:{type:Boolean, default: true},
-  to:{type:String, required: false},
-  color:{type:String, required: false}
+  to:{type:String, default: ""},
+  color:{type:String, default: ""}
 });
 
 const emits = defineEmits(["click"]);

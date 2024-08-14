@@ -1,6 +1,6 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ref, toRefs } from 'vue';
+import { onMounted, Ref, computed, ref, toRefs } from 'vue';
 import { QForm, useQuasar } from "quasar";
 
 import { NotifyUtil } from "@/modules/notifyUtil";
@@ -101,7 +101,7 @@ const filteredSortedToreadBooks = computed({
     // 条件キャッシュ
     const filterWords = util.strToTag(filterCond.value.word);
     const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
-    // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
+    // マイナス検索の単語を抽出 最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
     const filterIsOnlyNewBook = filterCond.value.isOnlyNewBook;
 
@@ -117,11 +117,12 @@ const filteredSortedToreadBooks = computed({
         book.tags,
         book.memo
       ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
+      // eslint-disable-next-line no-irregular-whitespace
       .replace(/[ 　,]/g, ""); // 空白など削除
 
       // すべてのキーワードがひっかかったらtrue
       const hasPlusFilterWords = plusFilterWords.filter(word => searchedText.includes(word)).length === plusFilterWords.length;
-      // マイナス検索　マイナス検索1件でも引っかかったらダメ
+      // マイナス検索 マイナス検索1件でも引っかかったらダメ
       const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
       return hasPlusFilterWords && !hasMinusFilterWords;
     }).filter((book:Book) => {
@@ -444,7 +445,7 @@ type BookDialog = {
   updateAt: number | null,
   headerText: string,
   okLabel: string,
-  okFunction: ((...args: any[]) => any),
+  okFunction: (() => void),
   form: BookForm
 }
 const bookDialog:Ref<BookDialog> = ref({
@@ -602,7 +603,7 @@ type AddTagDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: Function,
+  okFunction: (() => void),
   form: AddTagForm
 };
 const addTagDialog:Ref<AddTagDialog> = ref({
@@ -718,7 +719,6 @@ type MsgDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: Function | undefined,
   href: string | undefined,
   content: string
 };
@@ -726,7 +726,6 @@ const msgDialog:Ref<MsgDialog> = ref({
   isShow: false,
   headerText: "",
   okLabel: "",
-  okFunction: undefined,
   href: undefined,
   content: ""
 });
@@ -798,7 +797,7 @@ type NewBooksDialog = {
   isShow: boolean,
   headerText: string,
   okLabel: string,
-  okFunction: ((...args: any[]) => any),
+  okFunction: (() => void),
   forms: NewBookForm[]
 };
 const newBooksDialog:Ref<NewBooksDialog> = ref({
@@ -933,19 +932,19 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
   }
   
   // タグ履歴キャッシュ
-  const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
+  const cachedTagsHistories = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES) as string[] | null;
   if(cachedTagsHistories){
     tagsHistories.value = cachedTagsHistories;
   }
 
   // キャッシュからリスト取得してみる
-  const cachedToreadBooks:Book[] | null = await cacheUtil.get(CACHE_KEY.BOOKS);
+  const cachedToreadBooks = await cacheUtil.get(CACHE_KEY.BOOKS) as Book[] | null;
   if(cachedToreadBooks){
     await setToreadBooks(cachedToreadBooks);
   }else{
     await fetchToreadBooks();
   }
-  const cachedToreadTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
+  const cachedToreadTags = await cacheUtil.get(CACHE_KEY.TAGS) as string[] | null;
   if(cachedToreadTags) {
     await setTags(cachedToreadTags);
   }else{
@@ -973,7 +972,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
-          <div v-for="book in dispToreadBooks" class="col book-cover-wrapper q-my-sm">
+          <div v-for="book in dispToreadBooks" :key="book.documentId" class="col book-cover-wrapper q-my-sm">
             <c-book-card
               :book-name="book.bookName"
               :isbn="book.isbn || ''"
@@ -982,14 +981,14 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :disp-cover-url="book.dispCoverUrl"
               :memo="book.memo || ''"
             >
-              <template v-slot:header>
+              <template #header>
                 <q-checkbox
                   v-model="book.isChecked"
                   dense
                 >
                 </q-checkbox>
               </template>
-              <template v-slot:menu-footer>
+              <template #menu-footer>
                 <div class="row">
                   <div class="col-auto">
                     <q-toggle
@@ -1064,7 +1063,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           enter="fadeIn"
           leave="fadeOut"
         >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-6 col-md-auto q-pa-sm">
+          <div v-if="isShowFilterCond" ref="filtercond" class="col-12 col-sm-6 col-md-auto q-pa-sm">
             <div class="row filter-cond shadow-up-12" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
               <div class="col q-pa-sm">
                 <c-input-tag
@@ -1154,7 +1153,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="bookDialog.isShow"
       :header-text="bookDialog.headerText"
-      :okLabel="bookDialog.okLabel"
+      :ok-label="bookDialog.okLabel"
       @ok="bookDialog.okFunction"
     >
       <q-form ref="bookDialogForm">
@@ -1167,7 +1166,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :rules="validationRules.bookName"
               @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
-              <template v-slot:append>
+              <template #append>
                 <q-btn 
                   round 
                   dense 
@@ -1188,7 +1187,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
               @keydown.enter="getBook(bookDialog.form.isbn)"
             >
-              <template v-slot:append>
+              <template #append>
                 <q-btn 
                   round 
                   dense 
@@ -1202,7 +1201,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           
           <div class="col-12">
             <c-book-links
-              :bookName="bookDialog.form.bookName || ''"
+              :book-name="bookDialog.form.bookName || ''"
               :author-name="bookDialog.form.authorName"
               :isbn="bookDialog.form.isbn"
               :other-link="null"
@@ -1210,8 +1209,8 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           </div>
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
-              clearable
               v-model="bookDialog.form.authorName"
+              clearable
               :label="labels.authorName"
             ></q-input>
           </div>
@@ -1245,20 +1244,20 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
           <div class="col-auto q-pa-xs">
             <q-btn 
               :disable="tagsHistories.length <= 0" 
-              @click="setLatestTagsFromTagsHistories" 
               flat 
               label="タグ履歴" 
               color="primary" 
+              @click="setLatestTagsFromTagsHistories" 
             />
           </div>
           <div class="col-auto q-pa-xs">
             <q-btn 
               size="md"
               :disable="!(util.isExist(bookDialog.form.isbn) && util.isIsbn(bookDialog.form.isbn))" 
-              @click="setWantTag" 
               flat 
               label="よみたい" 
-              color="primary"
+              color="primary" 
+              @click="setWantTag"
             />
           </div>
           <q-space></q-space>
@@ -1299,7 +1298,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="addTagDialog.isShow"
       :header-text="addTagDialog.headerText"
-      :okLabel="addTagDialog.okLabel"
+      :ok-label="addTagDialog.okLabel"
       @ok="addMultiTag"
     >
       <q-form ref="addTagDialogForm">
@@ -1319,13 +1318,13 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="newBooksDialog.isShow"
       :header-text="newBooksDialog.headerText"
-      @hide="newBooksDialog.forms = []"
       no-padding
-      @ok="newBooksDialog.okFunction"
       :ok-label="newBooksDialog.okLabel"
+      @hide="newBooksDialog.forms = []"
+      @ok="newBooksDialog.okFunction"
     >
       <q-form v-if="newBooksDialog.forms.length > 0" ref="newBooksDialogForm">
-        <q-card v-for="form in newBooksDialog.forms" class="q-pa-sm q-ma-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2' ">
+        <q-card v-for="form in newBooksDialog.forms" :key="form.documentId" class="q-pa-sm q-ma-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2' ">
           <div>
             {{ form.authorName }}『{{ form.bookName }}』
           </div>
@@ -1349,15 +1348,15 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               </div>
               <div class="col-6 col-sm-4 q-pa-xs">
                 <q-input
-                  clearable
                   v-model="form.authorName"
+                  clearable
                   :label="labels.authorName"
                 ></q-input>
               </div>
               <div class="col-6 col-sm-3 q-pa-xs">
                 <q-input
-                  clearable
                   v-model="form.publisherName"
+                  clearable
                   :label="labels.publisherName"
                 ></q-input>
               </div>
@@ -1393,7 +1392,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
     <c-dialog
       v-model="msgDialog.isShow"
       :header-text="msgDialog.headerText"
-      :okLabel="msgDialog.okLabel"
+      :ok-label="msgDialog.okLabel"
       :href="msgDialog.href"
     >
       {{ msgDialog.content }}
