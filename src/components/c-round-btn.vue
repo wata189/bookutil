@@ -2,9 +2,9 @@
 
 const props = defineProps({
   title:{type:String, default: ""},
-  icon:{type:String, default: ""},
+  icon:{type:String, default: undefined},
   isFlat:{type:Boolean, default: true},
-  to:{type:String, default: ""},
+  to:{type:String, default: undefined},
   color:{type:String, default: ""}
 });
 

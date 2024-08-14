@@ -9,7 +9,7 @@ const props = defineProps({
   okLabel: {type:String, default: "OK"},
   hideFooter: {type:Boolean, default: false},
   noPadding: {type:Boolean, default: false},
-  href:{type:String, default: ""}
+  href:{type:String, default: undefined}
 });
 const emits = defineEmits([
   "update:modelValue",
