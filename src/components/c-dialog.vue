@@ -50,6 +50,7 @@ const value = computed({
       <q-card-section v-if="!hideFooter" class="row">
         <q-btn v-close-popup flat label="閉じる" color="secondary" />
         <q-space />
+        <slot name="footer-content"></slot>
         <q-btn 
           flat 
           :label="okLabel" 
