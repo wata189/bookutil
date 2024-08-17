@@ -2,21 +2,21 @@
 import CRoundBtn from "@/components/c-round-btn.vue";
 
 const props = defineProps({
-  title:{type:String, default: ""},
-  icon:{type:String, default: ""},
-  imgUrl:{type:String, default: ""},
-  isFlat:{type:Boolean, default: true},
-  href:{type:String, default: ""},
-  color:{type:String, default: "secondary"},
-  target:{type:String, default: "_blank"},
+  title: { type: String, default: "" },
+  icon: { type: String, default: "" },
+  imgUrl: { type: String, default: "" },
+  isFlat: { type: Boolean, default: true },
+  href: { type: String, default: "" },
+  color: { type: String, default: "secondary" },
+  target: { type: String, default: "_blank" },
 });
 
 const emits = defineEmits(["click"]);
 </script>
 
 <template>
-  <c-round-btn 
-    :flat="props.isFlat"
+  <c-round-btn
+    :is-flat="props.isFlat"
     :color="props.color"
     :title="props.title"
     :href="props.href"

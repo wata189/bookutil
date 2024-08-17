@@ -1,33 +1,33 @@
 <script setup lang="ts">
-
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps({
-  modelValue: {type:Boolean, required: true},
-  headerText: {type:String, required: true},
-  okLabel: {type:String, default: "OK"},
-  cancelLabel: {type:String, default: "キャンセル"},
-  isError: {type:Boolean, default: false},
-  isNegative: {type:Boolean, default: false},
-  next: {type:Function, default: undefined}
+  modelValue: { type: Boolean, required: true },
+  headerText: { type: String, required: true },
+  okLabel: { type: String, default: "OK" },
+  cancelLabel: { type: String, default: "キャンセル" },
+  isError: { type: Boolean, default: false },
+  isNegative: { type: Boolean, default: false },
+  next: { type: Function, default: undefined },
 });
 const emits = defineEmits(["update:modelValue"]);
 const value = computed({
   get() {
-    return props.modelValue
+    return props.modelValue;
   },
-  set(value){
-    emits("update:modelValue", value)
-  }
+  set(value) {
+    emits("update:modelValue", value);
+  },
 });
 
 // isError, isNegativeを参照してスタイル設定
 const isNegativeColor = computed(() => {
-  return props.isNegative || props.isError
+  return props.isNegative || props.isError;
 });
 const isShowSeparator = computed(() => {
   return !isNegativeColor.value;
 });
+// TODO: 非ネガティブの場合の背景
 const headerClass = computed(() => {
   return isNegativeColor.value ? "bg-negative text-white" : "";
 });
@@ -46,15 +46,12 @@ const okBtnColor = computed(() => {
 
 const ok = () => {
   value.value = false;
-  if(props.next)props.next();
-}
+  if (props.next) props.next();
+};
 </script>
 
 <template>
-  <q-dialog
-    v-model="value"
-    persistent
-  >
+  <q-dialog v-model="value" persistent>
     <q-card class="confirm-dialog-card">
       <q-card-section class="row" :class="headerClass">
         <div class="text-h6">{{ headerText.trim() }}</div>
@@ -70,22 +67,26 @@ const ok = () => {
         </div>
       </q-card-section>
 
-
       <q-card-actions class="row" :class="footerClass">
-        <q-btn v-if="!isError" v-close-popup flat :label="cancelLabel" :color="cancelBtnColor" />
+        <q-btn
+          v-if="!isError"
+          v-close-popup
+          flat
+          :label="cancelLabel"
+          :color="cancelBtnColor"
+        />
         <q-space />
-        <q-btn flat :label="okLabel" :color="okBtnColor" @click="ok"/>
+        <q-btn flat :label="okLabel" :color="okBtnColor" @click="ok" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
-
 <style scoped>
-.confirm-dialog-card{
+.confirm-dialog-card {
   min-width: 300px;
 }
-.confirm-dialog-content{
+.confirm-dialog-content {
   white-space: pre-line;
 }
 </style>

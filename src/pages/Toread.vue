@@ -840,82 +840,6 @@ const showBooksSearchDialog = (searchWord: string) => {
   };
 };
 
-// TODO:新刊追加処理は新刊追加画面に移行
-const newBooksDialogForm: Ref<QForm | undefined> = ref();
-const addNewBooks = () => {
-  // フォームのバリデーション処理
-  if (!newBooksDialogForm.value) {
-    return;
-  }
-  newBooksDialogForm.value.validate().then(async (success: boolean) => {
-    if (!success) {
-      return;
-    }
-    // タグ履歴更新
-    if (bookDialog.value.form.tags) {
-      await addTagsHistories(bookDialog.value.form.tags);
-    }
-
-    // ダイアログ消す
-    newBooksDialog.value.isShow = false;
-
-    // formを送る
-    const idToken = await authUtil.getIdToken();
-    const user = authUtil.getUserInfo();
-    const params = {
-      newBooks: newBooksDialog.value.forms,
-      idToken,
-      user: user.email || "No User Data",
-    };
-    const response = await axiosUtil.post(`/toread/newbooks/add`, params);
-    if (response) {
-      const message = `新刊を一括追加しました`;
-      notifyUtil.notify(message);
-      // 画面情報再設定
-      await setToreadBooks(response.data.toreadBooks);
-    }
-  });
-};
-type NewBookForm = {
-  documentId: string;
-  bookName: string;
-  isbn: string;
-  authorName: string;
-  publisherName: string;
-  newBookCheckFlg: number;
-  tags: string;
-  isAdd: boolean;
-  updateAt: number;
-};
-type NewBooksDialog = {
-  isShow: boolean;
-  headerText: string;
-  okLabel: string;
-  okFunction: () => void;
-  forms: NewBookForm[];
-};
-const newBooksDialog: Ref<NewBooksDialog> = ref({
-  isShow: false,
-  headerText: "新刊一括追加",
-  okLabel: "一括追加",
-  okFunction: addNewBooks,
-  forms: [],
-});
-// 新刊一括追加ダイアログ
-const showNewBooksDialog = async () => {
-  newBooksDialog.value.isShow = true;
-
-  // 新刊取得処理
-  const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/toread/newbooks/fetch", { idToken });
-  if (response && response.data.newBooks.length > 0) {
-    newBooksDialog.value.forms = response.data.newBooks;
-  } else {
-    newBooksDialog.value.isShow = false;
-    emitError("エラー", "追加していない新刊はありません");
-  }
-};
-
 type Content = {
   authorName: string | null;
   contentName: string;
@@ -1090,7 +1014,6 @@ onMounted(
     // パラメータにisbnがあったらいきなりダイアログ表示
     const urlParams = new URL(window.location.href).searchParams;
     const urlParamIsbn = urlParams.get("isbn");
-    const urlParamAlertNewBooksFlg = urlParams.get("alertNewBooksFlg");
     if (urlParamIsbn) {
       if (util.isIsbn(urlParamIsbn)) {
         isExternalCooperation = true;
@@ -1116,9 +1039,6 @@ onMounted(
         // ISBNが取得できなかったことをアラートで表示
         emitError("エラー", "ISBNを取得できませんでした");
       }
-    } else if (util.isExist(urlParamAlertNewBooksFlg)) {
-      // alertNewBooksから遷移してきた場合newBooks
-      await showNewBooksDialog();
     }
 
     const urlParamWord = urlParams.get("filterCondWord");
@@ -1301,7 +1221,7 @@ onMounted(
             title="検索"
             icon="search"
             color="secondary"
-            :flat="false"
+            :is-flat="false"
             @click="isShowFilterCond = !isShowFilterCond"
           ></c-round-btn>
         </div>
@@ -1310,7 +1230,7 @@ onMounted(
             title="全選択"
             icon="done_all"
             color="secondary"
-            :flat="false"
+            :is-flat="false"
             @click="selectAllDispBooks"
           ></c-round-btn>
         </div>
@@ -1320,7 +1240,7 @@ onMounted(
             title="一括削除"
             icon="delete"
             color="negative"
-            :flat="false"
+            :is-flat="false"
             @click="deleteBooks(selectedBooks)"
           ></c-round-btn>
         </div>
@@ -1330,7 +1250,7 @@ onMounted(
             title="一括タグ"
             icon="local_offer"
             color="secondary"
-            :flat="false"
+            :is-flat="false"
             @click="showAddTagDialog"
           ></c-round-btn>
         </div>
@@ -1339,7 +1259,7 @@ onMounted(
             title="新規作成"
             icon="add"
             color="primary"
-            :flat="false"
+            :is-flat="false"
             @click="showCreateBookDialog"
           ></c-round-btn>
         </div>
@@ -1348,7 +1268,7 @@ onMounted(
             title="一括新規作成"
             icon="queue"
             color="secondary"
-            :flat="false"
+            :is-flat="false"
             @click="showCreateBooksDialog"
           ></c-round-btn>
         </div>
@@ -1535,78 +1455,6 @@ onMounted(
           class="set-tag-dialog-form-tags"
         ></c-input-tag>
       </q-form>
-    </c-dialog>
-
-    <!-- 新刊一括追加ダイアログ -->
-    <c-dialog
-      v-model="newBooksDialog.isShow"
-      :header-text="newBooksDialog.headerText"
-      no-padding
-      :ok-label="newBooksDialog.okLabel"
-      @hide="newBooksDialog.forms = []"
-      @ok="newBooksDialog.okFunction"
-    >
-      <q-form v-if="newBooksDialog.forms.length > 0" ref="newBooksDialogForm">
-        <q-card
-          v-for="form in newBooksDialog.forms"
-          :key="form.documentId"
-          class="q-pa-sm q-ma-sm"
-          :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'"
-        >
-          <div>{{ form.authorName }}『{{ form.bookName }}』</div>
-          <q-checkbox v-model="form.isAdd" label="追加する"></q-checkbox>
-          <q-expansion-item v-model="form.isAdd" header-style="display:none;">
-            <div class="row">
-              <div class="col-12 col-sm-5 q-pa-xs">
-                <q-input
-                  v-model="form.bookName"
-                  clearable
-                  :label="labels.bookName"
-                  :rules="form.isAdd ? validationRules.bookName : []"
-                ></q-input>
-              </div>
-              <div class="col-6 col-sm-4 q-pa-xs">
-                <q-input
-                  v-model="form.authorName"
-                  clearable
-                  :label="labels.authorName"
-                ></q-input>
-              </div>
-              <div class="col-6 col-sm-3 q-pa-xs">
-                <q-input
-                  v-model="form.publisherName"
-                  clearable
-                  :label="labels.publisherName"
-                ></q-input>
-              </div>
-              <div class="col-12 q-pa-xs">
-                <c-input-tag
-                  id="new-books-dialog-tag"
-                  v-model="form.tags"
-                  :label="labels.tags"
-                  hint=",/スペースで区切られます"
-                  :options="toreadTagOptions"
-                ></c-input-tag>
-              </div>
-              <div class="col-12 col-sm-auto q-pa-xs">
-                <q-toggle
-                  v-model="form.newBookCheckFlg"
-                  :disable="
-                    !(util.isExist(form.isbn) && util.isIsbn(form.isbn))
-                  "
-                  size="md"
-                  :true-value="1"
-                  :false-value="0"
-                  :label="labels.newBookCheckFlg"
-                ></q-toggle>
-              </div>
-            </div>
-          </q-expansion-item>
-        </q-card>
-      </q-form>
-      <div v-else class="row justify-center q-pa-md">
-        <q-spinner-ios size="36px" class="text-primary" />
-      </div>
     </c-dialog>
 
     <!-- 汎用ダイアログ -->
