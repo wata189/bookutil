@@ -1,5 +1,5 @@
 import { Dark } from "quasar";
-import { Ref, watch } from "vue";
+import { computed, ComputedRef, Ref, watch } from "vue";
 import * as xml from "xml-js";
 
 const isIsbn = (isbn: string): boolean => {
@@ -25,6 +25,13 @@ const strToTag = (tagStr: string): string[] => {
 const isDarkMode = (): boolean => {
   return Dark.isActive;
 };
+
+const baseColorClasses: ComputedRef<string> = computed(() => {
+  return isDarkMode() ? "" : "bg-pink-2";
+});
+const accentColorClasses: ComputedRef<string> = computed(() => {
+  return isDarkMode() ? "bg-dark" : "bg-accent text-black";
+});
 
 const isSmartPhone = (): boolean => {
   return window.matchMedia("(max-device-width: 600px)").matches;
@@ -213,6 +220,8 @@ export default {
   isUrl,
   strToTag,
   isDarkMode,
+  baseColorClasses,
+  accentColorClasses,
   isSmartPhone,
   formatDateToStr,
   getCurrentUrl,

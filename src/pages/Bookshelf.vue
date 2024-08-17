@@ -947,7 +947,7 @@ onMounted(
           >
             <div
               class="row filter-cond shadow-up-12 items-center"
-              :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'"
+              :class="util.accentColorClasses.value"
             >
               <div class="col-2 q-pa-sm">読了日</div>
               <div class="col-5 q-pa-sm">
@@ -1199,7 +1199,7 @@ onMounted(
               v-for="(content, i) in bookDialog.form.contents"
               :key="'content-' + i"
               class="q-my-sm"
-              :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'"
+              :class="util.baseColorClasses.value"
             >
               <div class="row items-center">
                 <div class="col-12 q-pa-xs">

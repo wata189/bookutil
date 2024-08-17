@@ -1192,7 +1192,7 @@ onMounted(
           >
             <div
               class="row filter-cond shadow-up-12"
-              :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'"
+              :class="util.accentColorClasses.value"
             >
               <div class="col q-pa-sm">
                 <c-input-tag

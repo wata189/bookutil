@@ -211,7 +211,7 @@ onMounted(
             v-for="(form, i) in forms"
             :key="form.documentId"
             class="q-pa-sm q-ma-sm"
-            :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'"
+            :class="util.baseColorClasses.value"
           >
             <div>{{ form.authorName }}『{{ form.bookName }}』</div>
             <div class="row">

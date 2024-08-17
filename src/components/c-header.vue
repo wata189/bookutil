@@ -183,7 +183,7 @@ onMounted(
   <q-header
     reveal
     elevated
-    :class="isDarkMode ? 'bg-dark text-primary' : 'bg-pink-3 text-black'"
+    :class="[isDarkMode ? 'text-primary' : '', util.accentColorClasses.value]"
   >
     <q-toolbar>
       <q-toolbar-title shrink class="toolbar-title">
@@ -215,10 +215,7 @@ onMounted(
       />
       <q-separator vertical inset color="" />
       <c-round-btn title="メニュー" icon="manage_accounts">
-        <q-menu
-          ref="userInfoMenu"
-          :class="isDarkMode ? '' : 'bg-pink-3 text-black'"
-        >
+        <q-menu ref="userInfoMenu" :class="util.accentColorClasses.value">
           <q-list>
             <q-item v-if="user.email" v-close-popup>
               <q-item-section>{{ user.email }}</q-item-section>
