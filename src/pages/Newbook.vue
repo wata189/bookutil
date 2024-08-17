@@ -279,7 +279,7 @@ onMounted(
     </q-page-container>
     <q-footer class="bg-transparent">
       <div class="row justify-end items-end">
-        <div class="col-auto q-pa-xs">
+        <div v-if="forms.length > 0" class="col-auto q-pa-xs">
           <c-round-btn
             title="新刊追加"
             icon="queue"
