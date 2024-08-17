@@ -65,10 +65,12 @@ ${bookshelfBooks}
 ${notAddBooks}`;
 
     emits(EMIT_NAME_CONFIRM, "確認", msg, false, async () => {
-      // TODO:タグ履歴更新
-      // if (form.value.tags) {
-      //   await addTagsHistories(form.value.tags);
-      // }
+      // タグ履歴更新
+      for await (const form of forms.value) {
+        if (form.tags) {
+          await addTagsHistories(form.tags);
+        }
+      }
 
       // formを送る
       const idToken = await authUtil.getIdToken();
@@ -95,6 +97,19 @@ ${notAddBooks}`;
       forms.value = [];
     });
   });
+};
+
+const addTagsHistories = async (tags: string) => {
+  tagsHistories.value.push(tags);
+  if (tagsHistories.value.length > 10) {
+    tagsHistories.value.shift();
+  }
+  const limitHours = 24;
+  await cacheUtil.set(
+    CACHE_KEY.TAGS_HISTORIES,
+    [...tagsHistories.value],
+    limitHours
+  );
 };
 
 const ADD_TO_TOREAD = "Toread";
