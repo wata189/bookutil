@@ -104,7 +104,8 @@ const linkBtns:ComputedRef<LinkBtn[]> = computed(() => {
     }else if(props.bookName && link.searchUrl.bookName){
       href = link.searchUrl.bookName.replace(SEARCH_PLACEHOLDER, props.bookName);
     }else if(props.authorName && link.searchUrl.authorName){
-      // 空白・カンマ取り除いてトリム　英語のことは考慮しない
+      // 空白・カンマ取り除いてトリム 英語のことは考慮しない
+      // eslint-disable-next-line no-irregular-whitespace
       const trimedAuthorName = props.authorName.trim().replace(/[ 　,，、]/g, "");
       href = link.searchUrl.authorName.replace(SEARCH_PLACEHOLDER, trimedAuthorName);
     }
@@ -135,6 +136,7 @@ const linkBtns:ComputedRef<LinkBtn[]> = computed(() => {
 <template>
   <c-round-link
     v-for="linkBtn in linkBtns"
+    :key="linkBtn.title"
     :disable="!linkBtn.href"
     round
     :title="linkBtn.title"

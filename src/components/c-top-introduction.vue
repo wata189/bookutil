@@ -25,8 +25,8 @@ const props = defineProps({
     <div class="introduction q-pa-md text-black">
       <div class="introduction-title" @click="router.push(props.to)">
         <div class="q-py-xl text-center">
-          <q-img v-if="img" :src="img" :width="iconSize" :height="iconSize" :class="class"></q-img>
-          <q-icon v-else-if="icon" :name="icon" :size="iconSize" :class="class"></q-icon>
+          <q-img v-if="img" :src="img" :width="iconSize" :height="iconSize" :class="props.class"></q-img>
+          <q-icon v-else-if="icon" :name="icon" :size="iconSize" :class="props.class"></q-icon>
           <span class="text-h3">{{ name }}</span>
         </div>
         <q-separator inset color="dark" />

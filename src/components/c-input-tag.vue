@@ -23,7 +23,7 @@ const emits = defineEmits([
 const selected = ref("");
 
 const options = ref(props.options);
-const filterFn = (val:string, update:any) => {
+const filterFn = (val:string, update: (callbackFn: () => void) => void):void => {
   if (val === '') {
     update(() => {
       options.value = props.options
@@ -58,8 +58,8 @@ const addTag = () => {
     :label="label"
     :hint="hint"
   >
-    <template v-slot:append>
-      <q-icon v-if="value" name="cancel" @click.stop.prevent="value = ''" class="cursor-pointer" />
+    <template #append>
+      <q-icon v-if="value" name="cancel" class="cursor-pointer" @click.stop.prevent="value = ''" />
       <q-btn round dense flat icon="local_offer">
         <q-menu fit class="q-pa-sm">
           <q-select
@@ -67,8 +67,8 @@ const addTag = () => {
             use-input
             dense
             :options="options"
-            @filter="filterFn"
             label="タグを検索"
+            @filter="filterFn"
             @update:model-value="addTag()"
           ></q-select>
         </q-menu>

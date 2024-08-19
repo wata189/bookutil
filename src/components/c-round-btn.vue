@@ -1,18 +1,17 @@
 <script setup lang="ts">
-
 const props = defineProps({
-  title:{type:String, default: ""},
-  icon:{type:String, required:false},
-  isFlat:{type:Boolean, default: true},
-  to:{type:String, required: false},
-  color:{type:String, required: false}
+  title: { type: String, default: "" },
+  icon: { type: String, default: undefined },
+  isFlat: { type: Boolean, default: true },
+  to: { type: String, default: undefined },
+  color: { type: String, default: "" },
 });
 
 const emits = defineEmits(["click"]);
 </script>
 
 <template>
-  <q-btn 
+  <q-btn
     :flat="props.isFlat"
     round
     :color="props.color"

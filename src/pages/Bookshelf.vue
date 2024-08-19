@@ -1,6 +1,6 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { onMounted, Ref } from '@vue/runtime-core';
-import { computed, ComputedRef, ref, toRefs } from "vue";
+import { onMounted, Ref, computed, ComputedRef, ref, toRefs } from "vue";
 import { QForm, useQuasar } from "quasar";
 import VueApexCharts from "vue3-apexcharts";
 
@@ -9,22 +9,22 @@ const notifyUtil = new NotifyUtil(useQuasar());
 import authUtil from "@/modules/authUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
-import AxiosUtil from '@/modules/axiosUtil';
-import * as bookApiUtil from '@/modules/bookApiUtil';
-import {searchNdlShortStorys, getCoverUrl} from '@/modules/ndlSearchUtil';
-import { CacheUtil } from '@/modules/cacheUtil';
+import AxiosUtil from "@/modules/axiosUtil";
+import * as bookApiUtil from "@/modules/bookApiUtil";
+import { searchNdlShortStorys, getCoverUrl } from "@/modules/ndlSearchUtil";
+import { CacheUtil } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
 const CACHE_KEY = {
   BOOKSHELF: "cache-bookshelf",
   TAGS: "cache-toreadTags",
-  TAGS_HISTORIES: "cache-tagsHistories"
+  TAGS_HISTORIES: "cache-tagsHistories",
 };
-import CBooksSearchDialog from '@/components/c-books-search-dialog.vue';
-import CRoundBtn from '@/components/c-round-btn.vue';
+import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
+import CRoundBtn from "@/components/c-round-btn.vue";
 import CDialog from "@/components/c-dialog.vue";
 import CInputTag from "@/components/c-input-tag.vue";
-import CPagination from '@/components/c-pagination.vue';
-import CBookCard from '@/components/c-book-card.vue';
+import CPagination from "@/components/c-pagination.vue";
+import CBookCard from "@/components/c-book-card.vue";
 import CTransition from "@/components/c-transition.vue";
 import CInputDate from "@/components/c-input-date.vue";
 // axiosUtilのインスタンス作成
@@ -33,45 +33,47 @@ const EMIT_NAME_CONFIRM = "show-confirm-dialog";
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
 
-const emitError = (statusText:string, msg:string, status?:number) => {
+const emitError = (statusText: string, msg: string, status?: number) => {
   emits(EMIT_NAME_ERROR, status, statusText, msg);
 };
 
 interface Props {
-  isAppLoaded: boolean
+  isAppLoaded: boolean;
 }
 const props = defineProps<Props>();
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
+const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
 
 type Content = {
-  authorName: string | null,
-  contentName: string,
-  rate: number
+  authorName: string | null;
+  contentName: string;
+  rate: number;
 };
 type BookshelfBook = {
-  documentId: string | null,
-  bookName: string,
-  isbn: string | null,
-  coverUrl: string,
-  authorName: string | null,
-  publisherName: string | null,
-  readDate: string | null,
-  updateAt: number,
-  tags: string[],
-  rate: number,
-  contents: Content[],
-  dispCoverUrl: string
+  documentId: string | undefined;
+  bookName: string;
+  isbn: string | null;
+  coverUrl: string;
+  authorName: string | null;
+  publisherName: string | null;
+  readDate: string | null;
+  updateAt: number;
+  tags: string[];
+  rate: number;
+  contents: Content[];
+  dispCoverUrl: string;
 };
-const bookshelfBooks:Ref<BookshelfBook[]> = ref([]);
+const bookshelfBooks: Ref<BookshelfBook[]> = ref([]);
 
 const pagination = ref({
   number: 1,
 
-  dispMax: 99
+  dispMax: 99,
 });
 const paginationMax = computed(() => {
-  return Math.ceil(filteredSortedBookshelfBooks.value.length / pagination.value.dispMax)
+  return Math.ceil(
+    filteredSortedBookshelfBooks.value.length / pagination.value.dispMax
+  );
 });
 const isShowPagination = computed(() => {
   return filteredSortedBookshelfBooks.value.length > pagination.value.dispMax;
@@ -80,7 +82,7 @@ const toTopPagenation = () => {
   pagination.value.number = 1;
 };
 
-const sortByReadDate = (a:BookshelfBook, b:BookshelfBook) => {
+const sortByReadDate = (a: BookshelfBook, b: BookshelfBook) => {
   const aDateTime = new Date(a.readDate || "9999/12/31").getTime();
   const bDateTime = new Date(b.readDate || "9999/12/31").getTime();
   return bDateTime - aDateTime;
@@ -89,60 +91,89 @@ const filteredSortedBookshelfBooks = computed({
   get: () => {
     // 条件キャッシュ
     const filterWords = util.strToTag(filterCond.value.word);
-    const plusFilterWords = filterWords.filter(word => !word.startsWith("-"));
+    const plusFilterWords = filterWords.filter((word) => !word.startsWith("-"));
     //評価フィルターは1~5の選択時は無効
-    const useRateFilter = filterCond.value.rate.min !== 1 || filterCond.value.rate.max !== 5;
-    const filterDateRangeMin = (new Date(filterCond.value.readDate.min)).getTime();
-    const filterDateRangeMax = (new Date(filterCond.value.readDate.max)).getTime();
+    const useRateFilter =
+      filterCond.value.rate.min !== 1 || filterCond.value.rate.max !== 5;
+    const filterDateRangeMin = new Date(
+      filterCond.value.readDate.min
+    ).getTime();
+    const filterDateRangeMax = new Date(
+      filterCond.value.readDate.max
+    ).getTime();
     //読了日フィルターは読了日範囲最小値～最大値の選択時は無効
-    const useDateFilter = filterCond.value.readDate.min !== filterCondReadDateLimit.value.min || filterCond.value.readDate.max !== filterCondReadDateLimit.value.max;
-    // マイナス検索の単語を抽出　最初の1文字は事前に削除しておく
-    const minusFilterWords = filterWords.filter(word => word.startsWith("-")).map(word => word.slice(1));
-    const sortByUpdateAt = (a:BookshelfBook, b:BookshelfBook) => b.updateAt - a.updateAt;
-    let sortFunc = sortByUpdateAt;
+    const useDateFilter =
+      filterCond.value.readDate.min !== filterCondReadDateLimit.value.min ||
+      filterCond.value.readDate.max !== filterCondReadDateLimit.value.max;
+    // マイナス検索の単語を抽出 最初の1文字は事前に削除しておく
+    const minusFilterWords = filterWords
+      .filter((word) => word.startsWith("-"))
+      .map((word) => word.slice(1));
+    const sortByUpdateAt = (a: BookshelfBook, b: BookshelfBook) =>
+      b.updateAt - a.updateAt;
+    let sortFunc = sortByReadDate;
     // TODO: ソートあれこれ
-    if(true){
-      sortFunc = sortByReadDate;
-    }
+    // if(true){
+    //   sortFunc = sortByReadDate;
+    // }
 
     /////// フィルター
-    return bookshelfBooks.value.filter(book => {
-      // 評価によるフィルタリング
-      return !useRateFilter || (filterCond.value.rate.min <= book.rate && book.rate <= filterCond.value.rate.max);
-    }).filter(book => {
-      // 日付でフィルタリング
-      const dateTime = (new Date(book.readDate || "1970/01/01")).getTime();
-      return !useDateFilter || (filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax);
-    }).filter((book:BookshelfBook) => {
-      // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
-      if(filterCond.value.isOnlyReadBook && !book.readDate){return false;}
-      if(filterWords.length === 0){return true;}
-      // 通常のワード検索
-      const searchedText = [
-        book.bookName,
-        book.isbn,
-        book.authorName,
-        book.publisherName,
-        book.tags,
-        ...book.contents.map(content => content.authorName),
-        ...book.contents.map(content => content.contentName)
-      ].join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
-      .replace(/[ 　,]/g, ""); // 空白など削除
+    return bookshelfBooks.value
+      .filter((book) => {
+        // 評価によるフィルタリング
+        return (
+          !useRateFilter ||
+          (filterCond.value.rate.min <= book.rate &&
+            book.rate <= filterCond.value.rate.max)
+        );
+      })
+      .filter((book) => {
+        // 日付でフィルタリング
+        const dateTime = new Date(book.readDate || "1970/01/01").getTime();
+        return (
+          !useDateFilter ||
+          (filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax)
+        );
+      })
+      .filter((book: BookshelfBook) => {
+        // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
+        if (filterCond.value.isOnlyReadBook && !book.readDate) {
+          return false;
+        }
+        if (filterWords.length === 0) {
+          return true;
+        }
+        // 通常のワード検索
+        const searchedText = [
+          book.bookName,
+          book.isbn,
+          book.authorName,
+          book.publisherName,
+          book.tags,
+          ...book.contents.map((content) => content.authorName),
+          ...book.contents.map((content) => content.contentName),
+        ]
+          .join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
+          // eslint-disable-next-line no-irregular-whitespace
+          .replace(/[ 　,]/g, ""); // 空白など削除
 
-      // すべてのキーワードがひっかかったらtrue
-      const hasPlusFilterWords = plusFilterWords.filter(word => searchedText.includes(word)).length === plusFilterWords.length;
-      // マイナス検索　マイナス検索1件でも引っかかったらダメ
-      const hasMinusFilterWords = minusFilterWords.filter(word => searchedText.includes(word)).length > 0;
-      return hasPlusFilterWords && !hasMinusFilterWords;
-    })
-    .sort(sortByUpdateAt) // 1回更新順でソートする
-    .sort(sortFunc); // 選択した条件でソート
-
+        // すべてのキーワードがひっかかったらtrue
+        const hasPlusFilterWords =
+          plusFilterWords.filter((word) => searchedText.includes(word))
+            .length === plusFilterWords.length;
+        // マイナス検索 マイナス検索1件でも引っかかったらダメ
+        const hasMinusFilterWords =
+          minusFilterWords.filter((word) => searchedText.includes(word))
+            .length > 0;
+        return hasPlusFilterWords && !hasMinusFilterWords;
+      })
+      .sort(sortByUpdateAt) // 1回更新順でソートする
+      .sort(sortFunc); // 選択した条件でソート
   },
   set: (value) => {
-    bookshelfBooks.value = value
-  }
-})
+    bookshelfBooks.value = value;
+  },
+});
 const dispBookshelfBooks = computed({
   get: () => {
     /////// ページ件数で絞り込み
@@ -150,20 +181,23 @@ const dispBookshelfBooks = computed({
       // start: ページ番号 - 1 * 表示件数
       (pagination.value.number - 1) * pagination.value.dispMax,
       // end: ページ番号*表示件数 or 最後
-      Math.min(pagination.value.number * pagination.value.dispMax, bookshelfBooks.value.length)
+      Math.min(
+        pagination.value.number * pagination.value.dispMax,
+        bookshelfBooks.value.length
+      )
     );
   },
   set: (value) => {
-    bookshelfBooks.value = value
-  }
+    bookshelfBooks.value = value;
+  },
 });
-const tagOptions:Ref<string[]> = ref([]);
+const tagOptions: Ref<string[]> = ref([]);
 
 // 画面初期化
 const fetchTags = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/tag/fetch", {idToken});
-  if(response){
+  const response = await axiosUtil.post("/tag/fetch", { idToken });
+  if (response) {
     await setTags(response.data.tags);
   }
 };
@@ -175,169 +209,194 @@ const setTags = async (tags: string[]) => {
 };
 const fetchBookshelfBooks = async () => {
   const idToken = await authUtil.getIdToken();
-  const response = await axiosUtil.post("/bookshelf/fetch", {idToken});
-  if(response){
+  const response = await axiosUtil.post("/bookshelf/fetch", { idToken });
+  if (response) {
     await setBookshelfBooks(response.data.bookshelfBooks);
   }
 };
-const setBookshelfBooks = async (books:BookshelfBook[]) => {
+const setBookshelfBooks = async (books: BookshelfBook[]) => {
   // キャッシュに保存
   const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
 
-  bookshelfBooks.value = books.map((book:BookshelfBook):BookshelfBook => {
+  bookshelfBooks.value = books.map((book: BookshelfBook): BookshelfBook => {
     let dispCoverUrl = IMG_PLACEHOLDER_PATH;
-    if(book.coverUrl){
+    if (book.coverUrl) {
       dispCoverUrl = book.coverUrl;
-    }else if(book.isbn){
+    } else if (book.isbn) {
       dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
     }
     const retBook = {
       ...book,
-      dispCoverUrl
+      dispCoverUrl,
     };
     return retBook;
   });
-
-  // フィルターの日付の値いじる
-  filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
-  filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 };
 
-const getBook = async (isbn:string) => {
+const getBook = async (isbn: string) => {
   const trimedIsbn = isbn.trim();
-  if(!util.isIsbn(trimedIsbn)){return;}
+  if (!util.isIsbn(trimedIsbn)) {
+    return;
+  }
 
   const book = await bookApiUtil.getApiBook(trimedIsbn);
   // 本があったらフォームに設定
-  if(book){
+  if (book) {
     await setBookFromApiBook(book);
-  }else{
+  } else {
     // なかったらエラーダイアログ
     emitError("エラー", "APIからデータを取得できませんでした");
   }
 };
-const setBookFromApiBook = async (apiBook:bookApiUtil.ApiBook) => {
-  if(apiBook){
-    if(apiBook.isbn){
+const setBookFromApiBook = async (apiBook: bookApiUtil.ApiBook) => {
+  if (apiBook) {
+    if (apiBook.isbn) {
       bookDialog.value.form.isbn = apiBook.isbn;
     }
-    if(apiBook.bookName){
+    if (apiBook.bookName) {
       bookDialog.value.form.bookName = apiBook.bookName;
     }
-    if(apiBook.authorName){
+    if (apiBook.authorName) {
       bookDialog.value.form.authorName = apiBook.authorName;
     }
-    if(apiBook.coverUrl){
+    if (apiBook.coverUrl) {
       bookDialog.value.form.coverUrl = apiBook.coverUrl;
     }
-    if(apiBook.publisherName){
+    if (apiBook.publisherName) {
       bookDialog.value.form.publisherName = apiBook.publisherName;
     }
-
   }
 
   // isbnない場合やcontentsすでにある場合は終わり
-  if(!apiBook || !apiBook.isbn || !util.isIsbn(apiBook.isbn)){return;}
-  if(bookDialog.value.form.contents.length > 0){return;}
+  if (!apiBook || !apiBook.isbn || !util.isIsbn(apiBook.isbn)) {
+    return;
+  }
+  if (bookDialog.value.form.contents.length > 0) {
+    return;
+  }
 
   const shortStorys = await searchNdlShortStorys(apiBook.isbn);
   setShortStorysToContents(shortStorys);
 };
 
-const bookDialogForm:Ref<QForm | undefined> = ref();
+const bookDialogForm: Ref<QForm | undefined> = ref();
 const createBook = () => {
   // フォームのバリデーション処理
-  if(!bookDialogForm.value){return;}
-  bookDialogForm.value.validate().then(async (success:boolean) => {
-    if(!success){return;}
+  if (!bookDialogForm.value) {
+    return;
+  }
+  bookDialogForm.value.validate().then(async (success: boolean) => {
+    if (!success) {
+      return;
+    }
 
     // ダイアログ消す
     bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/bookshelf/create`, params);
-    if(response){
+    if (response) {
       const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
 
       // タグ履歴更新
-      if(bookDialog.value.form.tags){
+      if (bookDialog.value.form.tags) {
         await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
 };
-const addTagsHistories = async (tags:string) => {
+const addTagsHistories = async (tags: string) => {
   tagsHistories.value.push(tags);
-  if(tagsHistories.value.length > 10){
+  if (tagsHistories.value.length > 10) {
     tagsHistories.value.shift();
   }
   const limitHours = 24;
-  await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
+  await cacheUtil.set(
+    CACHE_KEY.TAGS_HISTORIES,
+    [...tagsHistories.value],
+    limitHours
+  );
 };
 const editBook = () => {
   // フォームのバリデーション処理
-  if(!bookDialogForm.value){return;}
-  bookDialogForm.value.validate().then(async (success:boolean) => {
-    if(!success){return;}
+  if (!bookDialogForm.value) {
+    return;
+  }
+  bookDialogForm.value.validate().then(async (success: boolean) => {
+    if (!success) {
+      return;
+    }
 
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
     // ダイアログ消す
     bookDialog.value.isShow = false;
-    const response = await updateBook(bookDialog.value.documentId, updateAt, bookDialog.value.form);
-    if(response){
+    const response = await updateBook(
+      bookDialog.value.documentId,
+      updateAt,
+      bookDialog.value.form
+    );
+    if (response) {
       const message = `『${bookDialog.value.form.bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
       // タグ履歴更新
-      if(bookDialog.value.form.tags){
+      if (bookDialog.value.form.tags) {
         await addTagsHistories(bookDialog.value.form.tags);
       }
     }
   });
 };
-const updateBook = async (documentId:string, updateAt:number, form:BookshelfBookForm) => {
+const updateBook = async (
+  documentId: string,
+  updateAt: number,
+  form: BookshelfBookForm
+) => {
   const params = await createUpdateParams(documentId, updateAt, form);
   const response = await axiosUtil.post(`/bookshelf/update`, params);
   return response;
 };
 type BookshelfBookForm = {
-  bookName: string,
-  isbn: string,
-  authorName: string,
-  publisherName: string,
-  coverUrl: string,
-  tags: string,
-  rate: number,
-  contents: Content[],
-  readDate: string
+  bookName: string;
+  isbn: string;
+  authorName: string;
+  publisherName: string;
+  coverUrl: string;
+  tags: string;
+  rate: number;
+  contents: Content[];
+  readDate: string;
 };
 type BookshelfBookParams = BookshelfBook & {
-  idToken: string | null,
-  user: string
+  idToken: string | null;
+  user: string;
 };
-const createCreateParams = async (form:BookshelfBookForm) => {
+const createCreateParams = async (form: BookshelfBookForm) => {
   const params = await createBookParams(form);
 
   return params;
 };
-const createUpdateParams = async (documentId:string, updateAt:number, form:BookshelfBookForm) => {
+const createUpdateParams = async (
+  documentId: string,
+  updateAt: number,
+  form: BookshelfBookForm
+) => {
   const params = await createBookParams(form);
   params.documentId = documentId;
   params.updateAt = updateAt;
   return params;
 };
-const createBookParams = async (form:BookshelfBookForm) => {
+const createBookParams = async (form: BookshelfBookForm) => {
   const idToken = await authUtil.getIdToken();
   const user = authUtil.getUserInfo();
   const email = user.email || "No User Data";
-  const params:BookshelfBookParams = {
-    documentId: null,
+  const params: BookshelfBookParams = {
+    documentId: undefined,
     updateAt: 0,
     user: email,
 
@@ -358,7 +417,7 @@ const createBookParams = async (form:BookshelfBookForm) => {
     // アクセストークン
     idToken,
   };
-  
+
   return params;
 };
 type SimpleBookshelfBooksParams = {
@@ -367,39 +426,44 @@ type SimpleBookshelfBooksParams = {
   user: string;
   idToken: string | null;
 };
-const deleteBook = async (book:BookshelfBook) => {
+const deleteBook = async (book: BookshelfBook) => {
   // 確認ダイアログ
-  emits(EMIT_NAME_CONFIRM, "確認", `『${book.bookName}』を削除します。`, true, async () => {
-    const idToken = await authUtil.getIdToken()
-    const user = authUtil.getUserInfo();
-    const params:SimpleBookshelfBooksParams = {
-      documentId: book.documentId || "",
-      updateAt: book.updateAt || 0,
-      user: user.email || "No User Data",
-      idToken
-    };
-    const response = await axiosUtil.post(`/bookshelf/delete`, params);
-    if(response){
-      const message = `『${book.bookName}』を削除しました`;
-      // TODO: 削除した本を戻す処理
-      notifyUtil.notify(message, [], true);
-      // 画面情報再設定
-      await setBookshelfBooks(response.data.bookshelfBooks);
+  emits(
+    EMIT_NAME_CONFIRM,
+    "確認",
+    `『${book.bookName}』を削除します。`,
+    true,
+    async () => {
+      const idToken = await authUtil.getIdToken();
+      const user = authUtil.getUserInfo();
+      const params: SimpleBookshelfBooksParams = {
+        documentId: book.documentId || "",
+        updateAt: book.updateAt || 0,
+        user: user.email || "No User Data",
+        idToken,
+      };
+      const response = await axiosUtil.post(`/bookshelf/delete`, params);
+      if (response) {
+        const message = `『${book.bookName}』を削除しました`;
+        // TODO: 削除した本を戻す処理
+        notifyUtil.notify(message, [], true);
+        // 画面情報再設定
+        await setBookshelfBooks(response.data.bookshelfBooks);
+      }
     }
-  });
-
+  );
 };
 type BookDialog = {
-  isShow: boolean,
-  documentId: string,
-  updateAt: number | null,
-  headerText: string,
-  showDatePopup: boolean,
-  okLabel: string,
-  okFunction: Function,
-  form: BookshelfBookForm
+  isShow: boolean;
+  documentId: string;
+  updateAt: number | null;
+  headerText: string;
+  showDatePopup: boolean;
+  okLabel: string;
+  okFunction: () => void;
+  form: BookshelfBookForm;
 };
-const bookDialog:Ref<BookDialog> = ref({
+const bookDialog: Ref<BookDialog> = ref({
   isShow: false,
   documentId: "",
   updateAt: null,
@@ -416,32 +480,42 @@ const bookDialog:Ref<BookDialog> = ref({
     tags: "",
     rate: 0,
     contents: [],
-    readDate: ""
-  }
+    readDate: "",
+  },
 });
-const isCreateUniqueIsbn = (val:string) => {
-  if(!util.isExist(val)){return true;}
+const isCreateUniqueIsbn = (val: string) => {
+  if (!util.isExist(val)) {
+    return true;
+  }
 
   let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
   let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
 
-  const isbns = bookshelfBooks.value.map(book => book.isbn);
+  const isbns = bookshelfBooks.value.map((book) => book.isbn);
 
-  return (!isbns.includes(isbn13) && !isbns.includes(isbn10)) || "同じISBNの本があります";
+  return (
+    (!isbns.includes(isbn13) && !isbns.includes(isbn10)) ||
+    "同じISBNの本があります"
+  );
 };
-const isUpdateUniqueIsbn = (documentId:string) => {
-  return (val:string) => {
-    if(!util.isExist(val)){return true;}
+const isUpdateUniqueIsbn = (documentId: string) => {
+  return (val: string) => {
+    if (!util.isExist(val)) {
+      return true;
+    }
 
     let isbn13 = val.length === 13 ? val : util.isbn10To13(val);
     let isbn10 = val.length === 10 ? val : util.isbn13To10(val);
 
-    const sameIsbnBook = bookshelfBooks.value.find(book => {
-      return (book.isbn === isbn13 || book.isbn === isbn10) && book.documentId !== documentId;
+    const sameIsbnBook = bookshelfBooks.value.find((book) => {
+      return (
+        (book.isbn === isbn13 || book.isbn === isbn10) &&
+        book.documentId !== documentId
+      );
     });
 
     return !util.isExist(sameIsbnBook) || "同じISBNの本があります";
-  }
+  };
 };
 const showCreateBookDialog = () => {
   bookDialog.value.documentId = "";
@@ -457,18 +531,18 @@ const showCreateBookDialog = () => {
     tags: "",
     rate: 0,
     contents: [],
-    readDate: ""
+    readDate: "",
   };
   bookDialog.value.isShow = true;
 
   validationRules.isbn = [
     validationUtil.isIsbn(labels.isbn),
-    isCreateUniqueIsbn
+    isCreateUniqueIsbn,
   ];
 };
 // 編集ダイアログ表示
-const showEditBookDialog = (book:BookshelfBook) => {
-  if(!book.documentId)return;
+const showEditBookDialog = (book: BookshelfBook) => {
+  if (!book.documentId) return;
   bookDialog.value.documentId = book.documentId;
   bookDialog.value.headerText = "編集";
   bookDialog.value.okLabel = "更新";
@@ -483,38 +557,42 @@ const showEditBookDialog = (book:BookshelfBook) => {
     tags: book.tags.join("/"),
     rate: book.rate,
     contents: [...book.contents],
-    readDate: book.readDate || ""
+    readDate: book.readDate || "",
   };
   bookDialog.value.isShow = true;
 
   validationRules.isbn = [
     validationUtil.isIsbn(labels.isbn),
-    isUpdateUniqueIsbn(book.documentId)
+    isUpdateUniqueIsbn(book.documentId),
   ];
 };
 // isbnの入力補完
 const onUpdateIsbn = (inputIsbn: string) => {
   let isbn = inputIsbn.replace(/-/g, "");
-  if(isbn.length === 9){
+  if (isbn.length === 9) {
     isbn = util.isbn9To10(isbn);
-  }else if(isbn.length === 12){
+  } else if (isbn.length === 12) {
     isbn = util.isbn12To13(isbn);
   }
-  
-  if(util.isIsbn(isbn)){
+
+  if (util.isIsbn(isbn)) {
     bookDialog.value.form.isbn = isbn;
   }
 };
 // ローカルストレージのタグ履歴取得
-const tagsHistories:Ref<string[]> = ref([]);
+const tagsHistories: Ref<string[]> = ref([]);
 const setLatestTagsFromTagsHistories = async () => {
   const latestTags = tagsHistories.value.pop();
-  if(latestTags){
+  if (latestTags) {
     // 最新タグ設定
     bookDialog.value.form.tags = latestTags;
     // キャッシュ更新
     const limitHours = 24;
-    await cacheUtil.set(CACHE_KEY.TAGS_HISTORIES, [...tagsHistories.value], limitHours);
+    await cacheUtil.set(
+      CACHE_KEY.TAGS_HISTORIES,
+      [...tagsHistories.value],
+      limitHours
+    );
   }
 };
 
@@ -531,8 +609,8 @@ const labels = {
   contents: {
     contentName: "内容名",
     authorName: "著者名",
-    rate: "評価"
-  }
+    rate: "評価",
+  },
 };
 const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
@@ -541,17 +619,19 @@ const validationRules = {
   contents: {
     readDate: [
       validationUtil.isDateStr(labels.readDate),
-      validationUtil.isValidDate(labels.readDate)
+      validationUtil.isValidDate(labels.readDate),
     ],
-    contentName: [validationUtil.isExist(labels.contents.contentName)]
-  }
+    contentName: [validationUtil.isExist(labels.contents.contentName)],
+  },
 };
-const searchShortStorys = async (isbn:string) => {
-  if(!isbn || !util.isIsbn(isbn)){return;}
+const searchShortStorys = async (isbn: string) => {
+  if (!isbn || !util.isIsbn(isbn)) {
+    return;
+  }
 
   const shortStorys = await searchNdlShortStorys(isbn);
 
-  if(shortStorys.length === 0){
+  if (shortStorys.length === 0) {
     emitError("エラー", "書籍内容がありません");
     return;
   }
@@ -563,19 +643,23 @@ const setShortStorysToContents = (contents: Content[]) => {
 };
 
 const calcRate = (contents: Content[]) => {
-  const calcedContents = contents.filter(content => content.rate > 0) // 点数つけたもののみで計算
-  const avg = calcedContents.map(content => content.rate)
-                .reduce((a, b) => {return a + b;}, 0) / calcedContents.length;
+  const calcedContents = contents.filter((content) => content.rate > 0); // 点数つけたもののみで計算
+  const avg =
+    calcedContents
+      .map((content) => content.rate)
+      .reduce((a, b) => {
+        return a + b;
+      }, 0) / calcedContents.length;
   bookDialog.value.form.rate = Math.round(avg);
 };
 
 const booksSearchDialog = ref({
   isShow: false,
   okFunction: setBookFromApiBook,
-  searchWord: ""
+  searchWord: "",
 });
-const showBooksSearchDialog = (searchWord:string) => {
-  if(!util.isExist(searchWord)){
+const showBooksSearchDialog = (searchWord: string) => {
+  if (!util.isExist(searchWord)) {
     emitError("エラー", "書籍名を入力してください");
     return;
   }
@@ -583,74 +667,108 @@ const showBooksSearchDialog = (searchWord:string) => {
   booksSearchDialog.value = {
     isShow: true,
     okFunction: setBookFromApiBook,
-    searchWord
+    searchWord,
   };
 };
 
 const filterCondReadDateLimit = computed(() => {
-  const dates = bookshelfBooks.value.filter((book) => { // readDateあるやつのみ対象
-    return !!book.readDate;
-  }).sort(sortByReadDate) // sort
-  .map(book => book.readDate || "9999/12/31");
+  const dates = bookshelfBooks.value
+    .filter((book) => {
+      // readDateあるやつのみ対象
+      return !!book.readDate;
+    })
+    .sort(sortByReadDate) // sort
+    .map((book) => book.readDate || "9999/12/31");
 
   return {
     max: dates[0] || "2100/12/31", // 降順なので先頭が最大
-    min: dates[dates.length - 1] || "2000/01/01"
-  }
+    min: dates[dates.length - 1] || "2000/01/01",
+  };
 });
 const filterCond = ref({
   word: "",
   isOnlyReadBook: false,
-  rate: {min: 1, max: 5},
-  readDate: {min: "2000/01/01", max: "2100/12/31"}
+  rate: { min: 1, max: 5 },
+  readDate: { min: "2000/01/01", max: "2100/12/31" },
 });
 
-
-const content2str = (contents:Content[]) => {
-  if(contents.length === 0){return undefined;}
-  return contents.map(content => `${content.authorName ? content.authorName : ""}「${content.contentName}」${"★".repeat(content.rate)}`)
-                .join("\n");
+const content2str = (contents: Content[]) => {
+  if (contents.length === 0) {
+    return undefined;
+  }
+  return contents
+    .map(
+      (content) =>
+        `${content.authorName ? content.authorName : ""}「${
+          content.contentName
+        }」${"★".repeat(content.rate)}`
+    )
+    .join("\n");
 };
 
 type ChartData = {
-  name: string,
-  data: number[]
-}
+  name: string;
+  data: number[];
+};
 type Chart = {
-  type: string,
-  data: ChartData[],
+  type: string;
+  data: ChartData[];
   options: {
     chart: {
-      id: string
-    },
+      id: string;
+    };
     xaxis: {
-      categories: string[]
-    }
-  }
+      categories: string[];
+    };
+  };
 };
-const chart:ComputedRef<Chart> = computed(() => {
-  const books:BookshelfBook[] = filteredSortedBookshelfBooks.value.filter(b => b.readDate); // 読了日あるものだけ対象
+const chart: ComputedRef<Chart> = computed(() => {
+  const books: BookshelfBook[] = filteredSortedBookshelfBooks.value.filter(
+    (b) => b.readDate
+  ); // 読了日あるものだけ対象
   // 設定した条件を元にaxisとdataを作る
-  let data:ChartData[] = [];
-  let categories:string[] = [];
+  let data: ChartData[] = [];
+  let categories: string[] = [];
   let type = "bar";
-  if(chartType.value === "barByMonth"){
+  if (chartType.value === "barByMonth") {
     // 月別に分解して件数計算
-    const months = util.removeDuplicateElements<string>(books.map(b => b.readDate || "").map(readDate => readDate.substring(0, 7)))
+    const months = util
+      .removeDuplicateElements<string>(
+        books
+          .map((b) => b.readDate || "")
+          .map((readDate) => readDate.substring(0, 7))
+      )
       .reverse(); // もともとreadDate降順になってるので、昇順に戻す
     categories = months;
-    data = [{
-      name: "",
-      data: months.map(month => books.filter(b => b.readDate && b.readDate.startsWith(month)).length)
-    }]
-  }else if(chartType.value === "barByYear"){
-    const months = util.removeDuplicateElements<string>(books.map(b => b.readDate || "").map(readDate => readDate.substring(0, 5)))
+    data = [
+      {
+        name: "",
+        data: months.map(
+          (month) =>
+            books.filter((b) => b.readDate && b.readDate.startsWith(month))
+              .length
+        ),
+      },
+    ];
+  } else if (chartType.value === "barByYear") {
+    const months = util
+      .removeDuplicateElements<string>(
+        books
+          .map((b) => b.readDate || "")
+          .map((readDate) => readDate.substring(0, 5))
+      )
       .reverse(); // もともとreadDate降順になってるので、昇順に戻す
     categories = months;
-    data = [{
-      name: "",
-      data: months.map(month => books.filter(b => b.readDate && b.readDate.startsWith(month)).length)
-    }]
+    data = [
+      {
+        name: "",
+        data: months.map(
+          (month) =>
+            books.filter((b) => b.readDate && b.readDate.startsWith(month))
+              .length
+        ),
+      },
+    ];
   }
 
   return {
@@ -658,73 +776,77 @@ const chart:ComputedRef<Chart> = computed(() => {
     data,
     options: {
       chart: {
-        id: "chart"
+        id: "chart",
       },
       xaxis: {
-        categories
-      }
-    }
-  }
-
+        categories,
+      },
+    },
+  };
 });
 type ChartType = "barByMonth" | "barByYear";
-const chartType:Ref<ChartType> = ref("barByMonth");
+const chartType: Ref<ChartType> = ref("barByMonth");
 const chartTypeOptions = [
-  {label: "", value: "barByMonth", slot: "barByMonth"},
-  {label: "", value: "barByYear", slot: "barByYear"}
+  { label: "", value: "barByMonth", slot: "barByMonth" },
+  { label: "", value: "barByYear", slot: "barByYear" },
   //TODO: 平均評価を年別グラフに出す
 ];
 const isShowChart = ref(false);
 const chartHeight = ref(0);
 const showChart = () => {
-  // 高さ設定　resizeイベントにこれ設定するとリサイズで消えちゃうので、チャート表示時に1回だけ行う
+  // 高さ設定 resizeイベントにこれ設定するとリサイズで消えちゃうので、チャート表示時に1回だけ行う
   chartHeight.value = window.innerHeight - 52 - 50 - 50 - 50;
   isShowChart.value = true;
-}
+};
 
+const { isAppLoaded } = toRefs(props);
+onMounted(
+  util.waitParentMount(isAppLoaded, async () => {
+    // タグ履歴キャッシュ
+    const cachedTagsHistories = (await cacheUtil.get(
+      CACHE_KEY.TAGS_HISTORIES
+    )) as string[] | null;
+    if (cachedTagsHistories) {
+      tagsHistories.value = cachedTagsHistories;
+    }
 
-const {isAppLoaded} = toRefs(props);
-onMounted(util.waitParentMount(isAppLoaded, async () => {
-  // タグ履歴キャッシュ
-  const cachedTagsHistories:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS_HISTORIES);
-  if(cachedTagsHistories){
-    tagsHistories.value = cachedTagsHistories;
-  }
+    // キャッシュからリスト取得してみる
+    const cachedBookshelfBooks = (await cacheUtil.get(CACHE_KEY.BOOKSHELF)) as
+      | BookshelfBook[]
+      | null;
+    if (cachedBookshelfBooks) {
+      await setBookshelfBooks(cachedBookshelfBooks);
+    } else {
+      await fetchBookshelfBooks();
+    }
 
-  // キャッシュからリスト取得してみる
-  const cachedBookshelfBooks:BookshelfBook[] | null = await cacheUtil.get(CACHE_KEY.BOOKSHELF);
-  if(cachedBookshelfBooks) {
-    await setBookshelfBooks(cachedBookshelfBooks);
-  }else{
-    await fetchBookshelfBooks();
-  }
-  const cachedTags:string[] | null = await cacheUtil.get(CACHE_KEY.TAGS);
-  if(cachedTags) {
-    await setTags(cachedTags);
-  }else{
-    fetchTags(); // tagOptions処理は完全に非同期で回す
-  }
-  
+    // フィルターの日付の値設定
+    filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
+    filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 
-  console.log("mounted bookshelf");
-}))
+    const cachedTags = (await cacheUtil.get(CACHE_KEY.TAGS)) as string[] | null;
+    if (cachedTags) {
+      await setTags(cachedTags);
+    } else {
+      fetchTags(); // tagOptions処理は完全に非同期で回す
+    }
+
+    console.log("mounted bookshelf");
+  })
+);
 </script>
 
 <template>
   <div>
-    
     <q-page-container @click="isShowFilterCond = false">
       <q-page v-if="isShowChart">
         <div class="row">
           <div class="col-4 q-pa-sm">
-            <q-btn-toggle
-              v-model="chartType"
-              :options="chartTypeOptions"
-            >
-              <template v-slot:barByMonth>
+            <q-btn-toggle v-model="chartType" :options="chartTypeOptions">
+              <template #barByMonth>
                 <q-icon title="月グラフ" name="bar_chart" />
               </template>
-              <template v-slot:barByYear>
+              <template #barByYear>
                 <q-icon title="年グラフ" name="leaderboard" />
               </template>
             </q-btn-toggle>
@@ -737,12 +859,10 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               width="100%"
               :height="chartHeight"
             ></vue-apex-charts>
-
           </div>
         </div>
       </q-page>
       <q-page v-else>
-        
         <div class="row lt-md items-center">
           <q-space></q-space>
           <div class="q-pa-sm">
@@ -752,11 +872,17 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :max="paginationMax"
             ></c-pagination>
           </div>
-          <div class="col-aut q-pa-sm text-primary">{{ filteredSortedBookshelfBooks.length }}冊</div>
+          <div class="col-aut q-pa-sm text-primary">
+            {{ filteredSortedBookshelfBooks.length }}冊
+          </div>
           <q-space></q-space>
         </div>
         <div class="row justify-center q-pa-md">
-          <div v-for="book in dispBookshelfBooks" class="col book-cover-wrapper q-my-sm">
+          <div
+            v-for="book in dispBookshelfBooks"
+            :key="book.documentId"
+            class="col book-cover-wrapper q-my-sm"
+          >
             <c-book-card
               :book-name="book.bookName"
               :isbn="book.isbn || ''"
@@ -765,17 +891,14 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :disp-cover-url="book.dispCoverUrl"
               :memo="content2str(book.contents)"
             >
-              <template v-slot:header>
-                  <div class="book-card-rate q-pl-sm">
-                    {{ "★".repeat(book.rate) }}
-                  </div>
-
+              <template #header>
+                <div class="book-card-rate q-pl-sm">
+                  {{ "★".repeat(book.rate) }}
+                </div>
               </template>
-              <template v-slot:menu-footer>
+              <template #menu-footer>
                 <div class="row">
-                  <div class="col-12">
-                    読了日：{{ book.readDate }}
-                  </div>
+                  <div class="col-12">読了日：{{ book.readDate }}</div>
                   <div class="col-auto">
                     <c-round-btn
                       title="削除"
@@ -807,23 +930,26 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :max="paginationMax"
             ></c-pagination>
           </div>
-          <div class="col-aut q-pa-sm text-primary">{{ filteredSortedBookshelfBooks.length }}冊</div>
+          <div class="col-aut q-pa-sm text-primary">
+            {{ filteredSortedBookshelfBooks.length }}冊
+          </div>
           <q-space></q-space>
         </div>
       </q-page>
     </q-page-container>
     <q-footer class="bg-transparent">
       <div class="row justify-end items-end">
-        <c-transition
-          appear
-          enter="fadeIn"
-          leave="fadeOut"
-        >
-          <div ref="filtercond" v-if="isShowFilterCond" class="col-12 col-sm-8 col-md-6 col-lg-auto q-pa-sm">
-            <div class="row filter-cond shadow-up-12 items-center" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-3 text-black'">
-              <div class="col-2 q-pa-sm">
-                読了日
-              </div>
+        <c-transition appear enter="fadeIn" leave="fadeOut">
+          <div
+            v-if="isShowFilterCond"
+            ref="filtercond"
+            class="col-12 col-sm-8 col-md-6 col-lg-auto q-pa-sm"
+          >
+            <div
+              class="row filter-cond shadow-up-12 items-center"
+              :class="util.accentColorClasses.value"
+            >
+              <div class="col-2 q-pa-sm">読了日</div>
               <div class="col-5 q-pa-sm">
                 <c-input-date
                   v-model="filterCond.readDate.min"
@@ -843,9 +969,7 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
                 ></c-input-date>
               </div>
 
-              <div class="col-2 q-pa-sm">
-                評価
-              </div>
+              <div class="col-2 q-pa-sm">評価</div>
               <div class="col-10 q-pa-sm">
                 <q-range
                   v-model="filterCond.rate"
@@ -881,20 +1005,20 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         <div class="col-auto q-pa-xs">
           <c-round-btn
             ref="showfiltercondbtn"
-            title="フィルター"  
+            title="フィルター"
             icon="search"
             color="secondary"
-            :flat="false"
-            @click="isShowFilterCond =!isShowFilterCond"
+            :is-flat="false"
+            @click="isShowFilterCond = !isShowFilterCond"
           ></c-round-btn>
         </div>
         <template v-if="isShowChart">
           <div class="col-auto q-pa-xs">
             <c-round-btn
-              title="本棚表示"  
+              title="本棚表示"
               icon="menu_book"
               color="secondary"
-              :flat="false"
+              :is-flat="false"
               @click="isShowChart = false"
             ></c-round-btn>
           </div>
@@ -902,32 +1026,30 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         <template v-else>
           <div class="col-auto q-pa-xs">
             <c-round-btn
-              title="グラフ表示"  
+              title="グラフ表示"
               icon="bar_chart"
               color="secondary"
-              :flat="false"
+              :is-flat="false"
               @click="showChart"
             ></c-round-btn>
           </div>
           <div class="col-auto q-pa-xs">
             <c-round-btn
-              title="新規作成"  
+              title="新規作成"
               icon="add"
               color="primary"
-              :flat="false"
+              :is-flat="false"
               @click="showCreateBookDialog"
             ></c-round-btn>
           </div>
-
         </template>
-        
       </div>
     </q-footer>
     <!-- 新規作成・編集ダイアログ -->
     <c-dialog
       v-model="bookDialog.isShow"
       :header-text="bookDialog.headerText"
-      :okLabel="bookDialog.okLabel"
+      :ok-label="bookDialog.okLabel"
       @ok="bookDialog.okFunction"
     >
       <q-form ref="bookDialogForm">
@@ -940,16 +1062,15 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               :rules="validationRules.bookName"
               @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
-              <template v-slot:append>
-                <q-btn 
-                  round 
-                  dense 
-                  flat 
+              <template #append>
+                <q-btn
+                  round
+                  dense
+                  flat
                   icon="search"
                   @click="showBooksSearchDialog(bookDialog.form.bookName)"
                 ></q-btn>
               </template>
-            
             </q-input>
           </div>
           <div class="col-12 q-pa-xs">
@@ -961,22 +1082,22 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
               @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
               @keydown.enter="getBook(bookDialog.form.isbn)"
             >
-              <template v-slot:append>
-                <q-btn 
-                  round 
-                  dense 
-                  flat 
+              <template #append>
+                <q-btn
+                  round
+                  dense
+                  flat
                   icon="search"
                   @click="getBook(bookDialog.form.isbn)"
                 ></q-btn>
               </template>
             </q-input>
           </div>
-          
+
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
-              clearable
               v-model="bookDialog.form.authorName"
+              clearable
               :label="labels.authorName"
             ></q-input>
           </div>
@@ -1009,12 +1130,12 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
         <div class="row">
           <q-space></q-space>
           <div class="col-auto q-pa-xs">
-            <q-btn 
-              :disable="tagsHistories.length <= 0" 
-              @click="setLatestTagsFromTagsHistories" 
-              flat 
-              label="タグ履歴" 
-              color="primary" 
+            <q-btn
+              :disable="tagsHistories.length <= 0"
+              flat
+              label="タグ履歴"
+              color="primary"
+              @click="setLatestTagsFromTagsHistories"
             />
           </div>
         </div>
@@ -1036,33 +1157,50 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             />
           </div>
           <div class="col-auto q-pa-xs">
-            <q-btn 
-              @click="bookDialog.form.contents.push({authorName: '', contentName: '', rate: 0})" 
-              flat 
-              label="1行追加" 
-              color="primary" 
+            <q-btn
+              flat
+              label="1行追加"
+              color="primary"
+              @click="
+                bookDialog.form.contents.push({
+                  authorName: '',
+                  contentName: '',
+                  rate: 0,
+                })
+              "
             />
           </div>
           <div class="col-auto q-pa-xs">
-            <q-btn 
-              :disable="!util.isExist(bookDialog.form.isbn)|| !util.isIsbn(bookDialog.form.isbn)"
-              @click="searchShortStorys(bookDialog.form.isbn)" 
-              flat 
-              label="書籍内容検索" 
-              color="primary" 
+            <q-btn
+              :disable="
+                !util.isExist(bookDialog.form.isbn) ||
+                !util.isIsbn(bookDialog.form.isbn)
+              "
+              flat
+              label="書籍内容検索"
+              color="primary"
+              @click="searchShortStorys(bookDialog.form.isbn)"
             />
           </div>
           <div class="col-auto q-pa-xs">
-            <q-btn 
+            <q-btn
               :disable="bookDialog.form.contents.length === 0"
-              @click="calcRate(bookDialog.form.contents)" 
-              flat 
-              label="点数計算" 
-              color="primary" 
+              flat
+              label="点数計算"
+              color="primary"
+              @click="calcRate(bookDialog.form.contents)"
             />
           </div>
-          <div v-if="bookDialog.form.contents.length > 0" class="col-12 q-pa-xs">
-            <q-card v-for="content, i in bookDialog.form.contents" class="q-my-sm" :class="util.isDarkMode() ? 'bg-dark' : 'bg-pink-2'">
+          <div
+            v-if="bookDialog.form.contents.length > 0"
+            class="col-12 q-pa-xs"
+          >
+            <q-card
+              v-for="(content, i) in bookDialog.form.contents"
+              :key="'content-' + i"
+              class="q-my-sm"
+              :class="util.baseColorClasses.value"
+            >
               <div class="row items-center">
                 <div class="col-12 q-pa-xs">
                   <q-input
@@ -1100,61 +1238,58 @@ onMounted(util.waitParentMount(isAppLoaded, async () => {
             </q-card>
           </div>
         </div>
-        
-        
       </q-form>
     </c-dialog>
-
-
-
 
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
       :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
-      @error="emitError('エラー', '国会図書館サーチからデータを取得できませんでした')"
+      @error="
+        emitError('エラー', '国会図書館サーチからデータを取得できませんでした')
+      "
     ></c-books-search-dialog>
   </div>
 </template>
 
 <style scoped>
-.book-cover-wrapper{
+.book-cover-wrapper {
   max-width: 120px;
   min-width: 120px;
 }
 
-@media (min-width: 600px){
-  .book-cover-wrapper{
+@media (min-width: 600px) {
+  .book-cover-wrapper {
     max-width: 150px;
     min-width: 150px;
   }
 }
 
-.filter-cond{
+.filter-cond {
   border-radius: 15px;
 }
 
-.set-tag-dialog-form-tags{
+.set-tag-dialog-form-tags {
   width: 300px;
 }
 
-.contents-table-author-name{
+.contents-table-author-name {
   width: 100px;
 }
-@media(min-width: 600px){
-  .contents-table-author-name{
+@media (min-width: 600px) {
+  .contents-table-author-name {
     width: 150px;
   }
 }
-.contents-table-rate{
+.contents-table-rate {
   width: 89px;
 }
-.contents-table-delete-btn{
+.contents-table-delete-btn {
   width: 58px;
 }
 
-.book-card-rate{
+.book-card-rate {
   height: 21px;
 }
 </style>
