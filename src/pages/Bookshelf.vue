@@ -96,15 +96,11 @@ const filteredSortedBookshelfBooks = computed({
     const useRateFilter =
       filterCond.value.rate.min !== 1 || filterCond.value.rate.max !== 5;
     const filterDateRangeMin = new Date(
-      filterCond.value.readDate.min
+      filterCond.value.readDate.min || "1970/01/01"
     ).getTime();
     const filterDateRangeMax = new Date(
-      filterCond.value.readDate.max
+      filterCond.value.readDate.max || "9999/12/31"
     ).getTime();
-    //読了日フィルターは読了日範囲最小値～最大値の選択時は無効
-    const useDateFilter =
-      filterCond.value.readDate.min !== filterCondReadDateLimit.value.min ||
-      filterCond.value.readDate.max !== filterCondReadDateLimit.value.max;
     // マイナス検索の単語を抽出 最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords
       .filter((word) => word.startsWith("-"))
@@ -129,11 +125,8 @@ const filteredSortedBookshelfBooks = computed({
       })
       .filter((book) => {
         // 日付でフィルタリング
-        const dateTime = new Date(book.readDate || "1970/01/01").getTime();
-        return (
-          !useDateFilter ||
-          (filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax)
-        );
+        const dateTime = new Date(book.readDate || "9999/12/31").getTime();
+        return filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax;
       })
       .filter((book: BookshelfBook) => {
         // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
@@ -671,25 +664,11 @@ const showBooksSearchDialog = (searchWord: string) => {
   };
 };
 
-const filterCondReadDateLimit = computed(() => {
-  const dates = bookshelfBooks.value
-    .filter((book) => {
-      // readDateあるやつのみ対象
-      return !!book.readDate;
-    })
-    .sort(sortByReadDate) // sort
-    .map((book) => book.readDate || "9999/12/31");
-
-  return {
-    max: dates[0] || "2100/12/31", // 降順なので先頭が最大
-    min: dates[dates.length - 1] || "2000/01/01",
-  };
-});
 const filterCond = ref({
   word: "",
   isOnlyReadBook: false,
   rate: { min: 1, max: 5 },
-  readDate: { min: "2000/01/01", max: "2100/12/31" },
+  readDate: { min: "", max: "" },
 });
 
 const content2str = (contents: Content[]) => {
@@ -819,10 +798,6 @@ onMounted(
     } else {
       await fetchBookshelfBooks();
     }
-
-    // フィルターの日付の値設定
-    filterCond.value.readDate.min = filterCondReadDateLimit.value.min;
-    filterCond.value.readDate.max = filterCondReadDateLimit.value.max;
 
     const cachedTags = (await cacheUtil.get(CACHE_KEY.TAGS)) as string[] | null;
     if (cachedTags) {
