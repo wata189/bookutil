@@ -8,6 +8,7 @@ const props = defineProps({
   bookName: { type: String, required: true },
   isbn: { type: String, default: "" },
   authorName: { type: String, default: "" },
+  publisherName: { type: String, default: "" },
   tags: { type: Array<string>, default: [] },
   dispCoverUrl: { type: String, required: true },
   memo: { type: String, default: "" },
@@ -45,8 +46,9 @@ const props = defineProps({
     <q-menu fit class="q-pa-md book-info" :class="util.baseColorClasses.value">
       <div class="book-info-inner">
         <div class="text-bold">
-          {{ bookName
-          }}<template v-if="authorName"> / {{ authorName }}</template>
+          {{ bookName }}
+          <template v-if="publisherName"> / {{ publisherName }}</template>
+          <template v-if="authorName"> / {{ authorName }}</template>
         </div>
         <div v-if="isbn">{{ isbn }}</div>
         <q-expansion-item v-if="memo" dense>
