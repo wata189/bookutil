@@ -129,6 +129,7 @@ type NewBookForm = {
   isbn: string;
   authorName: string;
   publisherName: string;
+  publishDate: string;
   newBookCheckFlg: number;
   tags: string;
   addTo: AddTo;
@@ -214,15 +215,9 @@ onMounted(
             :class="util.baseColorClasses.value"
           >
             <div>{{ form.authorName }}『{{ form.bookName }}』</div>
+            <div>ISBN:{{ form.isbn }} 発売日:{{ form.publishDate }}</div>
             <div class="row">
               <div class="col-12 q-pa-xs">
-                <!-- <q-select
-                  v-model="form.addTo"
-                  :options="addToOptions"
-                  label="追加先"
-                  emit-value
-                  map-options
-                /> -->
                 <q-radio
                   v-for="option in addToOptions"
                   :key="'add-to-option-' + option.value + '-' + i"
