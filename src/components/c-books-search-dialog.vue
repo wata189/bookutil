@@ -31,6 +31,7 @@ interface Book {
   bookName: string;
   isbn: string | null;
   authorName: string | null;
+  publisherName: string | null;
   tags: string[];
   dispCoverUrl: string;
   memo: string | null;
@@ -42,6 +43,7 @@ const dispBooks: ComputedRef<Book[]> = computed(() => {
       bookName: apiBook.bookName || "",
       isbn: apiBook.isbn || null,
       authorName: apiBook.authorName,
+      publisherName: apiBook.publisherName,
       tags: [],
       dispCoverUrl: apiBook.coverUrl || IMG_PLACEHOLDER_PATH,
       memo: null,
@@ -94,6 +96,7 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
           :isbn="book.isbn || ''"
           :author-name="book.authorName || ''"
           :tags="book.tags"
+          :publisher-name="book.publisherName || ''"
           :disp-cover-url="book.dispCoverUrl"
           :memo="book.memo || ''"
         >
