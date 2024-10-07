@@ -51,7 +51,7 @@ const dispMenus: ComputedRef<DispMenu[]> = computed(() => {
   return props.menus.map((menu) => {
     const path =
       router.currentRoute.value.path === "/"
-        ? "/toread"
+        ? "/bookshelf"
         : router.currentRoute.value.path;
     const isCurrent = menu.to === path;
     let textColor = "";
