@@ -6,7 +6,7 @@ const routes = [
     name: "index",
     props: true,
     component: async () => {
-      return await import("@/pages/Toread.vue");
+      return await import("@/pages/Bookshelf.vue");
     },
   },
 

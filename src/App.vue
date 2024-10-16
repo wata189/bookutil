@@ -33,13 +33,11 @@ interface Menu {
 }
 const menus: Ref<Menu[]> = ref([
   {
-    name: "読みたいリスト",
-    to: "/toread",
-    icon: "format_list_bulleted",
-    description: `管理者が読みたい本をカード形式で表示します。
-    カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
-    カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
-    また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`,
+    name: "本棚",
+    to: "/bookshelf",
+    icon: "menu_book",
+    description: `管理者が読んだ本をカード形式で表示します。
+      カードには評価を5段階で設定することができます。`,
   },
 ]);
 
@@ -96,11 +94,13 @@ const setUserInfo = (userInfo: { email: string }) => {
   const menuValues = [...menus.value];
   if (user.value.email) {
     menuValues.push({
-      name: "本棚",
-      to: "/bookshelf",
-      icon: "menu_book",
-      description: `管理者が読んだ本をカード形式で表示します。
-        カードには評価を5段階で設定することができます。`,
+      name: "読みたいリスト",
+      to: "/toread",
+      icon: "format_list_bulleted",
+      description: `管理者が読みたい本をカード形式で表示します。
+    カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
+    カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
+    また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`,
     });
     menuValues.push({
       name: "新刊追加",

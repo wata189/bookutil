@@ -42,6 +42,15 @@ interface Props {
 }
 const props = defineProps<Props>();
 
+const PATH_BOOKSHELF = "/bookshelf";
+const getTmpPath = () => {
+  // TODO: なぜかこのconsole.logないとpathが更新されない
+  console.log(router.currentRoute.value.path);
+  return router.currentRoute.value.path === "/"
+    ? PATH_BOOKSHELF
+    : router.currentRoute.value.path;
+};
+
 type DispMenu = Menu & {
   textColor: string;
   color: string;
@@ -49,11 +58,7 @@ type DispMenu = Menu & {
 const dispMenus: ComputedRef<DispMenu[]> = computed(() => {
   const isDarkMode = util.isDarkMode();
   return props.menus.map((menu) => {
-    const path =
-      router.currentRoute.value.path === "/"
-        ? "/toread"
-        : router.currentRoute.value.path;
-    const isCurrent = menu.to === path;
+    const isCurrent = menu.to === getTmpPath();
     let textColor = "";
     let color = "";
     if (isDarkMode) {
@@ -169,8 +174,9 @@ onMounted(
     }
     await setMode(isDarkMode.value);
 
-    // ログインしてなかったらメニュー開く
-    if (!props.user.email) {
+    // ログインしていない場合、
+    // 未ログインでも普通に見れる想定のbookshelf以外ではメニュー開く
+    if (!props.user.email && getTmpPath() !== PATH_BOOKSHELF) {
       showLoginDialog();
     }
 

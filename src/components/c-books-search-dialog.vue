@@ -1,72 +1,71 @@
 <script setup lang="ts">
+import { ComputedRef, Ref, computed, ref } from "vue";
 
-import { ComputedRef, Ref, computed, ref } from 'vue';
-
-import * as bookApiUtil from "@/modules/bookApiUtil.ts"
+import * as bookApiUtil from "@/modules/bookApiUtil.ts";
 
 import CDialog from "@/components/c-dialog.vue";
-import CBookCard from '@/components/c-book-card.vue';
-import CRoundBtn from '@/components/c-round-btn.vue';
-import util from '@/modules/util';
+import CBookCard from "@/components/c-book-card.vue";
+import CRoundBtn from "@/components/c-round-btn.vue";
+import util from "@/modules/util";
 
 const props = defineProps({
-  modelValue: {type:Boolean, required: true},
-  searchWord: {type:String, required: true}
+  modelValue: { type: Boolean, required: true },
+  searchWord: { type: String, required: true },
 });
 
-
-const emits = defineEmits(["update:modelValue","ok", "error"]);
+const emits = defineEmits(["update:modelValue", "ok", "error"]);
 
 const value = computed({
   get() {
-    return props.modelValue
+    return props.modelValue;
   },
-  set(value){
-    emits("update:modelValue", value)
-  }
+  set(value) {
+    emits("update:modelValue", value);
+  },
 });
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg"
-const apiBooks:Ref<bookApiUtil.ApiBook[]> = ref([]);
+const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
+const apiBooks: Ref<bookApiUtil.ApiBook[]> = ref([]);
 
 interface Book {
-  bookName: string,
-  isbn: string | null,
-  authorName: string | null,
-  tags: string[],
-  dispCoverUrl: string,
-  memo: string | null,
-  apiBook: bookApiUtil.ApiBook
+  bookName: string;
+  isbn: string | null;
+  authorName: string | null;
+  publisherName: string | null;
+  tags: string[];
+  dispCoverUrl: string;
+  memo: string | null;
+  apiBook: bookApiUtil.ApiBook;
 }
-const dispBooks:ComputedRef<Book[]> = computed(() =>{
-  return apiBooks.value.map((apiBook:bookApiUtil.ApiBook) => {
+const dispBooks: ComputedRef<Book[]> = computed(() => {
+  return apiBooks.value.map((apiBook: bookApiUtil.ApiBook) => {
     return {
       bookName: apiBook.bookName || "",
       isbn: apiBook.isbn || null,
       authorName: apiBook.authorName,
+      publisherName: apiBook.publisherName,
       tags: [],
       dispCoverUrl: apiBook.coverUrl || IMG_PLACEHOLDER_PATH,
       memo: null,
-      apiBook: apiBook
+      apiBook: apiBook,
     };
   });
 });
 
-
-const searchBooks = async (searchWord:string) => {
+const searchBooks = async (searchWord: string) => {
   apiBooks.value = await bookApiUtil.searchApiBooks(searchWord);
 
   // 検索結果ない場合はエラー投げる
-  if(apiBooks.value.length === 0){
+  if (apiBooks.value.length === 0) {
     value.value = false;
     emits("error");
   }
 };
-const selectBook = async (book:bookApiUtil.ApiBook) => {
+const selectBook = async (book: bookApiUtil.ApiBook) => {
   let apiBook = book;
-  if(book.isbn && util.isIsbn(book.isbn)){
+  if (book.isbn && util.isIsbn(book.isbn)) {
     const newApiBook = await bookApiUtil.getApiBook(book.isbn);
-    if(newApiBook){
+    if (newApiBook) {
       apiBook = newApiBook;
     }
   }
@@ -87,12 +86,17 @@ const selectBook = async (book:bookApiUtil.ApiBook) => {
     @hide="apiBooks = []"
   >
     <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
-      <div v-for="book, i in dispBooks" :key="'search-book-' + i" class="col book-cover-wrapper q-my-sm">
+      <div
+        v-for="(book, i) in dispBooks"
+        :key="'search-book-' + i"
+        class="col book-cover-wrapper q-my-sm"
+      >
         <c-book-card
           :book-name="book.bookName"
           :isbn="book.isbn || ''"
           :author-name="book.authorName || ''"
           :tags="book.tags"
+          :publisher-name="book.publisherName || ''"
           :disp-cover-url="book.dispCoverUrl"
           :memo="book.memo || ''"
         >
@@ -117,7 +121,7 @@ const selectBook = async (book:bookApiUtil.ApiBook) => {
 </template>
 
 <style scoped>
-.book-cover-wrapper{
+.book-cover-wrapper {
   max-width: 140px;
   min-width: 140px;
 }
