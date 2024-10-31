@@ -12,13 +12,8 @@ import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
 import { searchNdlShortStorys, getCoverUrl } from "@/modules/ndlSearchUtil";
-import { CacheUtil } from "@/modules/cacheUtil";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
-const CACHE_KEY = {
-  BOOKSHELF: "cache-bookshelf",
-  TAGS: "cache-toreadTags",
-  TAGS_HISTORIES: "cache-tagsHistories",
-};
 import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
 import CRoundBtn from "@/components/c-round-btn.vue";
 import CDialog from "@/components/c-dialog.vue";

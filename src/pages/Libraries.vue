@@ -8,9 +8,8 @@ import CRoundBtn from "@/components/c-round-btn.vue";
 import util from "@/modules/util";
 import authUtil from "@/modules/authUtil";
 import AxiosUtil from "@/modules/axiosUtil";
-import { CacheUtil } from "@/modules/cacheUtil";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
-const CACHE_KEY = "cache-libraries";
 
 const emits = defineEmits(["show-error-dialog", "show-confirm-dialog"]);
 const axiosUtil = new AxiosUtil(emits);
@@ -49,7 +48,11 @@ const fetchLibraries = async () => {
 
     // キャッシュ保存
     const limitHours = 24 * 30; // キャッシュ期限は1月くらい
-    await cacheUtil.set(CACHE_KEY, response.data.libraries, limitHours);
+    await cacheUtil.set(
+      CACHE_KEY.LIBRARIES,
+      response.data.libraries,
+      limitHours
+    );
   }
 };
 
@@ -59,7 +62,7 @@ const { isAppLoaded } = toRefs(props);
 onMounted(
   util.waitParentMount(isAppLoaded, async () => {
     // キャッシュからリスト取得してみる
-    const cachedLibraries = (await cacheUtil.get(CACHE_KEY)) as
+    const cachedLibraries = (await cacheUtil.get(CACHE_KEY.LIBRARIES)) as
       | Library[]
       | null;
     if (cachedLibraries) {
