@@ -269,13 +269,16 @@ const createBook = () => {
       await addTagsHistories(bookDialog.value.form.tags);
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // ダイアログ消す
     bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      const message = `『${bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setToreadBooks(response.data.toreadBooks);
@@ -309,6 +312,9 @@ const editBook = () => {
       await addTagsHistories(bookDialog.value.form.tags);
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
     // ダイアログ消す
@@ -319,7 +325,7 @@ const editBook = () => {
       bookDialog.value.form
     );
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      const message = `『${bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setToreadBooks(response.data.toreadBooks);
@@ -750,19 +756,17 @@ const addWantTag = async (book: Book) => {
   }
 };
 const addMultiTag = async () => {
-  if (!util.isExist(addTagDialog.value.form.tags)) {
+  const tags = addTagDialog.value.form.tags;
+  if (!util.isExist(tags)) {
     emitError("エラー", "タグを入力してください");
     return;
   }
 
   // ダイアログ消す
   addTagDialog.value.isShow = false;
-  const response = await addTags(
-    selectedBooks.value,
-    util.strToTag(addTagDialog.value.form.tags)
-  );
+  const response = await addTags(selectedBooks.value, util.strToTag(tags));
   if (response) {
-    const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
+    const message = `選択した本にタグ「${tags}」を追加しました`;
     notifyUtil.notify(message);
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);
@@ -973,13 +977,14 @@ const createBooks = async () => {
     bookDialog.value.isShow = false;
 
     // 0件の場合はエラー
-    if (createBookForms.value.length === 0) {
+    const count = createBookForms.value.length;
+    if (count === 0) {
       emitError("エラー", "一括新規作成する本がありません");
     }
     // formを送る
     const params = await createCreateMultiParams(createBookForms.value);
     const response = await axiosUtil.post(`/toread/create/multi`, params);
-    const message = `${createBookForms.value.length}冊の本を一括新規作成しました`;
+    const message = `${count}冊の本を一括新規作成しました`;
     notifyUtil.notify(message);
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);

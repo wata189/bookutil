@@ -279,13 +279,16 @@ const createBook = () => {
       return;
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // ダイアログ消す
     bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/bookshelf/create`, params);
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      const message = `『${bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
@@ -319,6 +322,9 @@ const editBook = () => {
       return;
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
     // ダイアログ消す
@@ -329,7 +335,7 @@ const editBook = () => {
       bookDialog.value.form
     );
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      const message = `『${bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
