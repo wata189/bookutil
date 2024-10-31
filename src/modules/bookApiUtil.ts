@@ -1,6 +1,28 @@
 import googleBooksUtil from "@/modules/googleBooksUtil";
 import * as ndlSearchUtil from "@/modules/ndlSearchUtil";
 import openBdUtil from "@/modules/openBdUtil";
+import axiosBase, { AxiosError } from "axios";
+import util from "@/modules/util";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
+const cacheUtil = new CacheUtil();
+
+const axios = axiosBase.create({
+  baseURL: import.meta.env.VITE_LAMBDA_URL,
+  headers: {
+    "Content-Type": "application/json;charset=utf-8",
+  },
+  responseType: "json",
+});
+axios.interceptors.response.use(
+  (response) => {
+    // 成功時は普通にresponse返却
+    return response;
+  },
+  (error: AxiosError) => {
+    console.error(error);
+    return null;
+  }
+);
 
 export type ApiBook = {
   bookName: string | null;
@@ -10,6 +32,37 @@ export type ApiBook = {
   coverUrl: string | null;
   memo: string | null;
 };
+
+type Publisher = {
+  code: string;
+  name: string;
+  isOnKadokawa: boolean;
+};
+let publishers: Publisher[] = [];
+// init処理 サーバから出版社マスタ取得
+const setPublishers = async (pubs: Publisher[]) => {
+  // どうせめったに更新しないし致命的でもないのでキャッシュの保存期間は半年あっても大丈夫
+  const limitHours = 24 * 30 * 6;
+  await cacheUtil.set(CACHE_KEY.PUBLISHERS, pubs, limitHours);
+  publishers = pubs;
+};
+const fetchPublishers = async () => {
+  console.log("bookutilApi:post:/publishers/fetch");
+  const response = await axios.post("/publishers/fetch");
+  if (response.data && response.data.publishers) {
+    await setPublishers(response.data.publishers);
+  }
+};
+const cachedPublishers = (await cacheUtil.get(CACHE_KEY.PUBLISHERS)) as
+  | Publisher[]
+  | null;
+if (cachedPublishers) {
+  await setPublishers(cachedPublishers);
+} else {
+  // マスタ取得非同期
+  fetchPublishers();
+}
+
 export const getApiBook = async (isbn: string) => {
   let apiBook: ApiBook | null = null;
   try {
@@ -23,9 +76,6 @@ export const getApiBook = async (isbn: string) => {
     }
   } catch (e) {
     console.error(e);
-  }
-  if (apiBook && apiBook.bookName && apiBook.isbn && apiBook.authorName) {
-    return apiBook;
   }
 
   try {
@@ -56,7 +106,14 @@ export const getApiBook = async (isbn: string) => {
   } catch (e) {
     console.error(e);
   }
-  if (apiBook && apiBook.bookName && apiBook.isbn && apiBook.authorName) {
+  if (
+    apiBook &&
+    apiBook.bookName &&
+    apiBook.isbn &&
+    apiBook.authorName &&
+    apiBook.publisherName &&
+    apiBook.coverUrl
+  ) {
     return apiBook;
   }
 
@@ -89,6 +146,19 @@ export const getApiBook = async (isbn: string) => {
     }
   } catch (e) {
     console.error(e);
+  }
+
+  if (apiBook && apiBook.isbn && !apiBook.publisherName) {
+    const isbn10 =
+      apiBook.isbn.length === 10 ? apiBook.isbn : util.isbn13To10(apiBook.isbn);
+    // 1文字目削除
+    const headDeletedIsbn = isbn10.slice(1);
+    for (const publisher of publishers) {
+      if (headDeletedIsbn.startsWith(publisher.code)) {
+        apiBook.publisherName = publisher.name;
+        break;
+      }
+    }
   }
 
   return apiBook;
