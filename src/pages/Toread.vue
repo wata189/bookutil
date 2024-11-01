@@ -231,25 +231,37 @@ const getBook = async (isbn: string) => {
 };
 
 const setBookFromApiBook = async (apiBook: bookApiUtil.ApiBook) => {
-  if (apiBook) {
-    if (apiBook.isbn) {
-      bookDialog.value.form.isbn = apiBook.isbn;
-    }
-    if (apiBook.bookName) {
-      bookDialog.value.form.bookName = apiBook.bookName;
-    }
-    if (apiBook.authorName) {
-      bookDialog.value.form.authorName = apiBook.authorName;
-    }
-    if (apiBook.coverUrl) {
-      bookDialog.value.form.coverUrl = apiBook.coverUrl;
-    }
-    if (apiBook.publisherName) {
-      bookDialog.value.form.publisherName = apiBook.publisherName;
-    }
-    if (apiBook.memo) {
-      bookDialog.value.form.memo = apiBook.memo;
-    }
+  if (apiBook.isbn) {
+    bookDialog.value.form.isbn = apiBook.isbn;
+  }
+  if (apiBook.bookName) {
+    bookDialog.value.form.bookName = apiBook.bookName;
+  }
+  if (apiBook.authorName) {
+    bookDialog.value.form.authorName = apiBook.authorName;
+  }
+  if (apiBook.coverUrl) {
+    bookDialog.value.form.coverUrl = apiBook.coverUrl;
+  }
+  if (apiBook.publisherName) {
+    bookDialog.value.form.publisherName = apiBook.publisherName;
+  }
+  if (apiBook.memo) {
+    // memoは入力されているもの優先
+    bookDialog.value.form.memo = bookDialog.value.form.memo || apiBook.memo;
+  }
+  // TODO: publishedMonth
+  // if(apiBook.publishedMonth){
+  //   bookDialog.value.form.publishedMonth = apiBook.publishedMonth;
+  // }
+
+  // 角川系列だったら一応ブックウォーカータグ足しておく
+  if (
+    apiBook.isOnKadokawa &&
+    !bookDialog.value.form.tags.includes("ブックウォーカー") &&
+    !bookDialog.value.form.tags.includes("ブックウォーカー?")
+  ) {
+    bookDialog.value.form.tags += "/ブックウォーカー?";
   }
 };
 
