@@ -695,11 +695,13 @@ const filterCond = ref({
   readDate: { min: "", max: "" },
 });
 
-const content2str = (contents: Content[]) => {
-  if (contents.length === 0) {
+const getBookshelfMemo = (book: BookshelfBook) => {
+  if (book.contents.length === 0 && !book.memo) {
     return undefined;
   }
-  return contents
+  let memo = book.memo || "";
+  memo += "\n";
+  memo += book.contents
     .map(
       (content) =>
         `${content.authorName ? content.authorName : ""}「${
@@ -707,6 +709,7 @@ const content2str = (contents: Content[]) => {
         }」${"★".repeat(content.rate)}`
     )
     .join("\n");
+  return memo.trim();
 };
 
 type ChartData = {
@@ -889,7 +892,7 @@ onMounted(
               :publisher-name="book.publisherName || undefined"
               :tags="book.tags"
               :disp-cover-url="book.dispCoverUrl"
-              :memo="content2str(book.contents)"
+              :memo="getBookshelfMemo(book)"
             >
               <template #header>
                 <div class="book-card-rate q-pl-sm">
