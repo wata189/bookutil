@@ -82,7 +82,37 @@ const isValidDate = (valName: string) => {
 
     const date = new Date(val);
     return (
-      !isNaN(date.getDate()) || `${valName}は存在する日付で入力してください`
+      !isNaN(date.getDate()) || `${valName}は存在する日付を入力してください`
+    );
+  };
+};
+
+const isYearMonthStr = (valName: string) => {
+  return (val: string) => {
+    if (!util.isExist(val)) {
+      return true;
+    }
+    const regexYear = /^\d{4}$/;
+    const regexYearMonth = /^\d{4}\/\d{2}$/;
+    return (
+      regexYear.test(val) ||
+      regexYearMonth.test(val) ||
+      `${valName}は/区切りで入力してください`
+    );
+  };
+};
+const isValidYearMonth = (valName: string) => {
+  return (val: string) => {
+    if (!util.isExist(val)) {
+      return true;
+    }
+
+    const regexYear = /^\d{4}$/;
+    const regexYearMonth = /^\d{4}\/(1[0-2]|0[1-9])$/;
+    return (
+      regexYear.test(val) ||
+      regexYearMonth.test(val) ||
+      `${valName}は存在する年月を入力してください`
     );
   };
 };
@@ -96,4 +126,6 @@ export default {
   isPassword,
   isDateStr,
   isValidDate,
+  isYearMonthStr,
+  isValidYearMonth,
 };

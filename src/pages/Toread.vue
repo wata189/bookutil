@@ -47,6 +47,7 @@ type Book = {
   coverUrl: string;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   page: number | null;
   newBookCheckFlg: number;
   updateAt: number;
@@ -69,6 +70,7 @@ const labels = {
   page: "ページ数",
   authorName: "著者名",
   publisherName: "出版社名",
+  publishedMonth: "出版年月",
   memo: "メモ",
   coverUrl: "書影URL",
   tags: "タグ",
@@ -250,10 +252,9 @@ const setBookFromApiBook = async (apiBook: bookApiUtil.ApiBook) => {
     // memoは入力されているもの優先
     bookDialog.value.form.memo = bookDialog.value.form.memo || apiBook.memo;
   }
-  // TODO: publishedMonth
-  // if(apiBook.publishedMonth){
-  //   bookDialog.value.form.publishedMonth = apiBook.publishedMonth;
-  // }
+  if (apiBook.publishedMonth) {
+    bookDialog.value.form.publishedMonth = apiBook.publishedMonth;
+  }
 
   // 角川系列だったら一応ブックウォーカータグ足しておく
   if (
@@ -355,6 +356,7 @@ const toggleNewBookCheckFlg = async (book: Book) => {
     isbn: book.isbn || "",
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
+    publishedMonth: book.publishedMonth || "",
     page: book.page,
     memo: book.memo || "",
     coverUrl: book.coverUrl || "",
@@ -374,6 +376,7 @@ type BookForm = {
   isbn: string;
   authorName: string;
   publisherName: string;
+  publishedMonth: string;
   page: number | null;
   memo: string;
   coverUrl: string;
@@ -389,6 +392,7 @@ type BookParams = {
   page: number | null;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   memo: string | null;
   coverUrl: string | null;
   newBookCheckFlg: number;
@@ -426,6 +430,7 @@ const createBookParams = async (form: BookForm) => {
     page: form.page || null,
     authorName: form.authorName ? form.authorName.trim() : null,
     publisherName: form.publisherName ? form.publisherName : null,
+    publishedMonth: form.publishedMonth ? form.publishedMonth.trim() : null,
     memo: form.memo ? form.memo.trim() : null,
     // 図書館チェックフラグはisbn入っているときのみ
     newBookCheckFlg: form.isbn ? form.newBookCheckFlg : 0,
@@ -515,6 +520,7 @@ const bookDialog: Ref<BookDialog> = ref({
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     page: null,
     memo: "",
     coverUrl: "",
@@ -560,6 +566,7 @@ const setCreateBookDialog = () => {
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     page: null,
     memo: "",
     coverUrl: "",
@@ -608,6 +615,7 @@ const showEditBookDialog = (book: Book) => {
     isbn: book.isbn || "",
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
+    publishedMonth: book.publishedMonth || "",
     page: book.page,
     memo: book.memo || "",
     coverUrl: book.coverUrl,
@@ -811,6 +819,10 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
+  publishedMonth: [
+    validationUtil.isYearMonthStr(labels.publishedMonth),
+    validationUtil.isValidYearMonth(labels.publishedMonth),
+  ],
   coverUrl: [validationUtil.isUrl(labels.coverUrl)],
 };
 
@@ -1315,7 +1327,7 @@ onMounted(
               </template>
             </q-input>
           </div>
-          <div class="col-12 q-pa-xs">
+          <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.isbn"
               clearable
@@ -1335,6 +1347,13 @@ onMounted(
               </template>
             </q-input>
           </div>
+          <div class="col-12 col-sm-6 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.authorName"
+              clearable
+              :label="labels.authorName"
+            ></q-input>
+          </div>
 
           <div class="col-12">
             <c-book-links
@@ -1344,14 +1363,16 @@ onMounted(
               :other-link="null"
             ></c-book-links>
           </div>
-          <div class="col-12 col-sm-6 q-pa-xs">
+
+          <div class="col-4 col-sm-6 q-pa-xs">
             <q-input
-              v-model="bookDialog.form.authorName"
+              v-model="bookDialog.form.publishedMonth"
               clearable
-              :label="labels.authorName"
+              :label="labels.publishedMonth"
+              :rules="validationRules.publishedMonth"
             ></q-input>
           </div>
-          <div class="col-12 col-sm-6 q-pa-xs">
+          <div class="col-8 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.publisherName"
               clearable
