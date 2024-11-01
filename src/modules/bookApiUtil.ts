@@ -30,6 +30,7 @@ export type ApiBook = {
   authorName: string | null;
   publisherName: string | null;
   coverUrl: string | null;
+  publishedMonth: string | null; // YYYY/MM形式
   memo: string | null;
 };
 
@@ -112,7 +113,8 @@ export const getApiBook = async (isbn: string) => {
     apiBook.isbn &&
     apiBook.authorName &&
     apiBook.publisherName &&
-    apiBook.coverUrl
+    apiBook.coverUrl &&
+    apiBook.publishedMonth
   ) {
     return apiBook;
   }
@@ -136,6 +138,9 @@ export const getApiBook = async (isbn: string) => {
         }
         if (!apiBook.coverUrl) {
           apiBook.coverUrl = openBdBook.coverUrl;
+        }
+        if (!apiBook.publishedMonth) {
+          apiBook.publishedMonth = openBdBook.publishedMonth;
         }
       } else {
         apiBook = {
@@ -175,6 +180,7 @@ export const searchApiBooks = async (searchWord: string) => {
       publisherName: null,
       coverUrl: book.coverUrl,
       memo: book.memo,
+      publishedMonth: book.publishedMonth,
     });
   });
   const ndlBooks = await ndlSearchUtil.searchNdlBooks(searchWord);
@@ -186,6 +192,7 @@ export const searchApiBooks = async (searchWord: string) => {
       publisherName: book.publisherName,
       coverUrl: book.coverUrl,
       memo: null,
+      publishedMonth: book.publishedMonth,
     });
   });
   return apiBooks;

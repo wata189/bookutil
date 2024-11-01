@@ -13,9 +13,14 @@ type OpenBdBook = {
   authorName: string;
   publisherName: string;
   coverUrl: string | null;
+  publishedMonth: string | null;
 };
 type Contributor = {
   ContributorRole: string[];
+};
+type PublishingDate = {
+  PublishingDateRole: string;
+  Date: string;
 };
 const getBookInfo = async (isbn: string): Promise<OpenBdBook | null> => {
   let book: OpenBdBook | null = null;
@@ -49,6 +54,20 @@ const getBookInfo = async (isbn: string): Promise<OpenBdBook | null> => {
       );
       const authorName = author.PersonName.content;
       const publisherName = onix.PublishingDetail.Imprint.ImprintName;
+
+      let publishedMonth = null;
+      const publishingDates: PublishingDate[] =
+        onix.PublishingDetail.PublishingDate;
+      const publishingDate = publishingDates.find(
+        (d) => d.PublishingDateRole === "01"
+      );
+      if (publishingDate) {
+        // YYYYMMDDをYYYY/MMに変換
+        publishedMonth =
+          publishingDate.Date.slice(0, 4) +
+          "/" +
+          publishingDate.Date.slice(4, 6);
+      }
       const coverUrl = getCoverUrl(isbn);
       book = {
         isbn,
@@ -56,6 +75,7 @@ const getBookInfo = async (isbn: string): Promise<OpenBdBook | null> => {
         authorName,
         publisherName,
         coverUrl,
+        publishedMonth,
       };
     }
 

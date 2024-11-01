@@ -13,6 +13,7 @@ export type NdlBook = {
   isbn: string | null;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   coverUrl: string | null;
 };
 
@@ -29,6 +30,7 @@ type NdlItem = {
   "dc:identifier": DcIdentifire | DcIdentifire[] | null;
   "dc:creator": DcCreator | DcCreator[];
   "dc:publisher": { _text: string } | null;
+  "dc:date": { _text: string };
 };
 type NdlResponse = {
   rss: {
@@ -154,11 +156,34 @@ const ndlItem2NdlBook = (ndlItem: NdlItem): NdlBook | null => {
       }
     }
 
+    let publishedMonth = null;
+    const dcDate = ndlItem["dc:date"];
+    const date = dcDate._text;
+
+    if (date) {
+      if (date.length === 4) {
+        publishedMonth = date;
+      } else {
+        // YYYY-MM とか YYYY-MM-DDをYYYY/MMにする
+        const yearMonth = date.slice(0, 7);
+        publishedMonth = yearMonth.replace("-", "/");
+      }
+    }
+
     let coverUrl = null;
     if (isbn) {
       coverUrl = getCoverUrl(isbn);
     }
-    ndlBook = { isbn, ndlId, bookName, authorName, publisherName, coverUrl };
+
+    ndlBook = {
+      isbn,
+      ndlId,
+      bookName,
+      authorName,
+      publisherName,
+      coverUrl,
+      publishedMonth,
+    };
   } catch (error) {
     console.error(error);
   }

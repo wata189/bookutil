@@ -12,6 +12,7 @@ type GoogleBook = {
   isbn: string | null;
   authorName: string | null;
   coverUrl: string | null;
+  publishedMonth: string | null;
   memo: string | null;
 };
 type GoogleBookItem = {
@@ -24,6 +25,7 @@ type GoogleBookItem = {
         identifier: string;
       }
     ];
+    publishedDate: string | undefined;
     pageCount: number | undefined;
     description: string | undefined;
     imageLinks: {
@@ -74,40 +76,48 @@ const searchBooks = async (searchWord: string): Promise<GoogleBook[]> => {
     const response = await axios.get(path);
     if (response && response.data && response.data.totalItems > 0) {
       console.log(response.data);
-      books = response.data.items.map((bookItem: GoogleBookItem) => {
-        const volumeInfo = bookItem.volumeInfo;
-        let isbns: string[] = [];
-        if (
-          volumeInfo.industryIdentifiers &&
-          volumeInfo.industryIdentifiers.length > 0
-        ) {
-          isbns = volumeInfo.industryIdentifiers
-            .filter((identifier) => {
-              return (
-                identifier.type == "ISBN_10" || identifier.type == "ISBN_13"
-              );
-            })
-            .map((identifier) => identifier.identifier);
-        }
+      books = response.data.items.map(
+        (bookItem: GoogleBookItem): GoogleBook => {
+          const volumeInfo = bookItem.volumeInfo;
+          let isbns: string[] = [];
+          if (
+            volumeInfo.industryIdentifiers &&
+            volumeInfo.industryIdentifiers.length > 0
+          ) {
+            isbns = volumeInfo.industryIdentifiers
+              .filter((identifier) => {
+                return (
+                  identifier.type == "ISBN_10" || identifier.type == "ISBN_13"
+                );
+              })
+              .map((identifier) => identifier.identifier);
+          }
 
-        const authorName =
-          volumeInfo.authors && volumeInfo.authors.length > 0
-            ? volumeInfo.authors.join(",")
+          const authorName =
+            volumeInfo.authors && volumeInfo.authors.length > 0
+              ? volumeInfo.authors.join(",")
+              : null;
+          // 書影は小サムネ＞大サムネ＞空の順で設定する
+          const coverUrl = volumeInfo.imageLinks
+            ? volumeInfo.imageLinks.smallThumbnail ||
+              volumeInfo.imageLinks.thumbnail
             : null;
-        // 書影は小サムネ＞大サムネ＞空の順で設定する
-        const coverUrl = volumeInfo.imageLinks
-          ? volumeInfo.imageLinks.smallThumbnail ||
-            volumeInfo.imageLinks.thumbnail
-          : null;
 
-        return {
-          isbn: isbns.length > 0 ? isbns[0] : null,
-          bookName: volumeInfo.title || null,
-          authorName,
-          memo: volumeInfo.description || null,
-          coverUrl: toHttps(coverUrl || ""),
-        };
-      });
+          // googleBooksのpublishedDateはYYYY-MM
+          const publishedMonth = volumeInfo.publishedDate
+            ? volumeInfo.publishedDate.replace("-", "/")
+            : null;
+
+          return {
+            isbn: isbns.length > 0 ? isbns[0] : null,
+            bookName: volumeInfo.title || null,
+            authorName,
+            memo: volumeInfo.description || null,
+            coverUrl: toHttps(coverUrl || ""),
+            publishedMonth,
+          };
+        }
+      );
     }
   } catch (error) {
     console.log(error);
