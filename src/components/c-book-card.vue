@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import util from "@/modules/util";
+import { computed } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
@@ -13,6 +14,9 @@ const props = defineProps({
   dispCoverUrl: { type: String, required: true },
   memo: { type: String, default: "" },
   hideBookLinks: { type: Boolean, default: false },
+});
+const memoFirstLine = computed(() => {
+  return props.memo.split("\n")[0];
 });
 </script>
 
@@ -74,7 +78,7 @@ const props = defineProps({
           :book-name="bookName"
           :isbn="isbn"
           :author-name="authorName"
-          :other-link="memo"
+          :other-link="memoFirstLine"
         ></c-book-links>
         <slot name="menu-footer"></slot>
       </div>
