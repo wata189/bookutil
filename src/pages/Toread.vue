@@ -874,7 +874,9 @@ type BookshelfBook = {
   coverUrl: string;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   readDate: string | null;
+  memo: string | null;
   updateAt: number;
   tags: string[];
   rate: number;
@@ -916,6 +918,8 @@ const addBookshelf = async (book: Book) => {
     authorName: book.authorName,
     coverUrl: book.coverUrl,
     publisherName: book.publisherName,
+    publishedMonth: book.publishedMonth,
+    memo: book.memo,
     tags,
     // bookshelf固有の情報
     readDate: null,
