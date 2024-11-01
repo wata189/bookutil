@@ -32,6 +32,7 @@ export type ApiBook = {
   coverUrl: string | null;
   publishedMonth: string | null; // YYYY/MM形式
   memo: string | null;
+  isOnKadokawa: boolean;
 };
 
 type Publisher = {
@@ -64,20 +65,48 @@ if (cachedPublishers) {
   fetchPublishers();
 }
 
+const isEnoughApiBook = (apiBook: ApiBook | null) => {
+  return (
+    apiBook &&
+    apiBook.bookName &&
+    apiBook.isbn &&
+    apiBook.authorName &&
+    apiBook.publisherName &&
+    apiBook.coverUrl &&
+    apiBook.publishedMonth
+  );
+};
+
+const findMasterPublisher = (isbn: string) => {
+  // isbn10に変換
+  const isbn10 = isbn.length === 10 ? isbn : util.isbn13To10(isbn);
+  // 1文字目削除
+  const headDeletedIsbn = isbn10.slice(1);
+  return publishers.find((p) => headDeletedIsbn.startsWith(p.code));
+};
+
 export const getApiBook = async (isbn: string) => {
   let apiBook: ApiBook | null = null;
+
+  const masterPublisher = findMasterPublisher(isbn);
+  const masterPublisherName = masterPublisher ? masterPublisher.name : null;
+  const isOnKadokawa = masterPublisher ? masterPublisher.isOnKadokawa : false;
+
   try {
     // 1.googleBooksApi
     const googleBook = await googleBooksUtil.getBook(isbn);
     if (googleBook) {
       apiBook = {
         ...googleBook,
-        publisherName: null,
+        publisherName: masterPublisherName,
+        isOnKadokawa,
       };
     }
   } catch (e) {
     console.error(e);
   }
+
+  if (isEnoughApiBook(apiBook)) return apiBook;
 
   try {
     // 2.ndl
@@ -93,7 +122,9 @@ export const getApiBook = async (isbn: string) => {
         if (!apiBook.authorName) {
           apiBook.authorName = ndlBook.authorName;
         }
-        apiBook.publisherName = ndlBook.publisherName;
+        if (!apiBook.publisherName) {
+          apiBook.publisherName = ndlBook.publisherName || masterPublisherName;
+        }
         if (!apiBook.coverUrl) {
           apiBook.coverUrl = ndlBook.coverUrl;
         }
@@ -101,23 +132,18 @@ export const getApiBook = async (isbn: string) => {
         apiBook = {
           ...ndlBook,
           memo: null,
+          isOnKadokawa,
         };
+        if (!apiBook.publisherName) {
+          apiBook.publisherName = masterPublisherName;
+        }
       }
     }
   } catch (e) {
     console.error(e);
   }
-  if (
-    apiBook &&
-    apiBook.bookName &&
-    apiBook.isbn &&
-    apiBook.authorName &&
-    apiBook.publisherName &&
-    apiBook.coverUrl &&
-    apiBook.publishedMonth
-  ) {
-    return apiBook;
-  }
+
+  if (isEnoughApiBook(apiBook)) return apiBook;
 
   try {
     // 3.openBD
@@ -146,24 +172,12 @@ export const getApiBook = async (isbn: string) => {
         apiBook = {
           ...openBdBook,
           memo: null,
+          isOnKadokawa,
         };
       }
     }
   } catch (e) {
     console.error(e);
-  }
-
-  if (apiBook && apiBook.isbn && !apiBook.publisherName) {
-    const isbn10 =
-      apiBook.isbn.length === 10 ? apiBook.isbn : util.isbn13To10(apiBook.isbn);
-    // 1文字目削除
-    const headDeletedIsbn = isbn10.slice(1);
-    for (const publisher of publishers) {
-      if (headDeletedIsbn.startsWith(publisher.code)) {
-        apiBook.publisherName = publisher.name;
-        break;
-      }
-    }
   }
 
   return apiBook;
@@ -173,26 +187,42 @@ export const searchApiBooks = async (searchWord: string) => {
 
   const googleBooks = await googleBooksUtil.searchBooks(searchWord);
   googleBooks.forEach((book) => {
+    let masterPublisherName = null;
+    let isOnKadokawa = false;
+    if (book.isbn) {
+      const masterPublisher = findMasterPublisher(book.isbn);
+      masterPublisherName = masterPublisher ? masterPublisher.name : null;
+      isOnKadokawa = masterPublisher ? masterPublisher.isOnKadokawa : false;
+    }
     apiBooks.push({
       bookName: book.bookName,
       isbn: book.isbn,
       authorName: book.authorName,
-      publisherName: null,
+      publisherName: masterPublisherName,
       coverUrl: book.coverUrl,
       memo: book.memo,
       publishedMonth: book.publishedMonth,
+      isOnKadokawa,
     });
   });
   const ndlBooks = await ndlSearchUtil.searchNdlBooks(searchWord);
   ndlBooks.forEach((book) => {
+    let masterPublisherName = null;
+    let isOnKadokawa = false;
+    if (book.isbn) {
+      const masterPublisher = findMasterPublisher(book.isbn);
+      masterPublisherName = masterPublisher ? masterPublisher.name : null;
+      isOnKadokawa = masterPublisher ? masterPublisher.isOnKadokawa : false;
+    }
     apiBooks.push({
       bookName: book.bookName,
       isbn: book.isbn,
       authorName: book.authorName,
-      publisherName: book.publisherName,
+      publisherName: book.publisherName || masterPublisherName,
       coverUrl: book.coverUrl,
       memo: null,
       publishedMonth: book.publishedMonth,
+      isOnKadokawa,
     });
   });
   return apiBooks;
