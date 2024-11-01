@@ -56,6 +56,7 @@ type BookshelfBook = {
   readDate: string | null;
   updateAt: number;
   tags: string[];
+  memo: string | null;
   rate: number;
   contents: Content[];
   dispCoverUrl: string;
@@ -371,6 +372,7 @@ type BookshelfBookForm = {
   rate: number;
   contents: Content[];
   readDate: string;
+  memo: string;
 };
 type BookshelfBookParams = BookshelfBook & {
   idToken: string | null;
@@ -411,6 +413,8 @@ const createBookParams = async (form: BookshelfBookForm) => {
     rate: form.rate ? form.rate : 0,
     contents: form.contents ? form.contents : [],
     readDate: form.readDate ? form.readDate.trim() : null,
+
+    memo: form.memo || null,
 
     // dispCoverUrl型の関係で入れとく
     dispCoverUrl: "",
@@ -483,6 +487,7 @@ const bookDialog: Ref<BookDialog> = ref({
     rate: 0,
     contents: [],
     readDate: "",
+    memo: "",
   },
 });
 const isCreateUniqueIsbn = (val: string) => {
@@ -535,6 +540,7 @@ const showCreateBookDialog = () => {
     rate: 0,
     contents: [],
     readDate: "",
+    memo: "",
   };
   bookDialog.value.isShow = true;
 
@@ -562,6 +568,7 @@ const showEditBookDialog = (book: BookshelfBook) => {
     rate: book.rate,
     contents: [...book.contents],
     readDate: book.readDate || "",
+    memo: book.memo || "",
   };
   bookDialog.value.isShow = true;
 
@@ -609,6 +616,7 @@ const labels = {
   publishedMonth: "出版年月",
   coverUrl: "書影URL",
   tags: "タグ",
+  memo: "メモ",
   readDate: "読了日",
   rate: "評価",
   contents: {
@@ -1146,6 +1154,14 @@ onMounted(
               color="primary"
               @click="setLatestTagsFromTagsHistories"
             />
+          </div>
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.memo"
+              :label="labels.memo"
+              type="textarea"
+              autogrow
+            ></q-input>
           </div>
         </div>
         <div class="row">

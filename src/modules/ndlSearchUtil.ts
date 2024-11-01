@@ -158,14 +158,12 @@ const ndlItem2NdlBook = (ndlItem: NdlItem): NdlBook | null => {
 
     let publishedMonth = null;
     const dcDate = ndlItem["dc:date"];
-    const date = dcDate._text;
-
-    if (date) {
-      if (date.length === 4) {
-        publishedMonth = date;
+    if (dcDate && dcDate._text) {
+      if (dcDate._text.length === 4) {
+        publishedMonth = dcDate._text;
       } else {
         // YYYY-MM とか YYYY-MM-DDをYYYY/MMにする
-        const yearMonth = date.slice(0, 7);
+        const yearMonth = dcDate._text.slice(0, 7);
         publishedMonth = yearMonth.replace("-", "/");
       }
     }
