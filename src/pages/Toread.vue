@@ -847,18 +847,11 @@ let isExternalCooperation = false;
 const booksSearchDialog = ref({
   isShow: false,
   okFunction: setBookFromApiBook,
-  searchWord: "",
 });
-const showBooksSearchDialog = (searchWord: string) => {
-  if (!util.isExist(searchWord)) {
-    emitError("エラー", "書籍名を入力してください");
-    return;
-  }
-
+const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
     okFunction: setBookFromApiBook,
-    searchWord,
   };
 };
 
@@ -1312,25 +1305,25 @@ onMounted(
     >
       <q-form ref="bookDialogForm">
         <div class="row">
-          <div class="col-12 q-pa-xs">
+          <div class="col q-pa-xs">
             <q-input
               v-model="bookDialog.form.bookName"
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
-            >
-              <template #append>
-                <q-btn
-                  round
-                  dense
-                  flat
-                  icon="search"
-                  @click="showBooksSearchDialog(bookDialog.form.bookName)"
-                ></q-btn>
-              </template>
-            </q-input>
+            ></q-input>
           </div>
+          <div class="col-auto">
+            <q-btn
+              flat
+              label="書籍検索"
+              color="primary"
+              @click="showBooksSearchDialog"
+            />
+          </div>
+        </div>
+
+        <div class="row">
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.isbn"
@@ -1467,11 +1460,8 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
-      :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
-      @error="
-        emitError('エラー', '国会図書館サーチからデータを取得できませんでした')
-      "
+      @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->

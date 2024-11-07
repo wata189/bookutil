@@ -63,11 +63,26 @@ export const getNdlBook = async (isbn: string): Promise<NdlBook | null> => {
   return book;
 };
 
-export const searchNdlBooks = async (searchWord: string) => {
+export const searchNdlBooks = async (
+  bookName: string,
+  authorName: string,
+  publisherName: string
+) => {
   let ndlBooks: NdlBook[] = [];
-  // eslint-disable-next-line no-irregular-whitespace
-  const formatted = searchWord.replace(/　/g, " "); // 全角スペースあるとエラー出るので半角にする
-  const path = `/opensearch?any=${formatted}&cnt=50`;
+  const params = [];
+  if (bookName) {
+    // eslint-disable-next-line no-irregular-whitespace
+    params.push(`title=${bookName.replace(/　/g, " ")}`); // 全角スペースあるとエラー出るので半角にする
+  }
+  if (authorName) {
+    // eslint-disable-next-line no-irregular-whitespace
+    params.push(`creator=${authorName.replace(/　/g, " ")}`);
+  }
+  if (publisherName) {
+    // eslint-disable-next-line no-irregular-whitespace
+    params.push(`publisher=${publisherName.replace(/　/g, " ")}`);
+  }
+  const path = `/opensearch?${params.join("&")}&cnt=50`;
   console.log(`getNdlBooks:${path}`);
   try {
     const response = await axios.get(path);

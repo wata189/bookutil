@@ -182,10 +182,18 @@ export const getApiBook = async (isbn: string) => {
 
   return apiBook;
 };
-export const searchApiBooks = async (searchWord: string) => {
+export const searchApiBooks = async (
+  bookName: string,
+  authorName: string,
+  publisherName: string
+) => {
   const apiBooks: ApiBook[] = [];
 
-  const googleBooks = await googleBooksUtil.searchBooks(searchWord);
+  const googleBooks = await googleBooksUtil.searchBooks(
+    bookName,
+    authorName,
+    publisherName
+  );
   googleBooks.forEach((book) => {
     let masterPublisherName = null;
     let isOnKadokawa = false;
@@ -205,7 +213,11 @@ export const searchApiBooks = async (searchWord: string) => {
       isOnKadokawa,
     });
   });
-  const ndlBooks = await ndlSearchUtil.searchNdlBooks(searchWord);
+  const ndlBooks = await ndlSearchUtil.searchNdlBooks(
+    bookName,
+    authorName,
+    publisherName
+  );
   ndlBooks.forEach((book) => {
     let masterPublisherName = null;
     let isOnKadokawa = false;
@@ -225,5 +237,14 @@ export const searchApiBooks = async (searchWord: string) => {
       isOnKadokawa,
     });
   });
-  return apiBooks;
+  // ソートしてisbnある本が上になるようにする
+  return apiBooks.sort((a, b) => {
+    if (!b.isbn) {
+      return -1;
+    } else if (!a.isbn) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 };
