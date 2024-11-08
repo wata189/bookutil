@@ -12,13 +12,8 @@ import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
 import { searchNdlShortStorys, getCoverUrl } from "@/modules/ndlSearchUtil";
-import { CacheUtil } from "@/modules/cacheUtil";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
-const CACHE_KEY = {
-  BOOKSHELF: "cache-bookshelf",
-  TAGS: "cache-toreadTags",
-  TAGS_HISTORIES: "cache-tagsHistories",
-};
 import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
 import CRoundBtn from "@/components/c-round-btn.vue";
 import CDialog from "@/components/c-dialog.vue";
@@ -27,6 +22,7 @@ import CPagination from "@/components/c-pagination.vue";
 import CBookCard from "@/components/c-book-card.vue";
 import CTransition from "@/components/c-transition.vue";
 import CInputDate from "@/components/c-input-date.vue";
+import CBookLinks from "@/components/c-book-links.vue";
 // axiosUtilのインスタンス作成
 const EMIT_NAME_ERROR = "show-error-dialog";
 const EMIT_NAME_CONFIRM = "show-confirm-dialog";
@@ -56,9 +52,11 @@ type BookshelfBook = {
   coverUrl: string;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   readDate: string | null;
   updateAt: number;
   tags: string[];
+  memo: string | null;
   rate: number;
   contents: Content[];
   dispCoverUrl: string;
@@ -259,6 +257,9 @@ const setBookFromApiBook = async (apiBook: bookApiUtil.ApiBook) => {
     if (apiBook.publisherName) {
       bookDialog.value.form.publisherName = apiBook.publisherName;
     }
+    if (apiBook.publishedMonth) {
+      bookDialog.value.form.publishedMonth = apiBook.publishedMonth;
+    }
   }
 
   // isbnない場合やcontentsすでにある場合は終わり
@@ -284,13 +285,16 @@ const createBook = () => {
       return;
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // ダイアログ消す
     bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/bookshelf/create`, params);
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      const message = `『${bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
@@ -324,6 +328,9 @@ const editBook = () => {
       return;
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
     // ダイアログ消す
@@ -334,7 +341,7 @@ const editBook = () => {
       bookDialog.value.form
     );
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      const message = `『${bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setBookshelfBooks(response.data.bookshelfBooks);
@@ -359,11 +366,13 @@ type BookshelfBookForm = {
   isbn: string;
   authorName: string;
   publisherName: string;
+  publishedMonth: string;
   coverUrl: string;
   tags: string;
   rate: number;
   contents: Content[];
   readDate: string;
+  memo: string;
 };
 type BookshelfBookParams = BookshelfBook & {
   idToken: string | null;
@@ -398,11 +407,14 @@ const createBookParams = async (form: BookshelfBookForm) => {
     isbn: form.isbn ? form.isbn.trim() : null,
     authorName: form.authorName ? form.authorName.trim() : null,
     publisherName: form.publisherName ? form.publisherName.trim() : null,
+    publishedMonth: form.publishedMonth ? form.publishedMonth.trim() : null,
     tags: form.tags ? util.strToTag(form.tags.trim()) : [],
     coverUrl: form.coverUrl ? form.coverUrl.trim() : "",
     rate: form.rate ? form.rate : 0,
     contents: form.contents ? form.contents : [],
     readDate: form.readDate ? form.readDate.trim() : null,
+
+    memo: form.memo || null,
 
     // dispCoverUrl型の関係で入れとく
     dispCoverUrl: "",
@@ -469,11 +481,13 @@ const bookDialog: Ref<BookDialog> = ref({
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     coverUrl: "",
     tags: "",
     rate: 0,
     contents: [],
     readDate: "",
+    memo: "",
   },
 });
 const isCreateUniqueIsbn = (val: string) => {
@@ -520,11 +534,13 @@ const showCreateBookDialog = () => {
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     coverUrl: "",
     tags: "",
     rate: 0,
     contents: [],
     readDate: "",
+    memo: "",
   };
   bookDialog.value.isShow = true;
 
@@ -546,11 +562,13 @@ const showEditBookDialog = (book: BookshelfBook) => {
     isbn: book.isbn || "",
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
+    publishedMonth: book.publishedMonth || "",
     coverUrl: book.coverUrl,
     tags: book.tags.join("/"),
     rate: book.rate,
     contents: [...book.contents],
     readDate: book.readDate || "",
+    memo: book.memo || "",
   };
   bookDialog.value.isShow = true;
 
@@ -595,8 +613,10 @@ const labels = {
   isbn: "ISBN",
   authorName: "著者名",
   publisherName: "出版社名",
+  publishedMonth: "出版年月",
   coverUrl: "書影URL",
   tags: "タグ",
+  memo: "メモ",
   readDate: "読了日",
   rate: "評価",
   contents: {
@@ -609,6 +629,10 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   coverUrl: [validationUtil.isUrl(labels.coverUrl)],
+  publishedMonth: [
+    validationUtil.isYearMonthStr(labels.publishedMonth),
+    validationUtil.isValidYearMonth(labels.publishedMonth),
+  ],
   contents: {
     readDate: [
       validationUtil.isDateStr(labels.readDate),
@@ -649,18 +673,11 @@ const calcRate = (contents: Content[]) => {
 const booksSearchDialog = ref({
   isShow: false,
   okFunction: setBookFromApiBook,
-  searchWord: "",
 });
-const showBooksSearchDialog = (searchWord: string) => {
-  if (!util.isExist(searchWord)) {
-    emitError("エラー", "書籍名を入力してください");
-    return;
-  }
-
+const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
     okFunction: setBookFromApiBook,
-    searchWord,
   };
 };
 
@@ -671,11 +688,13 @@ const filterCond = ref({
   readDate: { min: "", max: "" },
 });
 
-const content2str = (contents: Content[]) => {
-  if (contents.length === 0) {
+const getBookshelfMemo = (book: BookshelfBook) => {
+  if (book.contents.length === 0 && !book.memo) {
     return undefined;
   }
-  return contents
+  let memo = book.memo || "";
+  memo += "\n";
+  memo += book.contents
     .map(
       (content) =>
         `${content.authorName ? content.authorName : ""}「${
@@ -683,6 +702,7 @@ const content2str = (contents: Content[]) => {
         }」${"★".repeat(content.rate)}`
     )
     .join("\n");
+  return memo.trim();
 };
 
 type ChartData = {
@@ -865,7 +885,7 @@ onMounted(
               :publisher-name="book.publisherName || undefined"
               :tags="book.tags"
               :disp-cover-url="book.dispCoverUrl"
-              :memo="content2str(book.contents)"
+              :memo="getBookshelfMemo(book)"
             >
               <template #header>
                 <div class="book-card-rate q-pl-sm">
@@ -1030,26 +1050,27 @@ onMounted(
     >
       <q-form ref="bookDialogForm">
         <div class="row">
-          <div class="col-12 q-pa-xs">
+          <div class="col q-pa-xs">
             <q-input
               v-model="bookDialog.form.bookName"
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
             >
-              <template #append>
-                <q-btn
-                  round
-                  dense
-                  flat
-                  icon="search"
-                  @click="showBooksSearchDialog(bookDialog.form.bookName)"
-                ></q-btn>
-              </template>
             </q-input>
           </div>
-          <div class="col-12 q-pa-xs">
+          <div class="col-auto">
+            <q-btn
+              flat
+              label="書籍検索"
+              color="primary"
+              @click="showBooksSearchDialog"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.isbn"
               clearable
@@ -1069,7 +1090,6 @@ onMounted(
               </template>
             </q-input>
           </div>
-
           <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.authorName"
@@ -1077,7 +1097,25 @@ onMounted(
               :label="labels.authorName"
             ></q-input>
           </div>
-          <div class="col-12 col-sm-6 q-pa-xs">
+
+          <div class="col-12">
+            <c-book-links
+              :book-name="bookDialog.form.bookName || ''"
+              :author-name="bookDialog.form.authorName"
+              :isbn="bookDialog.form.isbn"
+              :other-link="null"
+            ></c-book-links>
+          </div>
+
+          <div class="col-4 col-sm-6 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.publishedMonth"
+              clearable
+              :label="labels.publishedMonth"
+              :rules="validationRules.publishedMonth"
+            ></q-input>
+          </div>
+          <div class="col-8 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.publisherName"
               clearable
@@ -1113,6 +1151,14 @@ onMounted(
               color="primary"
               @click="setLatestTagsFromTagsHistories"
             />
+          </div>
+          <div class="col-12 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.memo"
+              :label="labels.memo"
+              type="textarea"
+              autogrow
+            ></q-input>
           </div>
         </div>
         <div class="row">
@@ -1220,7 +1266,6 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
-      :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
       @error="
         emitError('エラー', '国会図書館サーチからデータを取得できませんでした')

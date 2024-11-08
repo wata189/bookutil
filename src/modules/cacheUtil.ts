@@ -4,10 +4,21 @@ const dataBaseVer = 1;
 const dataBaseName = "Cache";
 const dataBaseTableName = "cacheTable";
 
+const CACHE_KEY = {
+  LIBRARIES: "cache-libraries",
+  BOOKSHELF: "cache-bookshelf",
+  BOOKS: "cache-toreadBooks",
+  TAGS: "cache-toreadTags",
+  TAGS_HISTORIES: "cache-tagsHistories",
+  PUBLISHERS: "cache-publishers",
+  ACCESS_TOKEN: "cache-accessToken",
+  REFRESH_TOKEN: "cache-refreshToken",
+  IS_DARK_MODE: "cache-isDarkMode",
+};
 const PERMANENT_CACHE_KEY = [
-  "cache-accessToken",
-  "cache-refreshToken",
-  "cache-isDarkMode",
+  CACHE_KEY.ACCESS_TOKEN,
+  CACHE_KEY.REFRESH_TOKEN,
+  CACHE_KEY.IS_DARK_MODE,
 ];
 
 interface Cache {
@@ -79,4 +90,4 @@ class CacheUtil {
   }
 }
 
-export { CacheUtil };
+export { CacheUtil, CACHE_KEY };

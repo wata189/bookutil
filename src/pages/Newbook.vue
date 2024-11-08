@@ -2,19 +2,13 @@
 <script setup lang="ts">
 import authUtil from "@/modules/authUtil";
 import AxiosUtil from "@/modules/axiosUtil";
-import { CacheUtil } from "@/modules/cacheUtil";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 import { NotifyUtil } from "@/modules/notifyUtil";
 import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import { QForm, useQuasar } from "quasar";
 import { onMounted, ref, Ref, toRefs, ComputedRef, computed } from "vue";
 const cacheUtil = new CacheUtil();
-const CACHE_KEY = {
-  BOOKSHELF: "cache-bookshelf",
-  BOOKS: "cache-toreadBooks",
-  TAGS: "cache-toreadTags",
-  TAGS_HISTORIES: "cache-tagsHistories",
-};
 const notifyUtil = new NotifyUtil(useQuasar());
 import CRoundBtn from "@/components/c-round-btn.vue";
 import CInputTag from "@/components/c-input-tag.vue";

@@ -10,7 +10,6 @@ import util from "@/modules/util";
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
-  searchWord: { type: String, required: true },
 });
 
 const emits = defineEmits(["update:modelValue", "ok", "error"]);
@@ -51,16 +50,40 @@ const dispBooks: ComputedRef<Book[]> = computed(() => {
     };
   });
 });
+const labels = {
+  bookName: "書籍名",
+  authorName: "著者名",
+  publisherName: "出版社名",
+};
 
-const searchBooks = async (searchWord: string) => {
-  apiBooks.value = await bookApiUtil.searchApiBooks(searchWord);
+const form = ref({ bookName: "", authorName: "", publisherName: "" });
+
+const isLoading = ref(false);
+const searchBooks = async (
+  bookName: string,
+  authorName: string,
+  publisherName: string
+) => {
+  // 入力値ない場合無反応
+  if (!bookName && !authorName && !publisherName) {
+    return;
+  }
+
+  apiBooks.value = [];
+  isLoading.value = true;
+  apiBooks.value = await bookApiUtil.searchApiBooks(
+    bookName,
+    authorName,
+    publisherName
+  );
+  isLoading.value = false;
 
   // 検索結果ない場合はエラー投げる
   if (apiBooks.value.length === 0) {
-    value.value = false;
     emits("error");
   }
 };
+
 const selectBook = async (book: bookApiUtil.ApiBook) => {
   let apiBook = book;
   if (book.isbn && util.isIsbn(book.isbn)) {
@@ -73,6 +96,12 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
   value.value = false;
   emits("ok", apiBook);
 };
+
+const resetDialog = () => {
+  form.value = { bookName: "", authorName: "", publisherName: "" };
+  apiBooks.value = [];
+  isLoading.value = false;
+};
 </script>
 
 <template>
@@ -80,11 +109,56 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
     v-model="value"
     header-text="書籍検索"
     hide-footer
-    class="books-search-dialog"
     no-padding
-    @show="searchBooks(props.searchWord)"
-    @hide="apiBooks = []"
+    @hide="resetDialog"
   >
+    <q-form ref="booksSearchDialog">
+      <div class="row q-pa-md">
+        <div class="col-12 q-pa-xs">
+          <q-input
+            v-model="form.bookName"
+            clearable
+            :label="labels.bookName"
+            @keydown.enter="
+              searchBooks(form.bookName, form.authorName, form.publisherName)
+            "
+          ></q-input>
+        </div>
+        <div class="col-12 col-sm-6 q-pa-xs">
+          <q-input
+            v-model="form.authorName"
+            clearable
+            :label="labels.authorName"
+            @keydown.enter="
+              searchBooks(form.bookName, form.authorName, form.publisherName)
+            "
+          ></q-input>
+        </div>
+        <div class="col-12 col-sm-6 q-pa-xs">
+          <q-input
+            v-model="form.publisherName"
+            clearable
+            :label="labels.publisherName"
+            @keydown.enter="
+              searchBooks(form.bookName, form.authorName, form.publisherName)
+            "
+          ></q-input>
+        </div>
+        <div class="col-1"></div>
+        <q-space></q-space>
+        <div class="col-auto q-pa-xs">
+          <q-btn
+            :disable="!form.bookName && !form.publisherName && !form.authorName"
+            flat
+            label="検索"
+            color="primary"
+            @click="
+              searchBooks(form.bookName, form.authorName, form.publisherName)
+            "
+          />
+        </div>
+      </div>
+    </q-form>
     <div v-if="dispBooks.length > 0" class="row justify-center q-pa-md">
       <div
         v-for="(book, i) in dispBooks"
@@ -115,7 +189,7 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
       </div>
     </div>
     <div v-else class="row justify-center q-pa-md">
-      <q-spinner-ios size="36px" class="text-primary" />
+      <q-spinner-ios v-if="isLoading" size="36px" class="text-primary" />
     </div>
   </c-dialog>
 </template>

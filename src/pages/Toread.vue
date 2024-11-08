@@ -11,14 +11,8 @@ import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
 import { getCoverUrl } from "@/modules/ndlSearchUtil";
-import { CacheUtil } from "@/modules/cacheUtil";
+import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
-const CACHE_KEY = {
-  BOOKSHELF: "cache-bookshelf",
-  BOOKS: "cache-toreadBooks",
-  TAGS: "cache-toreadTags",
-  TAGS_HISTORIES: "cache-tagsHistories",
-};
 
 import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
 import CRoundBtn from "@/components/c-round-btn.vue";
@@ -53,6 +47,7 @@ type Book = {
   coverUrl: string;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   page: number | null;
   newBookCheckFlg: number;
   updateAt: number;
@@ -75,6 +70,7 @@ const labels = {
   page: "ページ数",
   authorName: "著者名",
   publisherName: "出版社名",
+  publishedMonth: "出版年月",
   memo: "メモ",
   coverUrl: "書影URL",
   tags: "タグ",
@@ -237,25 +233,36 @@ const getBook = async (isbn: string) => {
 };
 
 const setBookFromApiBook = async (apiBook: bookApiUtil.ApiBook) => {
-  if (apiBook) {
-    if (apiBook.isbn) {
-      bookDialog.value.form.isbn = apiBook.isbn;
-    }
-    if (apiBook.bookName) {
-      bookDialog.value.form.bookName = apiBook.bookName;
-    }
-    if (apiBook.authorName) {
-      bookDialog.value.form.authorName = apiBook.authorName;
-    }
-    if (apiBook.coverUrl) {
-      bookDialog.value.form.coverUrl = apiBook.coverUrl;
-    }
-    if (apiBook.publisherName) {
-      bookDialog.value.form.publisherName = apiBook.publisherName;
-    }
-    if (apiBook.memo) {
-      bookDialog.value.form.memo = apiBook.memo;
-    }
+  if (apiBook.isbn) {
+    bookDialog.value.form.isbn = apiBook.isbn;
+  }
+  if (apiBook.bookName) {
+    bookDialog.value.form.bookName = apiBook.bookName;
+  }
+  if (apiBook.authorName) {
+    bookDialog.value.form.authorName = apiBook.authorName;
+  }
+  if (apiBook.coverUrl) {
+    bookDialog.value.form.coverUrl = apiBook.coverUrl;
+  }
+  if (apiBook.publisherName) {
+    bookDialog.value.form.publisherName = apiBook.publisherName;
+  }
+  if (apiBook.memo) {
+    // memoは入力されているもの優先
+    bookDialog.value.form.memo = bookDialog.value.form.memo || apiBook.memo;
+  }
+  if (apiBook.publishedMonth) {
+    bookDialog.value.form.publishedMonth = apiBook.publishedMonth;
+  }
+
+  // 角川系列だったら一応ブックウォーカータグ足しておく
+  if (
+    apiBook.isOnKadokawa &&
+    !bookDialog.value.form.tags.includes("ブックウォーカー") &&
+    !bookDialog.value.form.tags.includes("ブックウォーカー?")
+  ) {
+    bookDialog.value.form.tags += "/ブックウォーカー?";
   }
 };
 
@@ -275,13 +282,16 @@ const createBook = () => {
       await addTagsHistories(bookDialog.value.form.tags);
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // ダイアログ消す
     bookDialog.value.isShow = false;
     // formを送る
     const params = await createCreateParams(bookDialog.value.form);
     const response = await axiosUtil.post(`/toread/create`, params);
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を新規作成しました`;
+      const message = `『${bookName}』を新規作成しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setToreadBooks(response.data.toreadBooks);
@@ -315,6 +325,9 @@ const editBook = () => {
       await addTagsHistories(bookDialog.value.form.tags);
     }
 
+    // 書籍名キャッシュ
+    const bookName = bookDialog.value.form.bookName;
+
     // formを送る
     const updateAt = bookDialog.value.updateAt || 0;
     // ダイアログ消す
@@ -325,7 +338,7 @@ const editBook = () => {
       bookDialog.value.form
     );
     if (response) {
-      const message = `『${bookDialog.value.form.bookName}』を更新しました`;
+      const message = `『${bookName}』を更新しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
       await setToreadBooks(response.data.toreadBooks);
@@ -343,6 +356,7 @@ const toggleNewBookCheckFlg = async (book: Book) => {
     isbn: book.isbn || "",
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
+    publishedMonth: book.publishedMonth || "",
     page: book.page,
     memo: book.memo || "",
     coverUrl: book.coverUrl || "",
@@ -362,6 +376,7 @@ type BookForm = {
   isbn: string;
   authorName: string;
   publisherName: string;
+  publishedMonth: string;
   page: number | null;
   memo: string;
   coverUrl: string;
@@ -377,6 +392,7 @@ type BookParams = {
   page: number | null;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   memo: string | null;
   coverUrl: string | null;
   newBookCheckFlg: number;
@@ -414,6 +430,7 @@ const createBookParams = async (form: BookForm) => {
     page: form.page || null,
     authorName: form.authorName ? form.authorName.trim() : null,
     publisherName: form.publisherName ? form.publisherName : null,
+    publishedMonth: form.publishedMonth ? form.publishedMonth.trim() : null,
     memo: form.memo ? form.memo.trim() : null,
     // 図書館チェックフラグはisbn入っているときのみ
     newBookCheckFlg: form.isbn ? form.newBookCheckFlg : 0,
@@ -503,6 +520,7 @@ const bookDialog: Ref<BookDialog> = ref({
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     page: null,
     memo: "",
     coverUrl: "",
@@ -548,6 +566,7 @@ const setCreateBookDialog = () => {
     isbn: "",
     authorName: "",
     publisherName: "",
+    publishedMonth: "",
     page: null,
     memo: "",
     coverUrl: "",
@@ -596,6 +615,7 @@ const showEditBookDialog = (book: Book) => {
     isbn: book.isbn || "",
     authorName: book.authorName || "",
     publisherName: book.publisherName || "",
+    publishedMonth: book.publishedMonth || "",
     page: book.page,
     memo: book.memo || "",
     coverUrl: book.coverUrl,
@@ -756,19 +776,17 @@ const addWantTag = async (book: Book) => {
   }
 };
 const addMultiTag = async () => {
-  if (!util.isExist(addTagDialog.value.form.tags)) {
+  const tags = addTagDialog.value.form.tags;
+  if (!util.isExist(tags)) {
     emitError("エラー", "タグを入力してください");
     return;
   }
 
   // ダイアログ消す
   addTagDialog.value.isShow = false;
-  const response = await addTags(
-    selectedBooks.value,
-    util.strToTag(addTagDialog.value.form.tags)
-  );
+  const response = await addTags(selectedBooks.value, util.strToTag(tags));
   if (response) {
-    const message = `選択した本にタグ「${addTagDialog.value.form.tags}」を追加しました`;
+    const message = `選択した本にタグ「${tags}」を追加しました`;
     notifyUtil.notify(message);
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);
@@ -801,6 +819,10 @@ const validationRules = {
   bookName: [validationUtil.isExist(labels.bookName)],
   isbn: [validationUtil.isIsbn(labels.isbn)],
   page: [validationUtil.isNumber(labels.page)],
+  publishedMonth: [
+    validationUtil.isYearMonthStr(labels.publishedMonth),
+    validationUtil.isValidYearMonth(labels.publishedMonth),
+  ],
   coverUrl: [validationUtil.isUrl(labels.coverUrl)],
 };
 
@@ -825,18 +847,11 @@ let isExternalCooperation = false;
 const booksSearchDialog = ref({
   isShow: false,
   okFunction: setBookFromApiBook,
-  searchWord: "",
 });
-const showBooksSearchDialog = (searchWord: string) => {
-  if (!util.isExist(searchWord)) {
-    emitError("エラー", "書籍名を入力してください");
-    return;
-  }
-
+const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
     okFunction: setBookFromApiBook,
-    searchWord,
   };
 };
 
@@ -852,7 +867,9 @@ type BookshelfBook = {
   coverUrl: string;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   readDate: string | null;
+  memo: string | null;
   updateAt: number;
   tags: string[];
   rate: number;
@@ -894,6 +911,8 @@ const addBookshelf = async (book: Book) => {
     authorName: book.authorName,
     coverUrl: book.coverUrl,
     publisherName: book.publisherName,
+    publishedMonth: book.publishedMonth,
+    memo: book.memo,
     tags,
     // bookshelf固有の情報
     readDate: null,
@@ -979,13 +998,14 @@ const createBooks = async () => {
     bookDialog.value.isShow = false;
 
     // 0件の場合はエラー
-    if (createBookForms.value.length === 0) {
+    const count = createBookForms.value.length;
+    if (count === 0) {
       emitError("エラー", "一括新規作成する本がありません");
     }
     // formを送る
     const params = await createCreateMultiParams(createBookForms.value);
     const response = await axiosUtil.post(`/toread/create/multi`, params);
-    const message = `${createBookForms.value.length}冊の本を一括新規作成しました`;
+    const message = `${count}冊の本を一括新規作成しました`;
     notifyUtil.notify(message);
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);
@@ -1285,26 +1305,26 @@ onMounted(
     >
       <q-form ref="bookDialogForm">
         <div class="row">
-          <div class="col-12 q-pa-xs">
+          <div class="col q-pa-xs">
             <q-input
               v-model="bookDialog.form.bookName"
               clearable
               :label="labels.bookName"
               :rules="validationRules.bookName"
-              @keydown.enter="showBooksSearchDialog(bookDialog.form.bookName)"
-            >
-              <template #append>
-                <q-btn
-                  round
-                  dense
-                  flat
-                  icon="search"
-                  @click="showBooksSearchDialog(bookDialog.form.bookName)"
-                ></q-btn>
-              </template>
-            </q-input>
+            ></q-input>
           </div>
-          <div class="col-12 q-pa-xs">
+          <div class="col-auto">
+            <q-btn
+              flat
+              label="書籍検索"
+              color="primary"
+              @click="showBooksSearchDialog"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.isbn"
               clearable
@@ -1324,6 +1344,13 @@ onMounted(
               </template>
             </q-input>
           </div>
+          <div class="col-12 col-sm-6 q-pa-xs">
+            <q-input
+              v-model="bookDialog.form.authorName"
+              clearable
+              :label="labels.authorName"
+            ></q-input>
+          </div>
 
           <div class="col-12">
             <c-book-links
@@ -1333,14 +1360,16 @@ onMounted(
               :other-link="null"
             ></c-book-links>
           </div>
-          <div class="col-12 col-sm-6 q-pa-xs">
+
+          <div class="col-4 col-sm-6 q-pa-xs">
             <q-input
-              v-model="bookDialog.form.authorName"
+              v-model="bookDialog.form.publishedMonth"
               clearable
-              :label="labels.authorName"
+              :label="labels.publishedMonth"
+              :rules="validationRules.publishedMonth"
             ></q-input>
           </div>
-          <div class="col-12 col-sm-6 q-pa-xs">
+          <div class="col-8 col-sm-6 q-pa-xs">
             <q-input
               v-model="bookDialog.form.publisherName"
               clearable
@@ -1431,11 +1460,8 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
-      :search-word="booksSearchDialog.searchWord"
       @ok="booksSearchDialog.okFunction"
-      @error="
-        emitError('エラー', '国会図書館サーチからデータを取得できませんでした')
-      "
+      @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>
 
     <!-- 一括タグダイアログ -->
