@@ -55,15 +55,19 @@ const fetchPublishers = async () => {
     await setPublishers(response.data.publishers);
   }
 };
-const cachedPublishers = (await cacheUtil.get(CACHE_KEY.PUBLISHERS)) as
-  | Publisher[]
-  | null;
-if (cachedPublishers) {
-  await setPublishers(cachedPublishers);
-} else {
-  // マスタ取得非同期
-  fetchPublishers();
-}
+
+const init = async () => {
+  const cachedPublishers = (await cacheUtil.get(CACHE_KEY.PUBLISHERS)) as
+    | Publisher[]
+    | null;
+  if (cachedPublishers) {
+    await setPublishers(cachedPublishers);
+  } else {
+    // マスタ取得非同期
+    fetchPublishers();
+  }
+};
+init();
 
 const isEnoughApiBook = (apiBook: ApiBook | null) => {
   return (
