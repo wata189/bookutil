@@ -14,11 +14,11 @@ describe.each([
   ["1234567890123", true],
   ["123456789012X", false],
   ["123456789X123", false],
-  ["12345678901234", false]
+  ["12345678901234", false],
 ])("isIsbn(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isIsbn(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   [-1, true],
@@ -29,14 +29,14 @@ describe.each([
   [false, true],
   [[], true],
   [{}, true],
-  
+
   ["", false],
   [null, false],
-  [undefined, false]
+  [undefined, false],
 ])("isExist(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isExist(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   ["", false],
@@ -52,7 +52,7 @@ describe.each([
 ])("isUrl(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isUrl(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   ["", 0],
@@ -70,13 +70,12 @@ describe.each([
   [",a,", 1],
 
   ["1,1 1　1/1", 5],
-  
 ])("strTotag(%p)", (param, expected) => {
   test(`length = ${expected}`, () => {
     expect(util.strToTag(param).length).toBe(expected);
-  })
+  });
 });
-const testDate = new Date('1995-01-01T01:01:01');
+const testDate = new Date("1995-01-01T01:01:01");
 describe.each([
   ["yy", testDate, "95"],
   ["yyyy", testDate, "1995"],
@@ -95,7 +94,7 @@ describe.each([
 ])("formatDateToStr(%p)", (format, date, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.formatDateToStr(date, format)).toBe(expected);
-  })
+  });
 });
 
 describe.each([
@@ -113,7 +112,7 @@ describe.each([
 ])("isbn9To10(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isbn9To10(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   ["9784048912075", "4048912070"],
@@ -130,7 +129,7 @@ describe.each([
 ])("isbn13To10(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isbn13To10(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   ["978404891207", "9784048912075"],
@@ -147,7 +146,7 @@ describe.each([
 ])("isbn12To13(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isbn12To13(param)).toBe(expected);
-  })
+  });
 });
 describe.each([
   ["4048912070", "9784048912075"],
@@ -164,20 +163,66 @@ describe.each([
 ])("isbn10To13(%p)", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.isbn10To13(param)).toBe(expected);
-  })
+  });
 });
 
 describe.each([
   ["1234567890あいうえおAbcdefg", "1234567890あいうえおAbcdefg"],
   ["１２３４５６７８９０", "1234567890"],
   ["Ａ　ｂｃｄｅｆｇ", "A bcdefg"],
-  ["！？", "!?"]
+  ["！？", "!?"],
 ])("fullStr2Half", (param, expected) => {
   test(`returns ${expected}`, () => {
     expect(util.fullStr2Half(param)).toBe(expected);
-  })
+  });
 });
 
+describe.each([
+  [[], []],
+  [
+    [0, 1, 2],
+    [0, 1, 2],
+  ],
+  [[0, 0, 0], [0]],
+  [
+    [0, 1, 1],
+    [0, 1],
+  ],
+  [
+    [0, 1, 0],
+    [0, 1],
+  ],
+])("removeDuplicateElements", (param, expected) => {
+  test(`returns ${JSON.stringify(expected)}`, () => {
+    expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
+      JSON.stringify(expected)
+    );
+  });
+});
+describe.each([
+  [
+    ["0", "1", "1"],
+    ["0", "1"],
+  ],
+])("removeDuplicateElements", (param, expected) => {
+  test(`returns ${JSON.stringify(expected)}`, () => {
+    expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
+      JSON.stringify(expected)
+    );
+  });
+});
+describe.each([
+  [
+    [true, false, true],
+    [true, false],
+  ],
+])("removeDuplicateElements", (param, expected) => {
+  test(`returns ${JSON.stringify(expected)}`, () => {
+    expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
+      JSON.stringify(expected)
+    );
+  });
+});
 
 import validationUtil from "./modules/validationUtil.ts";
 
@@ -190,77 +235,202 @@ describe.each([
   [validationUtil.isExist, "パラメータ", false, true],
   [validationUtil.isExist, "パラメータ", [], true],
   [validationUtil.isExist, "パラメータ", {}, true],
-  
+
   [validationUtil.isExist, "パラメータ", "", "パラメータを入力してください"],
   [validationUtil.isExist, "パラメータ", null, "パラメータを入力してください"],
-  [validationUtil.isExist, "パラメータ", undefined, "パラメータを入力してください"],
+  [
+    validationUtil.isExist,
+    "パラメータ",
+    undefined,
+    "パラメータを入力してください",
+  ],
 
   [validationUtil.isExist, "", undefined, "を入力してください"],
   [validationUtil.isExist, "あ", undefined, "あを入力してください"],
 
-
   [validationUtil.isNumber, "パラメータ", null, true],
   [validationUtil.isNumber, "パラメータ", "", true],
   [validationUtil.isNumber, "パラメータ", undefined, true],
-  
+
   [validationUtil.isNumber, "パラメータ", -1, true],
   [validationUtil.isNumber, "パラメータ", 0, true],
   [validationUtil.isNumber, "パラメータ", 1, true],
   [validationUtil.isNumber, "パラメータ", 9, true],
   [validationUtil.isNumber, "パラメータ", 1234567890, true],
-  
+
   [validationUtil.isNumber, "パラメータ", "-1", true],
   [validationUtil.isNumber, "パラメータ", "0", true],
   [validationUtil.isNumber, "パラメータ", "1", true],
   [validationUtil.isNumber, "パラメータ", "9", true],
   [validationUtil.isNumber, "パラメータ", "1234567890", true],
 
-  [validationUtil.isNumber, "パラメータ", "123456789X", "パラメータは半角数字で入力してください"],
-  [validationUtil.isNumber, "パラメータ", "a", "パラメータは半角数字で入力してください"],
-  [validationUtil.isNumber, "パラメータ", true, "パラメータは半角数字で入力してください"],  
-  [validationUtil.isNumber, "パラメータ", false, "パラメータは半角数字で入力してください"],  
-  [validationUtil.isNumber, "パラメータ", "－１", "パラメータは半角数字で入力してください"],  
-  [validationUtil.isNumber, "パラメータ", "０", "パラメータは半角数字で入力してください"],  
-  [validationUtil.isNumber, "パラメータ", "１", "パラメータは半角数字で入力してください"],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    "123456789X",
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    "a",
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    true,
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    false,
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    "－１",
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    "０",
+    "パラメータは半角数字で入力してください",
+  ],
+  [
+    validationUtil.isNumber,
+    "パラメータ",
+    "１",
+    "パラメータは半角数字で入力してください",
+  ],
 
   [validationUtil.isNumber, "", "a", "は半角数字で入力してください"],
   [validationUtil.isNumber, "あ", "a", "あは半角数字で入力してください"],
 ])("%p(%p)(%p)", (func, valName, val, expected) => {
   test(`returns ${expected}`, () => {
     expect(func(valName)(val)).toBe(expected);
-  })
-})
+  });
+});
 describe.each([
   [validationUtil.isIsbn, "パラメータ", "", true],
-  [validationUtil.isIsbn, "パラメータ", "1", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "123456789", "パラメータは10桁または13桁で入力してください"],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "1",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "123456789",
+    "パラメータは10桁または13桁で入力してください",
+  ],
   [validationUtil.isIsbn, "パラメータ", "1234567890", true],
   [validationUtil.isIsbn, "パラメータ", "1234567891", true],
   [validationUtil.isIsbn, "パラメータ", "123456789X", true],
-  [validationUtil.isIsbn, "パラメータ", "X23456789X", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "123456789Y", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "12345678901", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "123456789012", "パラメータは10桁または13桁で入力してください"],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "X23456789X",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "123456789Y",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "12345678901",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "123456789012",
+    "パラメータは10桁または13桁で入力してください",
+  ],
   [validationUtil.isIsbn, "パラメータ", "1234567890123", true],
-  [validationUtil.isIsbn, "パラメータ", "123456789012X", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "123456789X123", "パラメータは10桁または13桁で入力してください"],
-  [validationUtil.isIsbn, "パラメータ", "12345678901234", "パラメータは10桁または13桁で入力してください"],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "123456789012X",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "123456789X123",
+    "パラメータは10桁または13桁で入力してください",
+  ],
+  [
+    validationUtil.isIsbn,
+    "パラメータ",
+    "12345678901234",
+    "パラメータは10桁または13桁で入力してください",
+  ],
   [validationUtil.isIsbn, "", "1", "は10桁または13桁で入力してください"],
   [validationUtil.isIsbn, "a", "1", "aは10桁または13桁で入力してください"],
 
-
   [validationUtil.isUrl, "パラメータ", "", true],
-  [validationUtil.isUrl, "パラメータ", "h", "パラメータはURLを入力してください"],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "h",
+    "パラメータはURLを入力してください",
+  ],
   [validationUtil.isUrl, "パラメータ", "http://example.com", true],
   [validationUtil.isUrl, "パラメータ", "https://example.com", true],
-  [validationUtil.isUrl, "パラメータ", "http:/example.com", "パラメータはURLを入力してください"],
-  [validationUtil.isUrl, "パラメータ", "https:/example.com", "パラメータはURLを入力してください"],
-  [validationUtil.isUrl, "パラメータ", "http//example.com", "パラメータはURLを入力してください"],
-  [validationUtil.isUrl, "パラメータ", "https//example.com", "パラメータはURLを入力してください"],
-  [validationUtil.isUrl, "パラメータ", "ttp://example.com", "パラメータはURLを入力してください"],
-  [validationUtil.isUrl, "パラメータ", "ttps://example.com", "パラメータはURLを入力してください"],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "http:/example.com",
+    "パラメータはURLを入力してください",
+  ],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "https:/example.com",
+    "パラメータはURLを入力してください",
+  ],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "http//example.com",
+    "パラメータはURLを入力してください",
+  ],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "https//example.com",
+    "パラメータはURLを入力してください",
+  ],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "ttp://example.com",
+    "パラメータはURLを入力してください",
+  ],
+  [
+    validationUtil.isUrl,
+    "パラメータ",
+    "ttps://example.com",
+    "パラメータはURLを入力してください",
+  ],
   [validationUtil.isUrl, "", "h", "はURLを入力してください"],
   [validationUtil.isUrl, "あ", "h", "あはURLを入力してください"],
+
+  [
+    validationUtil.isEmail,
+    "パラメータ",
+    "",
+    "パラメータは不正な形式のメールアドレスです",
+  ],
 ])("%p(%p)(%p)", (func, valName, val, expected) => {
   test(`returns ${expected}`, () => {
     expect(func(valName)(val)).toBe(expected);
