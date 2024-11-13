@@ -846,11 +846,17 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
+  bookName: "",
+  authorName: "",
+  publisherName: "",
   okFunction: setBookFromApiBook,
 });
 const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
+    bookName: bookDialog.value.form.bookName || "",
+    authorName: bookDialog.value.form.authorName || "",
+    publisherName: bookDialog.value.form.publisherName || "",
     okFunction: setBookFromApiBook,
   };
 };
@@ -1460,6 +1466,9 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
+      :book-name="booksSearchDialog.bookName"
+      :author-name="booksSearchDialog.authorName"
+      :publisher-name="booksSearchDialog.publisherName"
       @ok="booksSearchDialog.okFunction"
       @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>

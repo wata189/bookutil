@@ -10,6 +10,9 @@ import util from "@/modules/util";
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
+  bookName: { type: String, default: "" },
+  authorName: { type: String, default: "" },
+  publisherName: { type: String, default: "" },
 });
 
 const emits = defineEmits(["update:modelValue", "ok", "error"]);
@@ -56,7 +59,11 @@ const labels = {
   publisherName: "出版社名",
 };
 
-const form = ref({ bookName: "", authorName: "", publisherName: "" });
+const form = ref({
+  bookName: props.bookName,
+  authorName: props.authorName,
+  publisherName: props.publisherName,
+});
 
 const isLoading = ref(false);
 const searchBooks = async (
@@ -98,7 +105,11 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
 };
 
 const resetDialog = () => {
-  form.value = { bookName: "", authorName: "", publisherName: "" };
+  form.value = {
+    bookName: props.bookName,
+    authorName: props.authorName,
+    publisherName: props.publisherName,
+  };
   apiBooks.value = [];
   isLoading.value = false;
 };
