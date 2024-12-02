@@ -2,6 +2,7 @@
 import util from "@/modules/util";
 import { computed } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
+import * as ndlSearchUtil from "@/modules/ndlSearchUtil";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
 
@@ -11,12 +12,19 @@ const props = defineProps({
   authorName: { type: String, default: "" },
   publisherName: { type: String, default: "" },
   tags: { type: Array<string>, default: [] },
-  dispCoverUrl: { type: String, required: true },
+  dispCoverUrl: { type: String, default: "" },
   memo: { type: String, default: "" },
   hideBookLinks: { type: Boolean, default: false },
 });
 const memoFirstLine = computed(() => {
   return props.memo.split("\n")[0];
+});
+const coverUrl = computed(() => {
+  return (
+    props.dispCoverUrl ||
+    ndlSearchUtil.getCoverUrl(props.isbn) ||
+    IMG_PLACEHOLDER_PATH
+  );
 });
 </script>
 
@@ -29,7 +37,7 @@ const memoFirstLine = computed(() => {
   >
     <slot name="header"></slot>
     <q-img
-      :src="dispCoverUrl"
+      :src="coverUrl"
       decoding="async"
       class="book-img book-card-item"
       fit="contain"

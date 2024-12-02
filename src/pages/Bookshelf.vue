@@ -11,7 +11,7 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
-import { searchNdlShortStorys, getCoverUrl } from "@/modules/ndlSearchUtil";
+import { searchNdlShortStorys } from "@/modules/ndlSearchUtil";
 import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
 import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
@@ -38,8 +38,6 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
-
 type Content = {
   authorName: string | null;
   contentName: string;
@@ -59,7 +57,6 @@ type BookshelfBook = {
   memo: string | null;
   rate: number;
   contents: Content[];
-  dispCoverUrl: string;
 };
 const bookshelfBooks: Ref<BookshelfBook[]> = ref([]);
 
@@ -210,19 +207,7 @@ const setBookshelfBooks = async (books: BookshelfBook[]) => {
   const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
 
-  bookshelfBooks.value = books.map((book: BookshelfBook): BookshelfBook => {
-    let dispCoverUrl = IMG_PLACEHOLDER_PATH;
-    if (book.coverUrl) {
-      dispCoverUrl = book.coverUrl;
-    } else if (book.isbn) {
-      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
-    }
-    const retBook = {
-      ...book,
-      dispCoverUrl,
-    };
-    return retBook;
-  });
+  bookshelfBooks.value = books;
 };
 
 const getBook = async (isbn: string) => {
@@ -415,9 +400,6 @@ const createBookParams = async (form: BookshelfBookForm) => {
     readDate: form.readDate ? form.readDate.trim() : null,
 
     memo: form.memo || null,
-
-    // dispCoverUrl型の関係で入れとく
-    dispCoverUrl: "",
 
     // アクセストークン
     idToken,
@@ -890,7 +872,7 @@ onMounted(
               :author-name="book.authorName || ''"
               :publisher-name="book.publisherName || undefined"
               :tags="book.tags"
-              :disp-cover-url="book.dispCoverUrl"
+              :disp-cover-url="book.coverUrl"
               :memo="getBookshelfMemo(book)"
             >
               <template #header>

@@ -6,6 +6,7 @@
   "scripts": {
     "----↓Web開発----": "",
     "Webサーバ": "npm run test && vite",
+    "Webサーバ（自動テストなし）": "vite",
     "----↓androidビルド----": "",
     "androidビルド": "npm run build && npm run createApkImg && npx cap sync && npx cap open android",
     "----↓モジュール----": "",
