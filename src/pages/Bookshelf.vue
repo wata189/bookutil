@@ -693,6 +693,28 @@ const getBookshelfMemo = (book: BookshelfBook) => {
   return memo.trim();
 };
 
+const PUBLIC_DOMAIN_URLS = [
+  "https://www.youtube.com/results?search_query=朗読+",
+  "https://bookwalker.jp/category/1/?word=青空文庫+",
+  "https://www.google.com/search?q=パブリックドメイン+",
+];
+const searchPublicDomain = (bookName: string, authorName: string | null) => {
+  const urls = PUBLIC_DOMAIN_URLS.map(
+    (url) => url + `${bookName}+${authorName || ""}`
+  );
+  urls.forEach((url) => open(url));
+};
+const searchPublicDomains = (form: BookshelfBookForm) => {
+  const contents = form.contents.filter((content) => content.contentName);
+  if (contents.length > 0) {
+    contents.forEach((content) =>
+      searchPublicDomain(content.contentName, content.authorName)
+    );
+  } else {
+    searchPublicDomain(form.bookName, form.authorName);
+  }
+};
+
 type ChartData = {
   name: string;
   data: number[];
@@ -1199,6 +1221,15 @@ onMounted(
               label="点数計算"
               color="primary"
               @click="calcRate(bookDialog.form.contents)"
+            />
+          </div>
+          <div class="col-auto q-pa-xs">
+            <q-btn
+              :disable="!bookDialog.form.bookName"
+              flat
+              label="PD検索"
+              color="primary"
+              @click="searchPublicDomains(bookDialog.form)"
             />
           </div>
           <div
