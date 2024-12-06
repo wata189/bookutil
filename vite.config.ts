@@ -23,7 +23,12 @@ export default defineConfig({
   ],
   test: {
     globals: true,
+    include: ["src/test.*.test.ts"],
     environment: "jsdom",
+    coverage: {
+      include: ["src/components/**/*.vue", "src/modules/**/*.ts"],
+      reporter: ["text", "json", "html"],
+    },
   },
   server: {
     host: true,

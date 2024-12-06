@@ -10,7 +10,6 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
-import { getCoverUrl } from "@/modules/ndlSearchUtil";
 import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
 
@@ -38,8 +37,6 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
-
 type Book = {
   documentId: string;
   bookName: string;
@@ -53,7 +50,6 @@ type Book = {
   updateAt: number;
   tags: string[];
   isChecked: Ref<boolean>;
-  dispCoverUrl: string;
   memo: string | null;
 };
 
@@ -187,15 +183,8 @@ const setToreadBooks = async (books: Book[]) => {
   const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKS, books, limitHours);
   toreadBooks.value = books.map((book: Book): Book => {
-    let dispCoverUrl = IMG_PLACEHOLDER_PATH;
-    if (book.coverUrl) {
-      dispCoverUrl = book.coverUrl;
-    } else if (book.isbn) {
-      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
-    }
     const retBook = {
       ...book,
-      dispCoverUrl,
       isChecked: ref(false),
     };
     return retBook;
@@ -846,11 +835,17 @@ let isExternalCooperation = false;
 
 const booksSearchDialog = ref({
   isShow: false,
+  bookName: "",
+  authorName: "",
+  publisherName: "",
   okFunction: setBookFromApiBook,
 });
 const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
+    bookName: bookDialog.value.form.bookName || "",
+    authorName: bookDialog.value.form.authorName || "",
+    publisherName: bookDialog.value.form.publisherName || "",
     okFunction: setBookFromApiBook,
   };
 };
@@ -874,7 +869,6 @@ type BookshelfBook = {
   tags: string[];
   rate: number;
   contents: Content[];
-  dispCoverUrl: string;
 };
 type BookshelfBookParams = BookshelfBook & {
   idToken: string | null;
@@ -918,8 +912,6 @@ const addBookshelf = async (book: Book) => {
     readDate: null,
     rate: 0,
     contents: [],
-    // dispCoverUrl 型の関係で入れとく
-    dispCoverUrl: "",
   };
   const response = await axiosUtil.post(`/bookshelf/create`, params);
   if (response) {
@@ -1127,7 +1119,7 @@ onMounted(
               :author-name="book.authorName || ''"
               :publisher-name="book.publisherName || undefined"
               :tags="book.tags"
-              :disp-cover-url="book.dispCoverUrl"
+              :disp-cover-url="book.coverUrl"
               :memo="book.memo || ''"
             >
               <template #header>
@@ -1460,6 +1452,9 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
+      :book-name="booksSearchDialog.bookName"
+      :author-name="booksSearchDialog.authorName"
+      :publisher-name="booksSearchDialog.publisherName"
       @ok="booksSearchDialog.okFunction"
       @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>

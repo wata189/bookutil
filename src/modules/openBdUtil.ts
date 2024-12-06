@@ -68,7 +68,8 @@ const getBookInfo = async (isbn: string): Promise<OpenBdBook | null> => {
           "/" +
           publishingDate.Date.slice(4, 6);
       }
-      const coverUrl = getCoverUrl(isbn);
+      const summary = response.data[0].summary;
+      const coverUrl = summary.cover || null;
       book = {
         isbn,
         bookName,

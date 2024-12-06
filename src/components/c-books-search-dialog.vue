@@ -10,6 +10,9 @@ import util from "@/modules/util";
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
+  bookName: { type: String, default: "" },
+  authorName: { type: String, default: "" },
+  publisherName: { type: String, default: "" },
 });
 
 const emits = defineEmits(["update:modelValue", "ok", "error"]);
@@ -23,7 +26,6 @@ const value = computed({
   },
 });
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
 const apiBooks: Ref<bookApiUtil.ApiBook[]> = ref([]);
 
 interface Book {
@@ -32,7 +34,7 @@ interface Book {
   authorName: string | null;
   publisherName: string | null;
   tags: string[];
-  dispCoverUrl: string;
+  dispCoverUrl: string | null;
   memo: string | null;
   apiBook: bookApiUtil.ApiBook;
 }
@@ -44,7 +46,7 @@ const dispBooks: ComputedRef<Book[]> = computed(() => {
       authorName: apiBook.authorName,
       publisherName: apiBook.publisherName,
       tags: [],
-      dispCoverUrl: apiBook.coverUrl || IMG_PLACEHOLDER_PATH,
+      dispCoverUrl: apiBook.coverUrl,
       memo: null,
       apiBook: apiBook,
     };
@@ -56,7 +58,11 @@ const labels = {
   publisherName: "出版社名",
 };
 
-const form = ref({ bookName: "", authorName: "", publisherName: "" });
+const form = ref({
+  bookName: props.bookName,
+  authorName: props.authorName,
+  publisherName: props.publisherName,
+});
 
 const isLoading = ref(false);
 const searchBooks = async (
@@ -98,7 +104,11 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
 };
 
 const resetDialog = () => {
-  form.value = { bookName: "", authorName: "", publisherName: "" };
+  form.value = {
+    bookName: props.bookName,
+    authorName: props.authorName,
+    publisherName: props.publisherName,
+  };
   apiBooks.value = [];
   isLoading.value = false;
 };
@@ -171,7 +181,7 @@ const resetDialog = () => {
           :author-name="book.authorName || ''"
           :tags="book.tags"
           :publisher-name="book.publisherName || ''"
-          :disp-cover-url="book.dispCoverUrl"
+          :disp-cover-url="book.dispCoverUrl || undefined"
           :memo="book.memo || ''"
         >
           <template #header>

@@ -11,7 +11,7 @@ import util from "@/modules/util";
 import validationUtil from "@/modules/validationUtil";
 import AxiosUtil from "@/modules/axiosUtil";
 import * as bookApiUtil from "@/modules/bookApiUtil";
-import { searchNdlShortStorys, getCoverUrl } from "@/modules/ndlSearchUtil";
+import { searchNdlShortStorys } from "@/modules/ndlSearchUtil";
 import { CacheUtil, CACHE_KEY } from "@/modules/cacheUtil";
 const cacheUtil = new CacheUtil();
 import CBooksSearchDialog from "@/components/c-books-search-dialog.vue";
@@ -38,8 +38,6 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
-
 type Content = {
   authorName: string | null;
   contentName: string;
@@ -59,7 +57,6 @@ type BookshelfBook = {
   memo: string | null;
   rate: number;
   contents: Content[];
-  dispCoverUrl: string;
 };
 const bookshelfBooks: Ref<BookshelfBook[]> = ref([]);
 
@@ -210,19 +207,7 @@ const setBookshelfBooks = async (books: BookshelfBook[]) => {
   const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
 
-  bookshelfBooks.value = books.map((book: BookshelfBook): BookshelfBook => {
-    let dispCoverUrl = IMG_PLACEHOLDER_PATH;
-    if (book.coverUrl) {
-      dispCoverUrl = book.coverUrl;
-    } else if (book.isbn) {
-      dispCoverUrl = getCoverUrl(book.isbn) || IMG_PLACEHOLDER_PATH;
-    }
-    const retBook = {
-      ...book,
-      dispCoverUrl,
-    };
-    return retBook;
-  });
+  bookshelfBooks.value = books;
 };
 
 const getBook = async (isbn: string) => {
@@ -415,9 +400,6 @@ const createBookParams = async (form: BookshelfBookForm) => {
     readDate: form.readDate ? form.readDate.trim() : null,
 
     memo: form.memo || null,
-
-    // dispCoverUrl型の関係で入れとく
-    dispCoverUrl: "",
 
     // アクセストークン
     idToken,
@@ -672,11 +654,17 @@ const calcRate = (contents: Content[]) => {
 
 const booksSearchDialog = ref({
   isShow: false,
+  bookName: "",
+  authorName: "",
+  publisherName: "",
   okFunction: setBookFromApiBook,
 });
 const showBooksSearchDialog = () => {
   booksSearchDialog.value = {
     isShow: true,
+    bookName: bookDialog.value.form.bookName || "",
+    authorName: bookDialog.value.form.authorName || "",
+    publisherName: bookDialog.value.form.publisherName || "",
     okFunction: setBookFromApiBook,
   };
 };
@@ -703,6 +691,28 @@ const getBookshelfMemo = (book: BookshelfBook) => {
     )
     .join("\n");
   return memo.trim();
+};
+
+const PUBLIC_DOMAIN_URLS = [
+  "https://www.youtube.com/results?search_query=朗読+",
+  "https://bookwalker.jp/category/1/?word=青空文庫+",
+  "https://www.google.com/search?q=パブリックドメイン+",
+];
+const searchPublicDomain = (bookName: string, authorName: string | null) => {
+  const urls = PUBLIC_DOMAIN_URLS.map(
+    (url) => url + `${bookName}+${authorName || ""}`
+  );
+  urls.forEach((url) => open(url));
+};
+const searchPublicDomains = (form: BookshelfBookForm) => {
+  const contents = form.contents.filter((content) => content.contentName);
+  if (contents.length > 0) {
+    contents.forEach((content) =>
+      searchPublicDomain(content.contentName, content.authorName)
+    );
+  } else {
+    searchPublicDomain(form.bookName, form.authorName);
+  }
 };
 
 type ChartData = {
@@ -884,7 +894,7 @@ onMounted(
               :author-name="book.authorName || ''"
               :publisher-name="book.publisherName || undefined"
               :tags="book.tags"
-              :disp-cover-url="book.dispCoverUrl"
+              :disp-cover-url="book.coverUrl"
               :memo="getBookshelfMemo(book)"
             >
               <template #header>
@@ -1213,6 +1223,15 @@ onMounted(
               @click="calcRate(bookDialog.form.contents)"
             />
           </div>
+          <div class="col-auto q-pa-xs">
+            <q-btn
+              :disable="!bookDialog.form.bookName"
+              flat
+              label="PD検索"
+              color="primary"
+              @click="searchPublicDomains(bookDialog.form)"
+            />
+          </div>
           <div
             v-if="bookDialog.form.contents.length > 0"
             class="col-12 q-pa-xs"
@@ -1266,10 +1285,11 @@ onMounted(
     <!-- 書籍検索ダイアログ -->
     <c-books-search-dialog
       v-model="booksSearchDialog.isShow"
+      :book-name="booksSearchDialog.bookName"
+      :author-name="booksSearchDialog.authorName"
+      :publisher-name="booksSearchDialog.publisherName"
       @ok="booksSearchDialog.okFunction"
-      @error="
-        emitError('エラー', '国会図書館サーチからデータを取得できませんでした')
-      "
+      @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>
   </div>
 </template>

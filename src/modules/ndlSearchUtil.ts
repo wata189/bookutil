@@ -183,18 +183,13 @@ const ndlItem2NdlBook = (ndlItem: NdlItem): NdlBook | null => {
       }
     }
 
-    let coverUrl = null;
-    if (isbn) {
-      coverUrl = getCoverUrl(isbn);
-    }
-
     ndlBook = {
       isbn,
       ndlId,
       bookName,
       authorName,
       publisherName,
-      coverUrl,
+      coverUrl: null,
       publishedMonth,
     };
   } catch (error) {
