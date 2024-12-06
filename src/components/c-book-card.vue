@@ -3,9 +3,10 @@ import util from "@/modules/util";
 import { computed } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
 import * as ndlSearchUtil from "@/modules/ndlSearchUtil";
+import openBdUtil from "@/modules/openBdUtil";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
-
+const IMG_ERROR = "img/.jpg"; // エラー起こすための適当なURL
 const props = defineProps({
   bookName: { type: String, required: true },
   isbn: { type: String, default: "" },
@@ -19,13 +20,6 @@ const props = defineProps({
 const memoFirstLine = computed(() => {
   return props.memo.split("\n")[0];
 });
-const coverUrl = computed(() => {
-  return (
-    props.dispCoverUrl ||
-    ndlSearchUtil.getCoverUrl(props.isbn) ||
-    IMG_PLACEHOLDER_PATH
-  );
-});
 </script>
 
 <template>
@@ -37,18 +31,36 @@ const coverUrl = computed(() => {
   >
     <slot name="header"></slot>
     <q-img
-      :src="coverUrl"
+      :src="dispCoverUrl || IMG_ERROR"
       decoding="async"
       class="book-img book-card-item"
       fit="contain"
     >
       <template #error>
         <q-img
-          :src="IMG_PLACEHOLDER_PATH"
+          :src="ndlSearchUtil.getCoverUrl(isbn) || IMG_ERROR"
           decoding="async"
           class="book-img book-card-item bg-transparent"
           fit="contain"
         >
+          <template #error>
+            <q-img
+              :src="openBdUtil.getCoverUrl(isbn) || IMG_ERROR"
+              decoding="async"
+              class="book-img book-card-item bg-transparent"
+              fit="contain"
+            >
+              <template #error>
+                <q-img
+                  :src="IMG_PLACEHOLDER_PATH"
+                  decoding="async"
+                  class="book-img book-card-item bg-transparent"
+                  fit="contain"
+                >
+                </q-img>
+              </template>
+            </q-img>
+          </template>
         </q-img>
       </template>
     </q-img>
