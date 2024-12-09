@@ -59,9 +59,9 @@ const labels = {
 };
 
 const form = ref({
-  bookName: props.bookName,
-  authorName: props.authorName,
-  publisherName: props.publisherName,
+  bookName: "",
+  authorName: "",
+  publisherName: "",
 });
 
 const isLoading = ref(false);
@@ -103,11 +103,20 @@ const selectBook = async (book: bookApiUtil.ApiBook) => {
   emits("ok", apiBook);
 };
 
-const resetDialog = () => {
+const setDialogForm = () => {
   form.value = {
     bookName: props.bookName,
     authorName: props.authorName,
     publisherName: props.publisherName,
+  };
+  apiBooks.value = [];
+  isLoading.value = false;
+};
+const resetDialog = () => {
+  form.value = {
+    bookName: "",
+    authorName: "",
+    publisherName: "",
   };
   apiBooks.value = [];
   isLoading.value = false;
@@ -120,6 +129,7 @@ const resetDialog = () => {
     header-text="書籍検索"
     hide-footer
     no-padding
+    @show="setDialogForm"
     @hide="resetDialog"
   >
     <q-form ref="booksSearchDialog">
