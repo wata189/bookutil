@@ -58,7 +58,10 @@ type BookshelfBook = {
   rate: number;
   contents: Content[];
 };
-const bookshelfBooks: Ref<BookshelfBook[]> = ref([]);
+type DispBookshelfBook = BookshelfBook & {
+  isChecked: Ref<boolean>;
+};
+const bookshelfBooks: Ref<DispBookshelfBook[]> = ref([]);
 
 const pagination = ref({
   number: 1,
@@ -77,7 +80,7 @@ const toTopPagenation = () => {
   pagination.value.number = 1;
 };
 
-const sortByReadDate = (a: BookshelfBook, b: BookshelfBook) => {
+const sortByReadDate = (a: DispBookshelfBook, b: DispBookshelfBook) => {
   const aDateTime = new Date(a.readDate || "9999/12/31").getTime();
   const bDateTime = new Date(b.readDate || "9999/12/31").getTime();
   return bDateTime - aDateTime;
@@ -100,7 +103,7 @@ const filteredSortedBookshelfBooks = computed({
     const minusFilterWords = filterWords
       .filter((word) => word.startsWith("-"))
       .map((word) => word.slice(1));
-    const sortByUpdateAt = (a: BookshelfBook, b: BookshelfBook) =>
+    const sortByUpdateAt = (a: DispBookshelfBook, b: DispBookshelfBook) =>
       b.updateAt - a.updateAt;
     let sortFunc = sortByReadDate;
     // TODO: ソートあれこれ
@@ -123,7 +126,7 @@ const filteredSortedBookshelfBooks = computed({
         const dateTime = new Date(book.readDate || "9999/12/31").getTime();
         return filterDateRangeMin <= dateTime && dateTime <= filterDateRangeMax;
       })
-      .filter((book: BookshelfBook) => {
+      .filter((book: DispBookshelfBook) => {
         // 既読のみチェックボックス入れている場合は、readDateなかったらダメ
         if (filterCond.value.isOnlyReadBook && !book.readDate) {
           return false;
@@ -207,7 +210,13 @@ const setBookshelfBooks = async (books: BookshelfBook[]) => {
   const limitHours = 24;
   await cacheUtil.set(CACHE_KEY.BOOKSHELF, books, limitHours);
 
-  bookshelfBooks.value = books;
+  bookshelfBooks.value = books.map((book: BookshelfBook): DispBookshelfBook => {
+    const retBook = {
+      ...book,
+      isChecked: ref(false),
+    };
+    return retBook;
+  });
 };
 
 const getBook = async (isbn: string) => {
@@ -407,39 +416,7 @@ const createBookParams = async (form: BookshelfBookForm) => {
 
   return params;
 };
-type SimpleBookshelfBooksParams = {
-  documentId: string;
-  updateAt: number;
-  user: string;
-  idToken: string | null;
-};
-const deleteBook = async (book: BookshelfBook) => {
-  // 確認ダイアログ
-  emits(
-    EMIT_NAME_CONFIRM,
-    "確認",
-    `『${book.bookName}』を削除します。`,
-    true,
-    async () => {
-      const idToken = await authUtil.getIdToken();
-      const user = authUtil.getUserInfo();
-      const params: SimpleBookshelfBooksParams = {
-        documentId: book.documentId || "",
-        updateAt: book.updateAt || 0,
-        user: user.email || "No User Data",
-        idToken,
-      };
-      const response = await axiosUtil.post(`/bookshelf/delete`, params);
-      if (response) {
-        const message = `『${book.bookName}』を削除しました`;
-        // TODO: 削除した本を戻す処理
-        notifyUtil.notify(message, [], true);
-        // 画面情報再設定
-        await setBookshelfBooks(response.data.bookshelfBooks);
-      }
-    }
-  );
-};
+
 type BookDialog = {
   isShow: boolean;
   documentId: string;
@@ -715,6 +692,151 @@ const searchPublicDomains = (form: BookshelfBookForm) => {
   }
 };
 
+const selectedBooks = computed(() => {
+  return bookshelfBooks.value.filter((book) => book.isChecked);
+});
+
+type AddTagForm = {
+  tags: string;
+};
+type AddTagDialog = {
+  isShow: boolean;
+  headerText: string;
+  okLabel: string;
+  okFunction: () => void;
+  form: AddTagForm;
+};
+const addTagDialog: Ref<AddTagDialog> = ref({
+  isShow: false,
+  headerText: "",
+  okLabel: "",
+  okFunction: () => {},
+  form: {
+    tags: "",
+  },
+});
+const showAddTagDialog = () => {
+  const books = selectedBooks.value;
+  // 0件選択の場合はエラーダイアログ
+  if (books.length === 0) {
+    emitError("エラー", "タグを設定する本を選択してください");
+    return;
+  }
+
+  addTagDialog.value = {
+    isShow: true,
+    headerText: "一括タグ追加",
+    okLabel: "タグ追加",
+    okFunction: addMultiTag,
+    form: {
+      tags: "",
+    },
+  };
+};
+const addTagValidationRules = {
+  tags: [validationUtil.isExist(labels.tags)],
+};
+const addTagDialogForm: Ref<QForm | undefined> = ref();
+const addMultiTag = async () => {
+  // フォームのバリデーション処理
+  if (!addTagDialogForm.value) {
+    return;
+  }
+  addTagDialogForm.value.validate().then(async (success: boolean) => {
+    if (!success) {
+      return;
+    }
+    const tags = addTagDialog.value.form.tags;
+
+    // ダイアログ消す
+    addTagDialog.value.isShow = false;
+    const response = await addTags(selectedBooks.value, util.strToTag(tags));
+    if (response) {
+      const message = `選択した本にタグ「${tags}」を追加しました`;
+      notifyUtil.notify(message);
+      // 画面情報再設定
+      await setBookshelfBooks(response.data.toreadBooks);
+    }
+  });
+};
+const addTags = async (books: BookshelfBook[], tags: string[]) => {
+  const params = await createAddTagParams(books, tags);
+  return await axiosUtil.post(`/bookshelf/tag/add`, params);
+};
+
+type SimpleBook = {
+  documentId: string;
+  updateAt: number;
+};
+type SimpleBooksParams = {
+  books: SimpleBook[];
+  tags?: string[];
+  user: string;
+  idToken: string | null;
+};
+const createAddTagParams = async (
+  books: BookshelfBook[],
+  tags: string[]
+): Promise<SimpleBooksParams> => {
+  const simpleBooks: SimpleBook[] = books.map((book) => {
+    return { documentId: book.documentId || "", updateAt: book.updateAt };
+  });
+
+  const idToken = await authUtil.getIdToken();
+  const user = authUtil.getUserInfo();
+  return {
+    books: simpleBooks,
+    user: user.email || "No User Data",
+    idToken,
+    tags: tags,
+  };
+};
+
+const deleteBooks = async (books: BookshelfBook[]) => {
+  const simpleBooks: SimpleBook[] = books.map((book) => {
+    return { documentId: book.documentId || "", updateAt: book.updateAt };
+  });
+  // 0件選択の場合はエラーダイアログ
+  if (books.length === 0) {
+    emitError("エラー", "削除する本を選択してください");
+    return;
+  }
+  // 確認ダイアログ
+  const dispBooks = books.map((book) => `・${book.bookName}`);
+  let confirmDialogMsg = `以下の本を削除します
+
+${dispBooks.join("\n")}`;
+  emits(EMIT_NAME_CONFIRM, "確認", confirmDialogMsg, true, async () => {
+    const idToken = await authUtil.getIdToken();
+    const user = authUtil.getUserInfo();
+    const params: SimpleBooksParams = {
+      books: simpleBooks,
+      user: user.email || "No User Data",
+      idToken,
+    };
+    const response = await axiosUtil.post(`/bookshelf/delete`, params);
+    if (response) {
+      const message = `選択した本を削除しました`;
+      // TODO: 削除した本を戻す処理
+      notifyUtil.notify(message, [], true);
+      // 画面情報再設定
+      await setBookshelfBooks(response.data.bookshelfBooks);
+    }
+  });
+};
+
+// 一括選択
+const selectAllDispBooks = () => {
+  for (const dispBookshelfBook of dispBookshelfBooks.value) {
+    const bookshelfBook = bookshelfBooks.value.find(
+      (book) => book.documentId === dispBookshelfBook.documentId
+    );
+    if (bookshelfBook) {
+      bookshelfBook.isChecked.value = true;
+    }
+  }
+};
+
 type ChartData = {
   name: string;
   data: number[];
@@ -898,9 +1020,12 @@ onMounted(
               :memo="getBookshelfMemo(book)"
             >
               <template #header>
-                <div class="book-card-rate q-pl-sm">
-                  {{ "★".repeat(book.rate) }}
-                </div>
+                <q-checkbox
+                  v-model="book.isChecked"
+                  :label="'★'.repeat(book.rate)"
+                  dense
+                >
+                </q-checkbox>
               </template>
               <template #menu-footer>
                 <div class="row">
@@ -910,7 +1035,7 @@ onMounted(
                       title="削除"
                       icon="delete"
                       color="negative"
-                      @click="deleteBook(book)"
+                      @click="deleteBooks([book])"
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
@@ -1037,6 +1162,35 @@ onMounted(
               color="secondary"
               :is-flat="false"
               @click="showChart"
+            ></c-round-btn>
+          </div>
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              title="全選択"
+              icon="done_all"
+              color="secondary"
+              :is-flat="false"
+              @click="selectAllDispBooks"
+            ></c-round-btn>
+          </div>
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              :disabled="selectedBooks.length === 0"
+              title="一括削除"
+              icon="delete"
+              color="negative"
+              :is-flat="false"
+              @click="deleteBooks(selectedBooks)"
+            ></c-round-btn>
+          </div>
+          <div class="col-auto q-pa-xs">
+            <c-round-btn
+              :disabled="selectedBooks.length === 0"
+              title="一括タグ"
+              icon="local_offer"
+              color="secondary"
+              :is-flat="false"
+              @click="showAddTagDialog"
             ></c-round-btn>
           </div>
           <div class="col-auto q-pa-xs">
@@ -1291,6 +1445,26 @@ onMounted(
       @ok="booksSearchDialog.okFunction"
       @error="emitError('エラー', 'APIからデータを取得できませんでした')"
     ></c-books-search-dialog>
+
+    <!-- 一括タグダイアログ -->
+    <c-dialog
+      v-model="addTagDialog.isShow"
+      :header-text="addTagDialog.headerText"
+      :ok-label="addTagDialog.okLabel"
+      @ok="addTagDialog.okFunction"
+    >
+      <q-form ref="addTagDialogForm">
+        <c-input-tag
+          id="add-tag-dialog-tag"
+          v-model="addTagDialog.form.tags"
+          :label="labels.tags"
+          hint=",/スペースで区切られます"
+          :options="tagOptions"
+          :rules="addTagValidationRules.tags"
+          class="set-tag-dialog-form-tags"
+        ></c-input-tag>
+      </q-form>
+    </c-dialog>
   </div>
 </template>
 

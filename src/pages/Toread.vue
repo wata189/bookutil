@@ -163,7 +163,7 @@ const selectAllDispBooks = () => {
       (toreadBook) => toreadBook.documentId === dispToreadBook.documentId
     );
     if (toreadBook) {
-      toreadBook.isChecked = ref(true);
+      toreadBook.isChecked.value = true;
     }
   }
 };
@@ -723,6 +723,7 @@ const addTagValidationRules = {
   tags: [validationUtil.isExist(labels.tags)],
 };
 const addTagDialogForm: Ref<QForm | undefined> = ref();
+// TODO: addTagsFromDialogForm使われていない
 const addTagsFromDialogForm = () => {
   // フォームのバリデーション処理
   if (!addTagDialogForm.value) {
