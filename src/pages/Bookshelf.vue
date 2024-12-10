@@ -832,7 +832,7 @@ const selectAllDispBooks = () => {
       (book) => book.documentId === dispBookshelfBook.documentId
     );
     if (bookshelfBook) {
-      bookshelfBook.isChecked.value = true;
+      bookshelfBook.isChecked = ref(true);
     }
   }
 };

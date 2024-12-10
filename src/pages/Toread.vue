@@ -163,7 +163,7 @@ const selectAllDispBooks = () => {
       (toreadBook) => toreadBook.documentId === dispToreadBook.documentId
     );
     if (toreadBook) {
-      toreadBook.isChecked.value = true;
+      toreadBook.isChecked = ref(true);
     }
   }
 };
