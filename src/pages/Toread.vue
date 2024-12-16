@@ -765,6 +765,13 @@ const addWantTag = async (book: Book) => {
     await setToreadBooks(response.data.toreadBooks);
   }
 };
+const addReserveTag = async (book: Book) => {
+  const response = await addTags([book], ["よやくする"]);
+  if (response) {
+    // 画面情報再設定
+    await setToreadBooks(response.data.toreadBooks);
+  }
+};
 const addMultiTag = async () => {
   const tags = addTagDialog.value.form.tags;
   if (!util.isExist(tags)) {
@@ -1156,6 +1163,15 @@ onMounted(
                       icon="star_border"
                       color="secondary"
                       @click="addWantTag(book)"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="book.isbn"
+                      title="よやくする"
+                      icon="event_available"
+                      color="secondary"
+                      @click="addReserveTag(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col-auto">
