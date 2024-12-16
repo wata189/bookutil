@@ -755,7 +755,7 @@ const addMultiTag = async () => {
       const message = `選択した本にタグ「${tags}」を追加しました`;
       notifyUtil.notify(message);
       // 画面情報再設定
-      await setBookshelfBooks(response.data.toreadBooks);
+      await setBookshelfBooks(response.data.bookshelfBooks);
     }
   });
 };
