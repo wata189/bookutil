@@ -723,6 +723,7 @@ const addTagValidationRules = {
   tags: [validationUtil.isExist(labels.tags)],
 };
 const addTagDialogForm: Ref<QForm | undefined> = ref();
+// TODO: addTagsFromDialogForm使われていない
 const addTagsFromDialogForm = () => {
   // フォームのバリデーション処理
   if (!addTagDialogForm.value) {
@@ -759,6 +760,13 @@ const addWantTag = async (book: Book) => {
     idToken,
   };
   const response = await axiosUtil.post(`/toread/tag/want/add`, params);
+  if (response) {
+    // 画面情報再設定
+    await setToreadBooks(response.data.toreadBooks);
+  }
+};
+const addReserveTag = async (book: Book) => {
+  const response = await addTags([book], ["よやくする"]);
   if (response) {
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);
@@ -1155,6 +1163,15 @@ onMounted(
                       icon="star_border"
                       color="secondary"
                       @click="addWantTag(book)"
+                    ></c-round-btn>
+                  </div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      v-if="book.isbn"
+                      title="よやくする"
+                      icon="event_available"
+                      color="secondary"
+                      @click="addReserveTag(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col-auto">
