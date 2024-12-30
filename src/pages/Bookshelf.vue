@@ -685,7 +685,10 @@ const searchPublicDomains = (form: BookshelfBookForm) => {
   const contents = form.contents.filter((content) => content.contentName);
   if (contents.length > 0) {
     contents.forEach((content) =>
-      searchPublicDomain(content.contentName, content.authorName)
+      searchPublicDomain(
+        content.contentName,
+        content.authorName || form.authorName
+      )
     );
   } else {
     searchPublicDomain(form.bookName, form.authorName);
