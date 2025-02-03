@@ -66,7 +66,7 @@ const bookshelfBooks: Ref<DispBookshelfBook[]> = ref([]);
 const pagination = ref({
   number: 1,
 
-  dispMax: 99,
+  dispMax: 120,
 });
 const paginationMax = computed(() => {
   return Math.ceil(

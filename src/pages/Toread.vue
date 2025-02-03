@@ -76,7 +76,7 @@ const labels = {
 const pagination = ref({
   number: 1,
 
-  dispMax: 99,
+  dispMax: 120,
 });
 const paginationMax = computed(() => {
   return Math.ceil(
@@ -962,26 +962,25 @@ const setCreateBooksDialog = () => {
     function: createBooks,
   };
 };
-const addCreateBooks = () => {
+const addCreateBooks = async () => {
   // フォームのバリデーション処理
   if (!bookDialogForm.value) {
     return;
   }
-  bookDialogForm.value.validate().then(async (success: boolean) => {
-    if (!success) {
-      return;
-    }
+  const success = await bookDialogForm.value.validate();
+  if (!success) {
+    return;
+  }
 
-    // BookFormを保存
-    createBookForms.value.push({ ...bookDialog.value.form });
+  // BookFormを保存
+  createBookForms.value.push({ ...bookDialog.value.form });
 
-    // タグ履歴更新
-    if (bookDialog.value.form.tags) {
-      await addTagsHistories(bookDialog.value.form.tags);
-    }
+  // タグ履歴更新
+  if (bookDialog.value.form.tags) {
+    await addTagsHistories(bookDialog.value.form.tags);
+  }
 
-    setCreateBooksDialog();
-  });
+  setCreateBooksDialog();
 };
 const createBooks = async () => {
   // フォームのバリデーション処理
@@ -991,7 +990,7 @@ const createBooks = async () => {
   bookDialogForm.value.validate().then(async (success: boolean) => {
     // フォームにエラーない場合は現在のフォームをいったん一括作成キャッシュに追加
     if (success) {
-      addCreateBooks();
+      await addCreateBooks();
     }
 
     // ダイアログ消す
