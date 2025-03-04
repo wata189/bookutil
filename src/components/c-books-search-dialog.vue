@@ -33,6 +33,7 @@ interface Book {
   isbn: string | null;
   authorName: string | null;
   publisherName: string | null;
+  publishedMonth: string | null;
   tags: string[];
   dispCoverUrl: string | null;
   memo: string | null;
@@ -45,6 +46,7 @@ const dispBooks: ComputedRef<Book[]> = computed(() => {
       isbn: apiBook.isbn || null,
       authorName: apiBook.authorName,
       publisherName: apiBook.publisherName,
+      publishedMonth: apiBook.publishedMonth,
       tags: [],
       dispCoverUrl: apiBook.coverUrl,
       memo: null,
@@ -191,6 +193,7 @@ const resetDialog = () => {
           :author-name="book.authorName || ''"
           :tags="book.tags"
           :publisher-name="book.publisherName || ''"
+          :published-month="book.publishedMonth || undefined"
           :disp-cover-url="book.dispCoverUrl || undefined"
           :memo="book.memo || ''"
         >

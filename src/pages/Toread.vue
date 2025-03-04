@@ -1125,6 +1125,7 @@ onMounted(
               :isbn="book.isbn || ''"
               :author-name="book.authorName || ''"
               :publisher-name="book.publisherName || undefined"
+              :published-month="book.publishedMonth || undefined"
               :tags="book.tags"
               :disp-cover-url="book.coverUrl"
               :memo="book.memo || ''"
