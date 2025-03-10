@@ -12,6 +12,7 @@ const props = defineProps({
   isbn: { type: String, default: "" },
   authorName: { type: String, default: "" },
   publisherName: { type: String, default: "" },
+  publishedMonth: { type: String, default: "" },
   tags: { type: Array<string>, default: [] },
   dispCoverUrl: { type: String, default: "" },
   memo: { type: String, default: "" },
@@ -71,8 +72,9 @@ const memoFirstLine = computed(() => {
       <div class="book-info-inner">
         <div class="text-bold">
           {{ bookName }}
-          <template v-if="publisherName"> / {{ publisherName }}</template>
           <template v-if="authorName"> / {{ authorName }}</template>
+          <template v-if="publisherName"> / {{ publisherName }}</template>
+          <template v-if="publishedMonth"> / {{ publishedMonth }}</template>
         </div>
         <div v-if="isbn">{{ isbn }}</div>
         <q-expansion-item v-if="memo" dense>
