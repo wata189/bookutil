@@ -656,8 +656,26 @@ const setLatestTagsFromTagsHistories = async () => {
   }
 };
 
+const ignoreTags = [
+  "ブックウォーカー",
+  "無料",
+  "オーディブル",
+  "キンドルアンリミテッド",
+  "アプリ",
+  "新宿区電子図書館",
+  "デジタルコレクション",
+];
 // よみたいタグ取得→セット
 const setWantTag = async () => {
+  const tags = util.strToTag(bookDialog.value.form.tags);
+
+  const hasIgnoreTag = ignoreTags.filter((t) => tags.includes(t)).length > 0;
+  if (hasIgnoreTag) {
+    tags.push("よみたい");
+    bookDialog.value.form.tags = tags.join("/");
+    return;
+  }
+
   const idToken = await authUtil.getIdToken();
   const user = authUtil.getUserInfo();
   const params = {
@@ -669,7 +687,6 @@ const setWantTag = async () => {
   if (response) {
     const libraryTag: string | null = response.data.libraryTag;
     if (libraryTag) {
-      const tags = util.strToTag(bookDialog.value.form.tags);
       // 図書館タグあったら事前に排除
       const filteredTags = tags.filter((tag) => !tag.includes("図書館"));
       filteredTags.push(libraryTag);
