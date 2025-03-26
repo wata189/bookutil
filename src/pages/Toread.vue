@@ -1286,18 +1286,9 @@ onMounted(
         </div>
         <div class="col-auto q-pa-xs">
           <c-round-btn
-            title="新規作成"
-            icon="add"
-            color="primary"
-            :is-flat="false"
-            @click="showCreateBookDialog"
-          ></c-round-btn>
-        </div>
-        <div class="col-auto q-pa-xs">
-          <c-round-btn
             title="一括新規作成"
             icon="queue"
-            color="secondary"
+            color="primary"
             :is-flat="false"
             @click="showCreateBooksDialog"
           ></c-round-btn>
