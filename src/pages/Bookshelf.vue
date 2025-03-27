@@ -140,10 +140,12 @@ const filteredSortedBookshelfBooks = computed({
           book.isbn,
           book.authorName,
           book.publisherName,
-          book.tags,
+          book.tags.join("/"),
+          book.memo,
           ...book.contents.map((content) => content.authorName),
           ...book.contents.map((content) => content.contentName),
         ]
+          .filter((t) => t) // nullとかけす
           .join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
           // eslint-disable-next-line no-irregular-whitespace
           .replace(/[ 　,]/g, ""); // 空白など削除
