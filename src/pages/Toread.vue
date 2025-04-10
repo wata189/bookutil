@@ -113,9 +113,10 @@ const filteredSortedToreadBooks = computed({
           book.isbn,
           book.authorName,
           book.publisherName,
-          book.tags,
+          book.tags.join("/"),
           book.memo,
         ]
+          .filter((t) => t) // nullとかけす
           .join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
           // eslint-disable-next-line no-irregular-whitespace
           .replace(/[ 　,]/g, ""); // 空白など削除
@@ -288,9 +289,10 @@ const createBook = () => {
   });
 };
 const addTagsHistories = async (tags: string) => {
-  tagsHistories.value.push(tags);
+  tagsHistories.value.unshift(tags);
+  tagsHistories.value = util.removeDuplicateElements(tagsHistories.value);
   if (tagsHistories.value.length > 10) {
-    tagsHistories.value.shift();
+    tagsHistories.value.pop();
   }
   const limitHours = 24;
   await cacheUtil.set(
@@ -641,23 +643,30 @@ const onUpdateIsbn = (inputIsbn: string) => {
 
 // ローカルストレージのタグ履歴取得
 const tagsHistories: Ref<string[]> = ref([]);
-const setLatestTagsFromTagsHistories = async () => {
-  const latestTags = tagsHistories.value.pop();
-  if (latestTags) {
-    // 最新タグ設定
-    bookDialog.value.form.tags = latestTags;
-    // キャッシュ更新
-    const limitHours = 24;
-    await cacheUtil.set(
-      CACHE_KEY.TAGS_HISTORIES,
-      [...tagsHistories.value],
-      limitHours
-    );
-  }
+const setTagsFromTagsHistories = (tags: string) => {
+  bookDialog.value.form.tags = tags;
 };
 
+const ignoreTags = [
+  "ブックウォーカー",
+  "無料",
+  "オーディブル",
+  "キンドルアンリミテッド",
+  "アプリ",
+  "新宿区電子図書館",
+  "デジタルコレクション",
+];
 // よみたいタグ取得→セット
 const setWantTag = async () => {
+  const tags = util.strToTag(bookDialog.value.form.tags);
+
+  const hasIgnoreTag = ignoreTags.filter((t) => tags.includes(t)).length > 0;
+  if (hasIgnoreTag) {
+    tags.push("よみたい");
+    bookDialog.value.form.tags = tags.join("/");
+    return;
+  }
+
   const idToken = await authUtil.getIdToken();
   const user = authUtil.getUserInfo();
   const params = {
@@ -669,7 +678,6 @@ const setWantTag = async () => {
   if (response) {
     const libraryTag: string | null = response.data.libraryTag;
     if (libraryTag) {
-      const tags = util.strToTag(bookDialog.value.form.tags);
       // 図書館タグあったら事前に排除
       const filteredTags = tags.filter((tag) => !tag.includes("図書館"));
       filteredTags.push(libraryTag);
@@ -1286,18 +1294,9 @@ onMounted(
         </div>
         <div class="col-auto q-pa-xs">
           <c-round-btn
-            title="新規作成"
-            icon="add"
-            color="primary"
-            :is-flat="false"
-            @click="showCreateBookDialog"
-          ></c-round-btn>
-        </div>
-        <div class="col-auto q-pa-xs">
-          <c-round-btn
             title="一括新規作成"
             icon="queue"
-            color="secondary"
+            color="primary"
             :is-flat="false"
             @click="showCreateBooksDialog"
           ></c-round-btn>
@@ -1406,13 +1405,26 @@ onMounted(
 
         <div class="row reverse">
           <div class="col-auto q-pa-xs">
-            <q-btn
+            <q-btn-dropdown
               :disable="tagsHistories.length <= 0"
               flat
-              label="タグ履歴"
               color="primary"
-              @click="setLatestTagsFromTagsHistories"
-            />
+              label="タグ履歴"
+            >
+              <q-list color="primary">
+                <q-item
+                  v-for="tagsHistory in tagsHistories"
+                  :key="tagsHistory"
+                  v-close-popup
+                  clickable
+                  @click="setTagsFromTagsHistories(tagsHistory)"
+                >
+                  <q-item-section>
+                    <q-item-label>{{ tagsHistory }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
           </div>
           <div class="col-auto q-pa-xs">
             <q-btn

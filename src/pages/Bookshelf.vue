@@ -140,10 +140,12 @@ const filteredSortedBookshelfBooks = computed({
           book.isbn,
           book.authorName,
           book.publisherName,
-          book.tags,
+          book.tags.join("/"),
+          book.memo,
           ...book.contents.map((content) => content.authorName),
           ...book.contents.map((content) => content.contentName),
         ]
+          .filter((t) => t) // nullとかけす
           .join("/") // /区切りで結合することで、予想外の検索ヒットを減らす
           // eslint-disable-next-line no-irregular-whitespace
           .replace(/[ 　,]/g, ""); // 空白など削除
@@ -301,9 +303,10 @@ const createBook = () => {
   });
 };
 const addTagsHistories = async (tags: string) => {
-  tagsHistories.value.push(tags);
+  tagsHistories.value.unshift(tags);
+  tagsHistories.value = util.removeDuplicateElements(tagsHistories.value);
   if (tagsHistories.value.length > 10) {
-    tagsHistories.value.shift();
+    tagsHistories.value.pop();
   }
   const limitHours = 24;
   await cacheUtil.set(
@@ -551,19 +554,8 @@ const onUpdateIsbn = (inputIsbn: string) => {
 };
 // ローカルストレージのタグ履歴取得
 const tagsHistories: Ref<string[]> = ref([]);
-const setLatestTagsFromTagsHistories = async () => {
-  const latestTags = tagsHistories.value.pop();
-  if (latestTags) {
-    // 最新タグ設定
-    bookDialog.value.form.tags = latestTags;
-    // キャッシュ更新
-    const limitHours = 24;
-    await cacheUtil.set(
-      CACHE_KEY.TAGS_HISTORIES,
-      [...tagsHistories.value],
-      limitHours
-    );
-  }
+const setTagsFromTagsHistories = (tags: string) => {
+  bookDialog.value.form.tags = tags;
 };
 
 const isShowFilterCond = ref(false);
@@ -1312,13 +1304,26 @@ onMounted(
         <div class="row">
           <q-space></q-space>
           <div class="col-auto q-pa-xs">
-            <q-btn
+            <q-btn-dropdown
               :disable="tagsHistories.length <= 0"
               flat
-              label="タグ履歴"
               color="primary"
-              @click="setLatestTagsFromTagsHistories"
-            />
+              label="タグ履歴"
+            >
+              <q-list color="primary">
+                <q-item
+                  v-for="tagsHistory in tagsHistories"
+                  :key="tagsHistory"
+                  v-close-popup
+                  clickable
+                  @click="setTagsFromTagsHistories(tagsHistory)"
+                >
+                  <q-item-section>
+                    <q-item-label>{{ tagsHistory }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
           </div>
           <div class="col-12 q-pa-xs">
             <q-input
