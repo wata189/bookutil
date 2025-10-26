@@ -539,6 +539,29 @@ const showEditBookDialog = (book: BookshelfBook) => {
     isUpdateUniqueIsbn(book.documentId),
   ];
 };
+
+const addNextVolume = (book: BookshelfBook) => {
+  showCreateBookDialog();
+
+  // bookNameの処理 巻数増やす
+  const bookName = book.bookName;
+  const match = bookName.match(/(\d+)$/);
+  let nextBookName = bookName;
+  if (match) {
+    const num = parseInt(match[1], 10);
+    const nextNum = num + 1;
+    const prefix = bookName.substring(0, match.index);
+    nextBookName = prefix + nextNum;
+  }
+  bookDialog.value.form.bookName = nextBookName;
+
+  bookDialog.value.form.authorName = book.authorName || "";
+  bookDialog.value.form.publisherName = book.publisherName || "";
+  bookDialog.value.form.tags = book.tags.join("/");
+
+  // 検索ダイアログも開く
+  showBooksSearchDialog();
+};
 // isbnの入力補完
 const onUpdateIsbn = (inputIsbn: string) => {
   let isbn = inputIsbn.replace(/-/g, "");
@@ -1035,6 +1058,14 @@ onMounted(
                     ></c-round-btn>
                   </div>
                   <div class="col"></div>
+                  <div class="col-auto">
+                    <c-round-btn
+                      title="次巻追加"
+                      icon="plus_one"
+                      color="secondary"
+                      @click="addNextVolume(book)"
+                    ></c-round-btn>
+                  </div>
                   <div class="col-auto">
                     <c-round-btn
                       title="編集"
