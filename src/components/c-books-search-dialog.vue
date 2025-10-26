@@ -219,7 +219,7 @@ const resetDialog = () => {
 
 <style scoped>
 .book-cover-wrapper {
-  max-width: 140px;
-  min-width: 140px;
+  max-width: 100px;
+  min-width: 100px;
 }
 </style>

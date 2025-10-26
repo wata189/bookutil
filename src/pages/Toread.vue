@@ -1522,8 +1522,8 @@ onMounted(
 
 <style scoped>
 .book-cover-wrapper {
-  max-width: 120px;
-  min-width: 120px;
+  max-width: 100px;
+  min-width: 100px;
 }
 
 @media (min-width: 600px) {
