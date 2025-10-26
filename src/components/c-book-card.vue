@@ -118,7 +118,7 @@ const memoFirstLine = computed(() => {
 }
 
 .book-img {
-  height: 120px;
+  height: 100px;
 }
 
 @media (min-width: 600px) {
