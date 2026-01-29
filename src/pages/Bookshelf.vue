@@ -558,6 +558,12 @@ const addNextVolume = (book: BookshelfBook) => {
   bookDialog.value.form.authorName = book.authorName || "";
   bookDialog.value.form.publisherName = book.publisherName || "";
   bookDialog.value.form.tags = book.tags.join("/");
+  bookDialog.value.form.rate = book.rate;
+
+  bookDialog.value.form.readDate = util.formatDateToStr(
+    new Date(),
+    "yyyy/MM/dd",
+  );
 
   // 検索ダイアログも開く
   showBooksSearchDialog();
