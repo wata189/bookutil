@@ -70,7 +70,7 @@ const pagination = ref({
 });
 const paginationMax = computed(() => {
   return Math.ceil(
-    filteredSortedBookshelfBooks.value.length / pagination.value.dispMax
+    filteredSortedBookshelfBooks.value.length / pagination.value.dispMax,
   );
 });
 const isShowPagination = computed(() => {
@@ -94,10 +94,10 @@ const filteredSortedBookshelfBooks = computed({
     const useRateFilter =
       filterCond.value.rate.min !== 1 || filterCond.value.rate.max !== 5;
     const filterDateRangeMin = new Date(
-      filterCond.value.readDate.min || "1970/01/01"
+      filterCond.value.readDate.min || "1970/01/01",
     ).getTime();
     const filterDateRangeMax = new Date(
-      filterCond.value.readDate.max || "9999/12/31"
+      filterCond.value.readDate.max || "9999/12/31",
     ).getTime();
     // マイナス検索の単語を抽出 最初の1文字は事前に削除しておく
     const minusFilterWords = filterWords
@@ -176,8 +176,8 @@ const dispBookshelfBooks = computed({
       // end: ページ番号*表示件数 or 最後
       Math.min(
         pagination.value.number * pagination.value.dispMax,
-        bookshelfBooks.value.length
-      )
+        bookshelfBooks.value.length,
+      ),
     );
   },
   set: (value) => {
@@ -312,7 +312,7 @@ const addTagsHistories = async (tags: string) => {
   await cacheUtil.set(
     CACHE_KEY.TAGS_HISTORIES,
     [...tagsHistories.value],
-    limitHours
+    limitHours,
   );
 };
 const editBook = () => {
@@ -335,7 +335,7 @@ const editBook = () => {
     const response = await updateBook(
       bookDialog.value.documentId,
       updateAt,
-      bookDialog.value.form
+      bookDialog.value.form,
     );
     if (response) {
       const message = `『${bookName}』を更新しました`;
@@ -352,7 +352,7 @@ const editBook = () => {
 const updateBook = async (
   documentId: string,
   updateAt: number,
-  form: BookshelfBookForm
+  form: BookshelfBookForm,
 ) => {
   const params = await createUpdateParams(documentId, updateAt, form);
   const response = await axiosUtil.post(`/bookshelf/update`, params);
@@ -383,7 +383,7 @@ const createCreateParams = async (form: BookshelfBookForm) => {
 const createUpdateParams = async (
   documentId: string,
   updateAt: number,
-  form: BookshelfBookForm
+  form: BookshelfBookForm,
 ) => {
   const params = await createBookParams(form);
   params.documentId = documentId;
@@ -558,6 +558,12 @@ const addNextVolume = (book: BookshelfBook) => {
   bookDialog.value.form.authorName = book.authorName || "";
   bookDialog.value.form.publisherName = book.publisherName || "";
   bookDialog.value.form.tags = book.tags.join("/");
+  bookDialog.value.form.rate = book.rate;
+
+  bookDialog.value.form.readDate = util.formatDateToStr(
+    new Date(),
+    "yyyy/MM/dd",
+  );
 
   // 検索ダイアログも開く
   showBooksSearchDialog();
@@ -679,7 +685,7 @@ const getBookshelfMemo = (book: BookshelfBook) => {
       (content) =>
         `${content.authorName ? content.authorName : ""}「${
           content.contentName
-        }」${"★".repeat(content.rate)}`
+        }」${"★".repeat(content.rate)}`,
     )
     .join("\n");
   return memo.trim();
@@ -687,12 +693,12 @@ const getBookshelfMemo = (book: BookshelfBook) => {
 
 const PUBLIC_DOMAIN_URLS = [
   "https://www.youtube.com/results?search_query=朗読+",
-  "https://bookwalker.jp/category/1/?word=青空文庫+",
+  "https://www.amazon.co.jp/s?k=青空文庫+",
   "https://www.google.com/search?q=パブリックドメイン+",
 ];
 const searchPublicDomain = (bookName: string, authorName: string | null) => {
   const urls = PUBLIC_DOMAIN_URLS.map(
-    (url) => url + `${bookName}+${authorName || ""}`
+    (url) => url + `${bookName}+${authorName || ""}`,
   );
   urls.forEach((url) => open(url));
 };
@@ -702,8 +708,8 @@ const searchPublicDomains = (form: BookshelfBookForm) => {
     contents.forEach((content) =>
       searchPublicDomain(
         content.contentName,
-        content.authorName || form.authorName
-      )
+        content.authorName || form.authorName,
+      ),
     );
   } else {
     searchPublicDomain(form.bookName, form.authorName);
@@ -794,7 +800,7 @@ type SimpleBooksParams = {
 };
 const createAddTagParams = async (
   books: BookshelfBook[],
-  tags: string[]
+  tags: string[],
 ): Promise<SimpleBooksParams> => {
   const simpleBooks: SimpleBook[] = books.map((book) => {
     return { documentId: book.documentId || "", updateAt: book.updateAt };
@@ -847,7 +853,7 @@ ${dispBooks.join("\n")}`;
 const selectAllDispBooks = () => {
   for (const dispBookshelfBook of dispBookshelfBooks.value) {
     const bookshelfBook = bookshelfBooks.value.find(
-      (book) => book.documentId === dispBookshelfBook.documentId
+      (book) => book.documentId === dispBookshelfBook.documentId,
     );
     if (bookshelfBook) {
       bookshelfBook.isChecked = ref(true);
@@ -873,7 +879,7 @@ type Chart = {
 };
 const chart: ComputedRef<Chart> = computed(() => {
   const books: BookshelfBook[] = filteredSortedBookshelfBooks.value.filter(
-    (b) => b.readDate
+    (b) => b.readDate,
   ); // 読了日あるものだけ対象
   // 設定した条件を元にaxisとdataを作る
   let data: ChartData[] = [];
@@ -885,7 +891,7 @@ const chart: ComputedRef<Chart> = computed(() => {
       .removeDuplicateElements<string>(
         books
           .map((b) => b.readDate || "")
-          .map((readDate) => readDate.substring(0, 7))
+          .map((readDate) => readDate.substring(0, 7)),
       )
       .reverse(); // もともとreadDate降順になってるので、昇順に戻す
     categories = months;
@@ -895,7 +901,7 @@ const chart: ComputedRef<Chart> = computed(() => {
         data: months.map(
           (month) =>
             books.filter((b) => b.readDate && b.readDate.startsWith(month))
-              .length
+              .length,
         ),
       },
     ];
@@ -904,7 +910,7 @@ const chart: ComputedRef<Chart> = computed(() => {
       .removeDuplicateElements<string>(
         books
           .map((b) => b.readDate || "")
-          .map((readDate) => readDate.substring(0, 5))
+          .map((readDate) => readDate.substring(0, 5)),
       )
       .reverse(); // もともとreadDate降順になってるので、昇順に戻す
     categories = months;
@@ -914,7 +920,7 @@ const chart: ComputedRef<Chart> = computed(() => {
         data: months.map(
           (month) =>
             books.filter((b) => b.readDate && b.readDate.startsWith(month))
-              .length
+              .length,
         ),
       },
     ];
@@ -953,7 +959,7 @@ onMounted(
   util.waitParentMount(isAppLoaded, async () => {
     // タグ履歴キャッシュ
     const cachedTagsHistories = (await cacheUtil.get(
-      CACHE_KEY.TAGS_HISTORIES
+      CACHE_KEY.TAGS_HISTORIES,
     )) as string[] | null;
     if (cachedTagsHistories) {
       tagsHistories.value = cachedTagsHistories;
@@ -977,7 +983,7 @@ onMounted(
     }
 
     console.log("mounted bookshelf");
-  })
+  }),
 );
 </script>
 
@@ -1267,7 +1273,7 @@ onMounted(
               clearable
               :label="labels.isbn"
               :rules="validationRules.isbn"
-              @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
+              @blur="onUpdateIsbn(bookDialog.form.isbn)"
               @keydown.enter="getBook(bookDialog.form.isbn)"
             >
               <template #append>

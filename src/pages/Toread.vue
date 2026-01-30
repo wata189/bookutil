@@ -1338,7 +1338,7 @@ onMounted(
               clearable
               :label="labels.isbn"
               :rules="validationRules.isbn"
-              @update:model-value="onUpdateIsbn(bookDialog.form.isbn)"
+              @blur="onUpdateIsbn(bookDialog.form.isbn)"
               @keydown.enter="getBook(bookDialog.form.isbn)"
             >
               <template #append>
