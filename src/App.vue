@@ -22,7 +22,7 @@ head?.append(
     rel: "icon",
     type: "image/svg+xml",
     href: iconHref,
-  })
+  }),
 );
 
 interface Menu {
@@ -68,7 +68,7 @@ const showConfirmDialog = (
   headerText: string,
   msg: string,
   isNegative: boolean,
-  next: () => void
+  next: () => void,
 ) => {
   dialog.value = {
     isShow: true,
@@ -101,6 +101,12 @@ const setUserInfo = (userInfo: { email: string }) => {
     カードにはタグを設定することができ、本のジャンルや優先度などを登録しています。
     カーリル、Amazon、国会図書館などのAPIと連携し、本の様々な情報を取得し、登録できます。
     また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`,
+    });
+    menuValues.push({
+      name: "マンガアプリ検索",
+      to: "/mangaapp",
+      icon: "app_shortcut",
+      description: "",
     });
     menuValues.push({
       name: "新刊追加",

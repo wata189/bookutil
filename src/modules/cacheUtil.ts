@@ -14,6 +14,7 @@ const CACHE_KEY = {
   ACCESS_TOKEN: "cache-accessToken",
   REFRESH_TOKEN: "cache-refreshToken",
   IS_DARK_MODE: "cache-isDarkMode",
+  MANGA_APPS: "cache-mangaApps",
 };
 const PERMANENT_CACHE_KEY = [
   CACHE_KEY.ACCESS_TOKEN,
