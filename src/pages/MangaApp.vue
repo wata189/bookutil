@@ -18,7 +18,7 @@ const axiosUtil = new AxiosUtil(emits);
 const cacheUtil = new CacheUtil();
 
 interface MangaApp {
-  id: string;
+  documentId: string;
   name: string;
   url: string[];
 }
@@ -109,7 +109,9 @@ onMounted(
             </template>
             <div>
               <ul>
-                <li v-for="app in mangaApps" :key="app.id">{{ app.name }}</li>
+                <li v-for="app in mangaApps" :key="app.documentId">
+                  {{ app.name }}
+                </li>
               </ul>
             </div>
           </q-expansion-item>
