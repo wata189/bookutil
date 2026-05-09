@@ -80,7 +80,7 @@ const pagination = ref({
 });
 const paginationMax = computed(() => {
   return Math.ceil(
-    filteredSortedToreadBooks.value.length / pagination.value.dispMax
+    filteredSortedToreadBooks.value.length / pagination.value.dispMax,
   );
 });
 const isShowPagination = computed(() => {
@@ -149,8 +149,8 @@ const dispToreadBooks = computed({
       // end: ページ番号*表示件数 or 最後
       Math.min(
         pagination.value.number * pagination.value.dispMax,
-        toreadBooks.value.length
-      )
+        toreadBooks.value.length,
+      ),
     );
   },
   set: (value) => {
@@ -161,7 +161,7 @@ const dispToreadBooks = computed({
 const selectAllDispBooks = () => {
   for (const dispToreadBook of dispToreadBooks.value) {
     const toreadBook = toreadBooks.value.find(
-      (toreadBook) => toreadBook.documentId === dispToreadBook.documentId
+      (toreadBook) => toreadBook.documentId === dispToreadBook.documentId,
     );
     if (toreadBook) {
       toreadBook.isChecked = ref(true);
@@ -298,7 +298,7 @@ const addTagsHistories = async (tags: string) => {
   await cacheUtil.set(
     CACHE_KEY.TAGS_HISTORIES,
     [...tagsHistories.value],
-    limitHours
+    limitHours,
   );
 };
 const editBook = () => {
@@ -326,7 +326,7 @@ const editBook = () => {
     const response = await updateBook(
       bookDialog.value.documentId,
       updateAt,
-      bookDialog.value.form
+      bookDialog.value.form,
     );
     if (response) {
       const message = `『${bookName}』を更新しました`;
@@ -399,7 +399,7 @@ const createCreateParams = async (form: BookForm) => {
 const createUpdateParams = async (
   documentId: string,
   updateAt: number,
-  form: BookForm
+  form: BookForm,
 ) => {
   const params = await createBookParams(form);
   params.documentId = documentId;
@@ -649,12 +649,10 @@ const setTagsFromTagsHistories = (tags: string) => {
 
 const ignoreTags = [
   "ブックウォーカー",
-  "無料",
   "オーディブル",
   "キンドルアンリミテッド",
   "アプリ",
   "新宿区電子図書館",
-  "デジタルコレクション",
 ];
 // よみたいタグ取得→セット
 const setWantTag = async () => {
@@ -804,7 +802,7 @@ const addTags = async (books: Book[], tags: string[]) => {
 
 const createAddTagParams = async (
   books: Book[],
-  tags: string[]
+  tags: string[],
 ): Promise<SimpleBooksParams> => {
   const simpleBooks: SimpleBook[] = books.map((book) => {
     return { documentId: book.documentId, updateAt: book.updateAt };
@@ -1060,7 +1058,7 @@ onMounted(
           bookDialog.value.form.publisherName = urlParamPublisherName;
         if (urlParamNewBookCheckFlg)
           bookDialog.value.form.newBookCheckFlg = Number(
-            urlParamNewBookCheckFlg
+            urlParamNewBookCheckFlg,
           );
       } else {
         // ISBNが取得できなかったことをアラートで表示
@@ -1075,7 +1073,7 @@ onMounted(
 
     // タグ履歴キャッシュ
     const cachedTagsHistories = (await cacheUtil.get(
-      CACHE_KEY.TAGS_HISTORIES
+      CACHE_KEY.TAGS_HISTORIES,
     )) as string[] | null;
     if (cachedTagsHistories) {
       tagsHistories.value = cachedTagsHistories;
@@ -1100,7 +1098,7 @@ onMounted(
     }
 
     console.log("mounted toread");
-  })
+  }),
 );
 </script>
 

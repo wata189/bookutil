@@ -4,14 +4,13 @@
     "useDefineForClassFields": true,
     "module": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,

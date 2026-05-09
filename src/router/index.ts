@@ -45,6 +45,12 @@ const routes = [
     },
   },
 
+  {
+    path: "/mangaapp",
+    name: "mangaapp",
+    component: async () => import("@/pages/MangaApp.vue"),
+  },
+
   // 404
   {
     path: "/:catchAll(.*)",

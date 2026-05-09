@@ -1,4 +1,5 @@
 import util from "./modules/util.ts";
+import { describe, expect, test } from "vitest";
 
 describe.each([
   ["", false],
@@ -195,7 +196,7 @@ describe.each([
 ])("removeDuplicateElements", (param, expected) => {
   test(`returns ${JSON.stringify(expected)}`, () => {
     expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
-      JSON.stringify(expected)
+      JSON.stringify(expected),
     );
   });
 });
@@ -207,7 +208,7 @@ describe.each([
 ])("removeDuplicateElements", (param, expected) => {
   test(`returns ${JSON.stringify(expected)}`, () => {
     expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
-      JSON.stringify(expected)
+      JSON.stringify(expected),
     );
   });
 });
@@ -219,7 +220,7 @@ describe.each([
 ])("removeDuplicateElements", (param, expected) => {
   test(`returns ${JSON.stringify(expected)}`, () => {
     expect(JSON.stringify(util.removeDuplicateElements(param))).toBe(
-      JSON.stringify(expected)
+      JSON.stringify(expected),
     );
   });
 });
