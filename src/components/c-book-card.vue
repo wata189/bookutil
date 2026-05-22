@@ -2,7 +2,6 @@
 import util from "@/modules/util";
 import { computed } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
-import * as ndlSearchUtil from "@/modules/ndlSearchUtil";
 import openBdUtil from "@/modules/openBdUtil";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
@@ -53,27 +52,18 @@ const amazonCoverUrl = computed(() => {
         >
           <template #error>
             <q-img
-              :src="ndlSearchUtil.getCoverUrl(isbn) || IMG_ERROR"
+              :src="openBdUtil.getCoverUrl(isbn) || IMG_ERROR"
               decoding="async"
               class="book-img book-card-item bg-transparent"
               fit="contain"
             >
               <template #error>
                 <q-img
-                  :src="openBdUtil.getCoverUrl(isbn) || IMG_ERROR"
+                  :src="IMG_PLACEHOLDER_PATH"
                   decoding="async"
                   class="book-img book-card-item bg-transparent"
                   fit="contain"
                 >
-                  <template #error>
-                    <q-img
-                      :src="IMG_PLACEHOLDER_PATH"
-                      decoding="async"
-                      class="book-img book-card-item bg-transparent"
-                      fit="contain"
-                    >
-                    </q-img>
-                  </template>
                 </q-img>
               </template>
             </q-img>

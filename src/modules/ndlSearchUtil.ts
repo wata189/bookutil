@@ -66,7 +66,7 @@ export const getNdlBook = async (isbn: string): Promise<NdlBook | null> => {
 export const searchNdlBooks = async (
   bookName: string,
   authorName: string,
-  publisherName: string
+  publisherName: string,
 ) => {
   let ndlBooks: NdlBook[] = [];
   const params = [];
@@ -198,14 +198,6 @@ const ndlItem2NdlBook = (ndlItem: NdlItem): NdlBook | null => {
   return ndlBook;
 };
 
-export const getCoverUrl = (isbn: string) => {
-  if (!util.isIsbn(isbn)) return null;
-
-  const isbn13 = isbn.length === 13 ? isbn : util.isbn10To13(isbn);
-
-  return `${NDL_SEARCH_URL}/thumbnail/${isbn13}.jpg`;
-};
-
 type Content = {
   authorName: string | null;
   contentName: string;
@@ -227,7 +219,7 @@ type OaipmhData = {
             "dcndl:BibResource": [
               {
                 "dcndl:partInformation": PartInformation[];
-              }
+              },
             ];
           };
         };
@@ -236,7 +228,7 @@ type OaipmhData = {
   };
 };
 export const searchNdlShortStorys = async (
-  isbn: string
+  isbn: string,
 ): Promise<Content[]> => {
   let shortStorys: Content[] = [];
 
