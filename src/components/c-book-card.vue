@@ -21,6 +21,13 @@ const props = defineProps({
 const memoFirstLine = computed(() => {
   return props.memo.split("\n")[0];
 });
+
+const amazonCoverUrl = computed(() => {
+  if (!props.isbn) return IMG_ERROR;
+  const isbn10 =
+    props.isbn.length === 10 ? props.isbn : util.isbn13To10(props.isbn);
+  return `https://images.amazon.com/images/P/${isbn10}.09_SL30_.jpg`;
+});
 </script>
 
 <template>
@@ -39,25 +46,34 @@ const memoFirstLine = computed(() => {
     >
       <template #error>
         <q-img
-          :src="ndlSearchUtil.getCoverUrl(isbn) || IMG_ERROR"
+          :src="amazonCoverUrl"
           decoding="async"
           class="book-img book-card-item bg-transparent"
           fit="contain"
         >
           <template #error>
             <q-img
-              :src="openBdUtil.getCoverUrl(isbn) || IMG_ERROR"
+              :src="ndlSearchUtil.getCoverUrl(isbn) || IMG_ERROR"
               decoding="async"
               class="book-img book-card-item bg-transparent"
               fit="contain"
             >
               <template #error>
                 <q-img
-                  :src="IMG_PLACEHOLDER_PATH"
+                  :src="openBdUtil.getCoverUrl(isbn) || IMG_ERROR"
                   decoding="async"
                   class="book-img book-card-item bg-transparent"
                   fit="contain"
                 >
+                  <template #error>
+                    <q-img
+                      :src="IMG_PLACEHOLDER_PATH"
+                      decoding="async"
+                      class="book-img book-card-item bg-transparent"
+                      fit="contain"
+                    >
+                    </q-img>
+                  </template>
                 </q-img>
               </template>
             </q-img>
