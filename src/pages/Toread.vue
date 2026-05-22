@@ -629,7 +629,7 @@ const showEditBookDialog = (book: Book) => {
 
 // isbnの入力補完
 const onUpdateIsbn = (inputIsbn: string) => {
-  let isbn = inputIsbn.replace(/-/g, "");
+  let isbn = inputIsbn.replace(/[-\-₋⁻–]/g, "");
   if (isbn.length === 9) {
     isbn = util.isbn9To10(isbn);
   } else if (isbn.length === 12) {
