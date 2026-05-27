@@ -629,7 +629,7 @@ const showEditBookDialog = (book: Book) => {
 
 // isbnの入力補完
 const onUpdateIsbn = (inputIsbn: string) => {
-  let isbn = inputIsbn.replace(/-/g, "");
+  let isbn = inputIsbn.replace(/[-\-₋⁻–]/g, "");
   if (isbn.length === 9) {
     isbn = util.isbn9To10(isbn);
   } else if (isbn.length === 12) {
@@ -654,16 +654,12 @@ const ignoreTags = [
   "アプリ",
   "新宿区電子図書館",
 ];
-// よみたいタグ取得→セット
-const setWantTag = async () => {
+// 図書館タグ取得→セット
+const setLibraryTag = async () => {
   const tags = util.strToTag(bookDialog.value.form.tags);
 
   const hasIgnoreTag = ignoreTags.filter((t) => tags.includes(t)).length > 0;
-  if (hasIgnoreTag) {
-    tags.push("よみたい");
-    bookDialog.value.form.tags = tags.join("/");
-    return;
-  }
+  if (hasIgnoreTag) return;
 
   const idToken = await authUtil.getIdToken();
   const user = authUtil.getUserInfo();
@@ -679,10 +675,6 @@ const setWantTag = async () => {
       // 図書館タグあったら事前に排除
       const filteredTags = tags.filter((tag) => !tag.includes("図書館"));
       filteredTags.push(libraryTag);
-      // よみたいタグなかったら追加
-      if (!filteredTags.includes("よみたい")) {
-        filteredTags.push("よみたい");
-      }
       bookDialog.value.form.tags = filteredTags.join("/");
     }
   }
@@ -753,7 +745,7 @@ const addTagsFromDialogForm = () => {
     }
   });
 };
-const addWantTag = async (book: Book) => {
+const addLibraryTag = async (book: Book) => {
   const simpleBook: SimpleBook = {
     documentId: book.documentId,
     updateAt: book.updateAt,
@@ -771,8 +763,8 @@ const addWantTag = async (book: Book) => {
     await setToreadBooks(response.data.toreadBooks);
   }
 };
-const addReserveTag = async (book: Book) => {
-  const response = await addTags([book], ["よやくする"]);
+const addWantTag = async (book: Book) => {
+  const response = await addTags([book], ["よみたい"]);
   if (response) {
     // 画面情報再設定
     await setToreadBooks(response.data.toreadBooks);
@@ -896,13 +888,9 @@ const addBookshelf = async (book: Book) => {
   const tags = book.tags
     .filter((tag) => {
       // 一部タグをフィルタリング
-      return ![
-        "よみたい",
-        "よんでいる",
-        "図書館未定",
-        "かいたい",
-        "よやくする",
-      ].includes(tag);
+      return !["よみたい", "よんでいる", "図書館未定", "かいたい"].includes(
+        tag,
+      );
     })
     .filter((tag) => {
       // 図書館タグも除外
@@ -1165,19 +1153,18 @@ onMounted(
                   <div class="col-auto">
                     <c-round-btn
                       v-if="book.isbn"
-                      title="よみたい"
-                      icon="star_border"
+                      title="図書館検索"
+                      icon="account_balance"
                       color="secondary"
-                      @click="addWantTag(book)"
+                      @click="addLibraryTag(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col-auto">
                     <c-round-btn
-                      v-if="book.isbn"
-                      title="よやくする"
-                      icon="event_available"
+                      title="よみたい"
+                      icon="star_border"
                       color="secondary"
-                      @click="addReserveTag(book)"
+                      @click="addWantTag(book)"
                     ></c-round-btn>
                   </div>
                   <div class="col-auto">
@@ -1434,9 +1421,9 @@ onMounted(
                 )
               "
               flat
-              label="よみたい"
+              label="図書館検索"
               color="primary"
-              @click="setWantTag"
+              @click="setLibraryTag"
             />
           </div>
           <q-space></q-space>

@@ -2,7 +2,6 @@
 import util from "@/modules/util";
 import { computed } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
-import * as ndlSearchUtil from "@/modules/ndlSearchUtil";
 import openBdUtil from "@/modules/openBdUtil";
 
 const IMG_PLACEHOLDER_PATH = "img/cover_placeholder.jpg";
@@ -20,6 +19,13 @@ const props = defineProps({
 });
 const memoFirstLine = computed(() => {
   return props.memo.split("\n")[0];
+});
+
+const amazonCoverUrl = computed(() => {
+  if (!props.isbn) return IMG_ERROR;
+  const isbn10 =
+    props.isbn.length === 10 ? props.isbn : util.isbn13To10(props.isbn);
+  return `https://images.amazon.com/images/P/${isbn10}.09_SL30_.jpg`;
 });
 </script>
 
@@ -39,7 +45,7 @@ const memoFirstLine = computed(() => {
     >
       <template #error>
         <q-img
-          :src="ndlSearchUtil.getCoverUrl(isbn) || IMG_ERROR"
+          :src="amazonCoverUrl"
           decoding="async"
           class="book-img book-card-item bg-transparent"
           fit="contain"
