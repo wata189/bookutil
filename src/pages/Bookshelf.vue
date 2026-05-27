@@ -545,13 +545,22 @@ const addNextVolume = (book: BookshelfBook) => {
 
   // bookNameの処理 巻数増やす
   const bookName = book.bookName;
-  const match = bookName.match(/(\d+)$/);
   let nextBookName = bookName;
-  if (match) {
-    const num = parseInt(match[1], 10);
-    const nextNum = num + 1;
-    const prefix = bookName.substring(0, match.index);
-    nextBookName = prefix + nextNum;
+  const halfWidthMatch = bookName.match(/\((\d+)\)$/);
+  const fullWidthMatch = bookName.match(/（(\d+)）$/);
+  const numberMatch = bookName.match(/(\d+)$/);
+  if (halfWidthMatch) {
+    const num = parseInt(halfWidthMatch[1], 10);
+    const prefix = bookName.substring(0, halfWidthMatch.index);
+    nextBookName = prefix + "(" + (num + 1) + ")";
+  } else if (fullWidthMatch) {
+    const num = parseInt(fullWidthMatch[1], 10);
+    const prefix = bookName.substring(0, fullWidthMatch.index);
+    nextBookName = prefix + "(" + (num + 1) + ")";
+  } else if (numberMatch) {
+    const num = parseInt(numberMatch[1], 10);
+    const prefix = bookName.substring(0, numberMatch.index);
+    nextBookName = prefix + (num + 1);
   }
   bookDialog.value.form.bookName = nextBookName;
 
