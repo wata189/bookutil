@@ -51,7 +51,7 @@ const fetchLibraries = async () => {
     await cacheUtil.set(
       CACHE_KEY.LIBRARIES,
       response.data.libraries,
-      limitHours
+      limitHours,
     );
   }
 };
@@ -73,7 +73,7 @@ onMounted(
     }
 
     console.log("mounted libraries");
-  })
+  }),
 );
 </script>
 
