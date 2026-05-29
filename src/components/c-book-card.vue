@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import util from "@/modules/util";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import CBookLinks from "@/components/c-book-links.vue";
 import openBdUtil from "@/modules/openBdUtil";
 
@@ -21,12 +21,34 @@ const memoFirstLine = computed(() => {
   return props.memo.split("\n")[0];
 });
 
-const amazonCoverUrl = computed(() => {
+const amazonValid = ref<boolean | null>(null);
+
+watch(
+  () => props.isbn,
+  () => {
+    amazonValid.value = null;
+  },
+);
+
+const amazonRawUrl = computed(() => {
   if (!props.isbn) return IMG_ERROR;
   const isbn10 =
     props.isbn.length === 10 ? props.isbn : util.isbn13To10(props.isbn);
   return `https://images.amazon.com/images/P/${isbn10}.09_SL30_.jpg`;
 });
+
+const amazonCoverUrl = computed(() => {
+  return amazonValid.value === false ? IMG_ERROR : amazonRawUrl.value;
+});
+
+const onAmazonPreload = (e: Event) => {
+  const img = e.target as HTMLImageElement;
+  amazonValid.value = img.naturalWidth > 1;
+};
+
+const onAmazonPreloadError = () => {
+  amazonValid.value = false;
+};
 </script>
 
 <template>
@@ -37,6 +59,13 @@ const amazonCoverUrl = computed(() => {
     :title="props.bookName"
   >
     <slot name="header"></slot>
+    <img
+      v-if="props.isbn"
+      v-show="false"
+      :src="amazonRawUrl"
+      @load="onAmazonPreload"
+      @error="onAmazonPreloadError"
+    />
     <q-img
       :src="dispCoverUrl || IMG_ERROR"
       decoding="async"

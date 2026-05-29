@@ -34,7 +34,7 @@ const libraries: Ref<Library[]> = ref([]);
 
 const dispLibraries = computed(() => {
   return libraries.value.map((library) => {
-    const toreadLink = `toread?filterCondWord=${library.city}図書館 よみたい`;
+    const toreadLink = `toread?filterCondWord=${library.city}図書館`;
 
     return { ...library, toreadLink };
   });

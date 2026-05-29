@@ -52,6 +52,18 @@ const links: Link[] = [
     },
   },
   {
+    title: "楽天kobo",
+    imgUrl: "img/rakutenkobo.png",
+    searchUrl: {
+      isbn: null,
+      bookName:
+        "https://books.rakuten.co.jp/search?sitem=" +
+        SEARCH_PLACEHOLDER +
+        "&g=101&l-id=search-l-genre-1",
+      authorName: null,
+    },
+  },
+  {
     title: "国会図書館",
     imgUrl: "img/ndl.png",
     searchUrl: {
