@@ -29,6 +29,7 @@ type Library = {
   spUrl?: string;
   calendarUrl?: string;
   barcodeUrl?: string;
+  note?: string;
 };
 const libraries: Ref<Library[]> = ref([]);
 
@@ -95,6 +96,7 @@ onMounted(
                   >{{ library.closestStation }}駅</span
                 >
               </div>
+              <div v-if="library.note">{{ library.note }}</div>
               <div class="row">
                 <c-round-link
                   title="図書館サイトを表示"

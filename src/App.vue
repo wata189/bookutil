@@ -103,9 +103,9 @@ const setUserInfo = (userInfo: { email: string }) => {
     また、登録した情報からAmazon、カーリル、ブクログなどさまざまなサービスへの検索が可能です。`,
     });
     menuValues.push({
-      name: "マンガアプリ検索",
+      name: "マンガアプリ",
       to: "/mangaapp",
-      icon: "app_shortcut",
+      icon: "aod",
       description: "",
     });
     menuValues.push({
