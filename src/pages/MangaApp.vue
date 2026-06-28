@@ -41,9 +41,9 @@ const appKey = (categoryDocId: string, appName: string) =>
 
 const initSelected = (apps: Mangaapp[]) => {
   selectedApps.value = new Set(
-    apps.flatMap((cat) =>
-      cat.apps.map((app) => appKey(cat.documentId, app.name)),
-    ),
+    apps
+      .filter((cat) => cat.category === "汎用")
+      .flatMap((cat) => cat.apps.map((app) => appKey(cat.documentId, app.name))),
   );
 };
 

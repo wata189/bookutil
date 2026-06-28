@@ -134,7 +134,7 @@ const login = async () => {
     try {
       await authUtil.login(
         loginDialog.value.form.email,
-        loginDialog.value.form.password
+        loginDialog.value.form.password,
       );
     } catch (e) {
       console.error(e);
@@ -158,8 +158,6 @@ const validationRules = {
   ],
 };
 
-const userInfoMenu: Ref<QMenu | undefined> = ref();
-
 // Appコンポーネントのロードが終わった後、子コンポーネントの処理
 // 初回ロードと画面遷移の療法に対応できるようにする
 const { isAppLoaded } = toRefs(props);
@@ -181,7 +179,7 @@ onMounted(
     }
 
     console.log("mounted c-header");
-  })
+  }),
 );
 </script>
 
